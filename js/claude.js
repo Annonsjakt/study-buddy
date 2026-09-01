@@ -74,7 +74,7 @@ function parseLooseJSON(text) {
 
 // ---------- assignment generation ----------
 
-export async function generateAssignment({ material, topic, image, count = 6, gradeHint = "" }) {
+export async function generateAssignment({ material, topic, image, count = 6, gradeHint = "", preferFlashcards = false }) {
   const userContent = [];
   if (image) {
     userContent.push({
@@ -93,7 +93,7 @@ export async function generateAssignment({ material, topic, image, count = 6, gr
   const body = {
     model: modelFor("generate"),
     max_tokens: 16000,
-    system: generationSystem({ gradeHint }),
+    system: generationSystem({ gradeHint, preferFlashcards }),
     messages: [{ role: "user", content: userContent }],
   };
 

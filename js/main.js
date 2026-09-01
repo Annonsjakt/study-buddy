@@ -12,7 +12,6 @@ import { renderProgress } from "./views/progress.js";
 import { renderSettings } from "./views/settings.js";
 import { renderLogin } from "./views/login.js";
 import { renderParentHub, renderParentStudent } from "./views/parent-dashboard.js";
-import { renderNationalTests } from "./views/national-tests.js";
 
 const app = document.getElementById("app");
 
@@ -29,7 +28,6 @@ const routes = [
   { rx: /^\/login$/, view: () => renderLogin() },
   { rx: /^\/parent$/, view: () => renderParentHub() },
   { rx: /^\/parent\/(.+)$/, view: (m) => renderParentStudent(m[1]) },
-  { rx: /^\/national$/, view: () => renderNationalTests() },
   { rx: /^\/national\/mix\/(.+)$/, view: (m, qs) => renderNationalMix(m[1], qs) },
 ];
 
@@ -62,7 +60,6 @@ function shell(contentNode) {
           title: `${streak}-day study streak`,
         }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
         el("a.iconbtn", { href: "#/progress", "aria-label": "Progress", title: "Progress" }, [icon(ICONS.chart, 18)]),
-        el("a.iconbtn", { href: "#/national", "aria-label": "Nationella prov", title: "Nationella prov" }, [icon(ICONS.flag, 18)]),
         store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
         el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
       ]),
