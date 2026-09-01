@@ -7,8 +7,9 @@ import { extractPdfText, readImageFile, fitText } from "../material.js";
 import { generateAssignment, ClaudeError } from "../claude.js";
 import { questionEditor } from "../components/question-editor.js";
 
-export function renderCreate() {
+export function renderCreate(prefill) {
   const root = el("div");
+  const prefillSubject = prefill?.get("subject");
   const state = {
     step: "source",           // source | input | generating | review
     source: null,             // paste | pdf | photo | topic
@@ -16,7 +17,11 @@ export function renderCreate() {
     topic: "",
     image: null,
     gradeHint: "",
-    subject: store.subjects[0]?.name || "General",
+    subject: prefillSubject || store.subjects[0]?.name || "General",
+    // Locked when arriving from a picker (e.g. Nationella prov) that needs
+    // every set it creates to land under one exact subject name, so it can
+    // find them all again later by subjectId — see js/data/national-tests.js.
+    subjectLocked: !!prefillSubject && prefill?.get("lock") === "1",
     type: "assignment",
     count: 6,
     doc: null,                // generated + editable
@@ -113,7 +118,9 @@ export function renderCreate() {
     }
 
     // shared options
-    const subjectInput = el("input", { type: "text", list: "subject-list", value: state.subject, oninput: (e) => { state.subject = e.target.value; } });
+    const subjectInput = state.subjectLocked
+      ? el("input", { type: "text", value: state.subject, disabled: true })
+      : el("input", { type: "text", list: "subject-list", value: state.subject, oninput: (e) => { state.subject = e.target.value; } });
     const datalist = el("datalist", { id: "subject-list" }, store.subjects.map((s) => el("option", { value: s.name })));
     const typeSel = el("select", { onchange: (e) => { state.type = e.target.value; } }, [
       el("option", { value: "assignment" }, "Assignment (practice)"),
@@ -155,7 +162,10 @@ export function renderCreate() {
       body,
       datalist,
       el("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" } }, [
-        el("label.field", {}, [el("span", {}, "Subject"), subjectInput]),
+        el("label.field", {}, [
+          el("span", {}, "Subject"), subjectInput,
+          state.subjectLocked && el("span.note", { style: { display: "block", marginTop: "4px" } }, "Låst till nationellt prov-ämne"),
+        ]),
         el("label.field", {}, [el("span", {}, "Type"), typeSel]),
       ]),
       el("label.field", { style: { maxWidth: "160px" } }, [el("span", {}, "How many questions"), countInput]),
@@ -184,10 +194,12 @@ export function renderCreate() {
       type: "text", value: doc.title, "aria-label": "Set title",
       oninput: (e) => { doc.title = e.target.value; },
     });
-    const subjectInput = el("input", {
-      type: "text", value: doc.subject, list: "subject-list", "aria-label": "Subject",
-      oninput: (e) => { doc.subject = e.target.value; },
-    });
+    const subjectInput = state.subjectLocked
+      ? el("input", { type: "text", value: doc.subject, "aria-label": "Subject", disabled: true })
+      : el("input", {
+          type: "text", value: doc.subject, list: "subject-list", "aria-label": "Subject",
+          oninput: (e) => { doc.subject = e.target.value; },
+        });
 
     const countNote = el("p.note");
     const editor = questionEditor(doc, {

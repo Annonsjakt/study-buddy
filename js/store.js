@@ -38,6 +38,10 @@ const DEFAULT_SUBJECTS = ["Science", "History", "Math", "English", "Geography"];
 
 export const REVIEW_ID = "__review__";
 export const PRACTICE_ID = "__practice__";
+// Per-subject, unlike the two above — several subjects can each have their
+// own in-progress "mix all years" session at once.
+export const NATIONAL_MIX_PREFIX = "__npmix__";
+export const nationalMixId = (subjectId) => `${NATIONAL_MIX_PREFIX}${subjectId}`;
 
 function seedState() {
   return {

@@ -310,7 +310,7 @@ function todayStrip() {
 
   if (open) {
     const answered = Object.keys(open.items || {}).length;
-    tiles.push(el("a.tile", { href: open.isReview ? "#/review" : `#/session/${open.assignmentId}` }, [
+    tiles.push(el("a.tile", { href: open.retryHash || (open.isReview ? "#/review" : `#/session/${open.assignmentId}`) }, [
       el("span.tile__icon", {}, icon(ICONS.play, 18)),
       el("span", {}, [
         el("strong", {}, "Continue"),

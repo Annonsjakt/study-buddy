@@ -6,18 +6,19 @@ import { announce, focusHeading } from "./lib/a11y.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
 import { renderEdit } from "./views/edit.js";
-import { renderSession, renderReview, renderPractice } from "./views/session.js";
+import { renderSession, renderReview, renderPractice, renderNationalMix } from "./views/session.js";
 import { renderResults } from "./views/results.js";
 import { renderProgress } from "./views/progress.js";
 import { renderSettings } from "./views/settings.js";
 import { renderLogin } from "./views/login.js";
 import { renderParentHub, renderParentStudent } from "./views/parent-dashboard.js";
+import { renderNationalTests } from "./views/national-tests.js";
 
 const app = document.getElementById("app");
 
 const routes = [
   { rx: /^\/?$/, view: () => renderMenu() },
-  { rx: /^\/create$/, view: () => renderCreate() },
+  { rx: /^\/create$/, view: (m, qs) => renderCreate(qs) },
   { rx: /^\/edit\/(.+)$/, view: (m) => renderEdit(m[1]) },
   { rx: /^\/review$/, view: () => renderReview() },
   { rx: /^\/practice\/(.+)$/, view: (m) => renderPractice(m[1]) },
@@ -28,16 +29,20 @@ const routes = [
   { rx: /^\/login$/, view: () => renderLogin() },
   { rx: /^\/parent$/, view: () => renderParentHub() },
   { rx: /^\/parent\/(.+)$/, view: (m) => renderParentStudent(m[1]) },
+  { rx: /^\/national$/, view: () => renderNationalTests() },
+  { rx: /^\/national\/mix\/(.+)$/, view: (m, qs) => renderNationalMix(m[1], qs) },
 ];
 
 let currentCleanup = null;
 let firstPaintDone = false;
 
 function parseHash() {
-  const h = location.hash.replace(/^#/, "");
+  const full = location.hash.replace(/^#/, "");
+  const [path, qs] = full.split("?");
+  const params = new URLSearchParams(qs || "");
   for (const r of routes) {
-    const m = h.match(r.rx);
-    if (m) return () => r.view(m);
+    const m = path.match(r.rx);
+    if (m) return () => r.view(m, params);
   }
   return () => renderMenu();
 }
@@ -57,6 +62,7 @@ function shell(contentNode) {
           title: `${streak}-day study streak`,
         }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
         el("a.iconbtn", { href: "#/progress", "aria-label": "Progress", title: "Progress" }, [icon(ICONS.chart, 18)]),
+        el("a.iconbtn", { href: "#/national", "aria-label": "Nationella prov", title: "Nationella prov" }, [icon(ICONS.flag, 18)]),
         store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
         el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
       ]),
