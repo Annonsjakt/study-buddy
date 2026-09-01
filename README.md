@@ -6,27 +6,29 @@ and adapts when you're stuck.
 
 Built for K–12. No framework, no build step, no npm — plain HTML, CSS, and ES modules.
 
-**Live:** <https://jobbleandersson.github.io/study-buddy/> — runs in demo mode. Live
-tutoring and question generation now need the backend proxy in `server/` running
-somewhere reachable (see `server/README.md`); there's no in-browser key field anymore.
+**Live:** <https://jobbleandersson.github.io/study-buddy/> is the original project's demo
+(unrelated to this fork) and runs in demo mode only.
 
 ## Run it
 
-**Windows (easiest):** double-click `serve.ps1` → "Run with PowerShell", then open the
-URL it prints (default <http://localhost:8000>).
-
-Or from a terminal:
+`server/` now serves the whole app — frontend and API — from one process on one port,
+so this is the only step needed for the full experience (demo mode works with no setup;
+add a Claude key for live mode):
 
 ```bash
-powershell -ExecutionPolicy Bypass -File serve.ps1 -Port 8000
+cd server
+npm install
+cp .env.example .env   # optionally fill in ANTHROPIC_API_KEY for live mode
+npm start
 ```
 
-Any static file server works too (e.g. the VS Code "Live Server" extension). Opening
-`index.html` directly with `file://` will **not** work — ES modules need to be served
-over http.
+Then open <http://localhost:8787>. See `server/README.md` for details.
 
-For live tutoring and question generation, also run the backend proxy in `server/` —
-see `server/README.md`. Without it, StudyBuddy runs fine in demo mode.
+**Frontend only, no Node:** double-click `serve.ps1` → "Run with PowerShell" (or
+`powershell -ExecutionPolicy Bypass -File serve.ps1 -Port 8000`), or use any other
+static file server. This runs the UI in demo mode only — with `server/` not serving
+it, there's no API for it to reach. Opening `index.html` directly with `file://` will
+**not** work either way — ES modules need to be served over http.
 
 ## What's in it
 
@@ -78,17 +80,17 @@ to mark a one-line answer:
 
 ### ⚠️ Security note
 
-The Claude API key now lives only on the machine running `server/` — the browser never
-sees it, so a public frontend deployment can't leak it. `/api/state`, `/api/links`, and
-`/api/assigned` all require a signed-in session. `/api/messages` (the Claude proxy)
-itself still has no per-request auth of its own, though — anyone who can reach `server/`
-can spend the configured key regardless of whether they've signed in. Don't expose
-`server/` beyond your own machine/network without addressing that — see `server/README.md`.
+The Claude API key lives only on the machine running `server/` — the browser never sees
+it. `/api/state`, `/api/links`, and `/api/assigned` all require a signed-in session.
+`/api/messages` (the Claude proxy) itself still has no per-request auth of its own,
+though — anyone who can reach the deployment can spend the configured key regardless of
+whether they've signed in. Understand that before hosting this somewhere public — see
+`server/README.md`.
 
 ## Project layout
 
 ```
-serve.ps1            local dev server (Windows PowerShell, no dependencies)
+serve.ps1            frontend-only dev server (Windows PowerShell, no dependencies) — demo mode only
 index.html           shell — fonts, vendored libs, manifest, theme bootstrap
 manifest.json        PWA manifest (installable to a home screen)
 sw.js                service worker — network-first, cache fallback for offline
@@ -109,16 +111,17 @@ js/views/parent-dashboard.js   linking, assigning sets, read-only student progre
 js/lib/library.js    pure findQuestion()/dueQuestions(), reused for a linked student's data
 data/samples/        demo sets + scripted tutor (demo mode)
 vendor/              pdf.js, KaTeX, canvas-confetti (committed, no npm)
-server/              backend: key proxy, accounts/sync, parent-teacher linking (Node/Express/SQLite) — see server/README.md
+server/              serves the frontend + API: key proxy, accounts/sync, parent-teacher
+                     linking (Node/Express/SQLite) — see server/README.md
 ```
 
 ## Accounts & sync
 
 Optional. StudyBuddy works fully signed out — everything stays in this browser's
-`localStorage`, same as always. Sign in (Settings → Account, or `server/` running)
-to also sync your library and progress to an account, so it's there on another
-device too. Auth is email/password against `server/`; there's no email-sending
-step, so nothing to confirm — an account is ready to use immediately.
+`localStorage`, same as always. Sign in (Settings → Account) to also sync your
+library and progress to an account, so it's there on another device too. Auth is
+email/password; there's no email-sending step, so nothing to confirm — an account
+is ready to use immediately.
 
 Sync pushes your whole local library as one unit a moment after each change, and
 pulls it once when you sign in elsewhere. If the same account is edited on two

@@ -1,9 +1,11 @@
-// Shared constants for talking to the local backend proxy (server/). Its own
-// module so claude.js and store.js can both use it without an import cycle
-// (claude.js already imports store.js).
+// Shared constants for talking to the backend (server/). Its own module so
+// claude.js and store.js can both use it without an import cycle (claude.js
+// already imports store.js).
 //
-// The one line to change when server/ is actually hosted somewhere:
-export const SERVER_ORIGIN = "http://localhost:8787";
+// server/ now serves the frontend itself, so the API is always same-origin —
+// no host to hardcode here. If the frontend is ever hosted separately from
+// server/ again, set this back to that server's absolute origin.
+export const SERVER_ORIGIN = "";
 
 export const PROXY_URL = `${SERVER_ORIGIN}/api/messages`;
 export const PROXY_HEALTH_URL = `${SERVER_ORIGIN}/api/health`;
