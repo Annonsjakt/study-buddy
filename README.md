@@ -6,8 +6,9 @@ and adapts when you're stuck.
 
 Built for K–12. No framework, no build step, no npm — plain HTML, CSS, and ES modules.
 
-**Live:** <https://jobbleandersson.github.io/study-buddy/> is the original project's demo
-(unrelated to this fork) and runs in demo mode only.
+**Live:** <https://annonsjakt.github.io/study-buddy/> — the frontend, hosted on GitHub
+Pages. Runs in demo mode only, since Pages serves static files and there's no `server/`
+behind it; run `server/` locally for live mode (see below).
 
 ## Run it
 
