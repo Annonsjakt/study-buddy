@@ -1,6 +1,6 @@
-// Övningsbiblioteket: bläddra bland färdiga set per årskurs och ämne och
-// lägg till dem i sitt eget bibliotek. Fungerar utan API-nyckel — allt
-// innehåll är statiska filer.
+// Övningsbiblioteket: välj nivå, sedan ämne, och se bara det ämnets set —
+// i stället för att lista allt på en enda lång sida. Fungerar utan
+// API-nyckel — allt innehåll är statiska filer.
 
 import { store } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
@@ -22,25 +22,61 @@ export async function renderLibrary() {
   }
 
   const root = el("div");
+  const state = { level: null, subject: null };
 
   function paint() {
     clear(root);
-    root.appendChild(el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
-      el("a.iconbtn", { href: "#/", "aria-label": "Tillbaka" }, [icon(ICONS.back, 18)]),
-      el("h1", {}, "Övningsbibliotek"),
-    ]));
-    root.appendChild(el("p.home__hi", { style: { marginBottom: "24px" } },
-      "Färdiga övningar du kan börja plugga på direkt — ingen egen uppladdning behövs. Lägg till ett set så hamnar det i ditt bibliotek."));
-
-    for (const level of index.levels) {
-      const subjects = index.subjects.filter((s) => s.level === level.id);
-      if (!subjects.length) continue;
-      root.appendChild(el("h2", { style: { margin: "8px 0 12px" } }, level.label));
-      for (const subject of subjects) root.appendChild(subjectSection(subject));
-    }
+    root.appendChild(header());
+    if (!state.level) root.appendChild(levelPicker());
+    else if (!state.subject) root.appendChild(subjectPicker());
+    else root.appendChild(setList());
   }
 
-  function subjectSection(subject) {
+  function header() {
+    const back = state.subject
+      ? () => { state.subject = null; paint(); }
+      : state.level
+        ? () => { state.level = null; paint(); }
+        : null;
+
+    return el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
+      back
+        ? el("button.iconbtn", { type: "button", "aria-label": "Tillbaka", onclick: back }, [icon(ICONS.back, 18)])
+        : el("a.iconbtn", { href: "#/", "aria-label": "Tillbaka" }, [icon(ICONS.back, 18)]),
+      el("h1", {}, "Övningsbibliotek"),
+    ]);
+  }
+
+  /* ---- steg 1: välj nivå ---- */
+  function levelPicker() {
+    const levels = index.levels.filter((l) => index.subjects.some((s) => s.level === l.id));
+    return el("div.panel", {}, [
+      el("p", { style: { marginBottom: "16px" } },
+        "Färdiga övningar du kan börja plugga på direkt — ingen egen uppladdning behövs. Välj nivå för att se ämnen."),
+      el("div.source-grid", {}, levels.map((lvl) =>
+        el("button.source-opt", { type: "button", onclick: () => { state.level = lvl.id; paint(); } }, [
+          el("span", {}, "🎓"), lvl.label,
+        ]))),
+    ]);
+  }
+
+  /* ---- steg 2: välj ämne ---- */
+  function subjectPicker() {
+    const level = index.levels.find((l) => l.id === state.level);
+    const subjects = index.subjects.filter((s) => s.level === state.level);
+    return el("div.panel", {}, [
+      el("p", { style: { marginBottom: "16px" } }, `${level?.label} — vilket ämne vill du plugga?`),
+      el("div.source-grid", {}, subjects.map((subject) =>
+        el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
+          el("span", {}, "📘"), subject.name,
+          el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subject.description),
+        ]))),
+    ]);
+  }
+
+  /* ---- steg 3: sett för valt ämne ---- */
+  function setList() {
+    const subject = index.subjects.find((s) => s.id === state.subject);
     const sets = index.sets.filter((s) => s.subject === subject.id);
     const missing = sets.filter((s) => !isImported(s.id));
 
@@ -57,15 +93,17 @@ export async function renderLibrary() {
       },
     }, [icon(ICONS.plus, 16), `Lägg till alla (${missing.length})`]);
 
-    return el("section.panel", { style: { marginBottom: "24px" } }, [
-      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
-        el("div", {}, [
-          el("h3", {}, subject.name),
-          el("p.note", { style: { marginTop: "4px" } }, subject.description),
+    return el("div", {}, [
+      el("section.panel", { style: { marginBottom: "24px" } }, [
+        el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
+          el("div", {}, [
+            el("h3", {}, subject.name),
+            el("p.note", { style: { marginTop: "4px" } }, subject.description),
+          ]),
+          missing.length ? addAllBtn : el("span.note", {}, "Alla set tillagda ✓"),
         ]),
-        missing.length ? addAllBtn : el("span.note", {}, "Alla set tillagda ✓"),
+        el("div.libgrid", {}, sets.map(setCard)),
       ]),
-      el("div.libgrid", {}, sets.map(setCard)),
     ]);
   }
 
