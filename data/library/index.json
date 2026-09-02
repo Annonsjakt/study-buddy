@@ -16,6 +16,18 @@
       "level": "gymnasiet",
       "name": "Matematik 1",
       "description": "Kursen alla gymnasieelever läser (Ma1a/1b/1c) — innehållet som återkommer på prov och nationellt prov."
+    },
+    {
+      "id": "gy-svenska-1",
+      "level": "gymnasiet",
+      "name": "Svenska 1",
+      "description": "Retorik, litterära begrepp, språkriktighet, referatteknik och källkritik."
+    },
+    {
+      "id": "gy-engelska-5",
+      "level": "gymnasiet",
+      "name": "Engelska 5",
+      "description": "Grammatik, ordförråd och läsförståelse. Frågorna är på engelska, förklaringarna på svenska."
     }
   ],
   "sets": [
@@ -115,6 +127,104 @@
       "summary": "Lägesmått, spridningsmått, beroende händelser och källkritik.",
       "count": 8,
       "file": "data/library/gy-ma1-statistik.json"
+    },
+
+    {
+      "id": "lib-sv1-retorik",
+      "subject": "gy-svenska-1",
+      "title": "Retorik och muntlig framställning",
+      "summary": "Ethos, pathos och logos, talets disposition och stilfigurer.",
+      "count": 8,
+      "file": "data/library/gy-sv1-retorik.json"
+    },
+    {
+      "id": "lib-sv1-sprakriktighet",
+      "subject": "gy-svenska-1",
+      "title": "Språkriktighet och meningsbyggnad",
+      "summary": "De och dem, särskrivning, skiljetecken och satsradning.",
+      "count": 8,
+      "file": "data/library/gy-sv1-sprakriktighet.json"
+    },
+    {
+      "id": "lib-sv1-litteratur",
+      "subject": "gy-svenska-1",
+      "title": "Litterära begrepp och analys",
+      "summary": "Genrer, berättarperspektiv, bildspråk samt tema och motiv.",
+      "count": 8,
+      "file": "data/library/gy-sv1-litteratur.json"
+    },
+    {
+      "id": "lib-sv1-texttyper",
+      "subject": "gy-svenska-1",
+      "title": "Texttyper, referat och källhantering",
+      "summary": "Tes och argument, utredande text, referatteknik och plagiat.",
+      "count": 8,
+      "file": "data/library/gy-sv1-texttyper.json"
+    },
+    {
+      "id": "lib-sv1-kallkritik",
+      "subject": "gy-svenska-1",
+      "title": "Källkritik",
+      "summary": "Äkthet, tid, beroende och tendens — samt primär- och sekundärkällor.",
+      "count": 8,
+      "file": "data/library/gy-sv1-kallkritik.json"
+    },
+    {
+      "id": "lib-sv1-sprakhistoria",
+      "subject": "gy-svenska-1",
+      "title": "Språksociologi och nordiska språk",
+      "summary": "Dialekt och sociolekt, minoritetsspråk, grannspråk och lånord.",
+      "count": 8,
+      "file": "data/library/gy-sv1-sprakhistoria.json"
+    },
+
+    {
+      "id": "lib-en5-tenses",
+      "subject": "gy-engelska-5",
+      "title": "Tenses: present perfect and past simple",
+      "summary": "Skillnaden svenskar oftast gör fel på, plus continuous-formerna.",
+      "count": 8,
+      "file": "data/library/gy-en5-tenses.json"
+    },
+    {
+      "id": "lib-en5-grammar",
+      "subject": "gy-engelska-5",
+      "title": "Grammar: articles, prepositions and conditionals",
+      "summary": "A/an/the, fasta prepositioner, if-satser och relativa pronomen.",
+      "count": 8,
+      "file": "data/library/gy-en5-grammar.json"
+    },
+    {
+      "id": "lib-en5-vocabulary",
+      "subject": "gy-engelska-5",
+      "title": "Vocabulary: collocations and phrasal verbs",
+      "summary": "Do eller make, vanliga phrasal verbs och ordbildning.",
+      "count": 8,
+      "file": "data/library/gy-en5-vocabulary.json"
+    },
+    {
+      "id": "lib-en5-falsefriends",
+      "subject": "gy-engelska-5",
+      "title": "False friends and typical Swedish mistakes",
+      "summary": "Eventually, fabric, lend/borrow, teach/learn och fun/funny.",
+      "count": 8,
+      "file": "data/library/gy-en5-falsefriends.json"
+    },
+    {
+      "id": "lib-en5-reading",
+      "subject": "gy-engelska-5",
+      "title": "Reading comprehension",
+      "summary": "Huvudbudskap, slutledning, ord i sammanhang, ton och syfte.",
+      "count": 8,
+      "file": "data/library/gy-en5-reading.json"
+    },
+    {
+      "id": "lib-en5-writing",
+      "subject": "gy-engelska-5",
+      "title": "Writing: register and linking words",
+      "summary": "Formellt kontra informellt, sambandsord och styckets uppbyggnad.",
+      "count": 8,
+      "file": "data/library/gy-en5-writing.json"
     }
   ]
 }
