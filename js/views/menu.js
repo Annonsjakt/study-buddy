@@ -1,8 +1,9 @@
-// Home menu: a "today" strip, Assignments | Tests tabs, filters, and the card grid.
+// Home dashboard: overall level + streak/due at a glance, a resume tile, a
+// subject grid, then the Assignments | Tests tabs, filters and card grid.
 
 import { store } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
-import { masteryByTopic, masteryForAssignment } from "../lib/mastery.js";
+import { masteryByTopic, masteryForAssignment, masteryForSubject } from "../lib/mastery.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
 let tab = "assignment";
@@ -21,6 +22,7 @@ export function renderMenu() {
 
   const grid = el("div.grid");
   const chipsRow = el("div.chips");
+  const subjGrid = el("div.subjgrid");
   const countLabel = el("p.note");
 
   const searchInput = el("input.search__input", {
@@ -61,6 +63,8 @@ export function renderMenu() {
   }
 
   function paint() {
+    paintSubjectGrid();
+
     // subject chips, limited to subjects present in this tab
     clear(chipsRow);
     const inTab = store.assignments.filter((a) => a.type === tab);
@@ -108,6 +112,64 @@ export function renderMenu() {
     countLabel.hidden = !q || !!items.length;
 
     if (!items.length && !q) grid.appendChild(emptyState());
+  }
+
+  /** One coloured card per subject you actually have sets in: how strong you
+   *  are in it, and how much of it there is. Doubles as the subject filter. */
+  function paintSubjectGrid() {
+    clear(subjGrid);
+    const rows = store.subjects
+      .map((s) => {
+        const sets = store.assignments.filter((a) => a.subjectId === s.id);
+        if (!sets.length) return null;
+        return {
+          subject: s,
+          sets: sets.length,
+          questions: sets.reduce((n, a) => n + a.questions.length, 0),
+          mastery: masteryForSubject(s.id, store.assignments, topicMastery),
+          color: store.subjectColor(s.id),
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => (a.mastery ?? Infinity) - (b.mastery ?? Infinity));
+
+    for (const r of rows) subjGrid.appendChild(subjectCard(r));
+    subjGrid.hidden = !rows.length;
+  }
+
+  function subjectCard({ subject, sets, questions, mastery, color }) {
+    const pct = mastery == null ? null : Math.round(mastery * 100);
+    const selected = subjectFilter === subject.id;
+
+    return el("button.subjcard", {
+      type: "button",
+      "aria-pressed": String(selected),
+      style: { "--subject": color.solid, "--subject-ink": color.ink, "--subject-tint": color.tint },
+      "aria-label": `${subject.name}: ${sets} set${sets === 1 ? "" : "s"}, ${questions} questions${pct == null ? ", not studied yet" : `, ${pct}% mastery`}`,
+      onclick: () => {
+        // Toggle off if it's already the active filter; otherwise select it —
+        // and follow the subject into the tab where its sets actually live.
+        subjectFilter = selected ? "all" : subject.id;
+        if (!selected) {
+          const inThisTab = store.assignments.some((a) => a.subjectId === subject.id && a.type === tab);
+          if (!inThisTab) {
+            tab = tab === "assignment" ? "test" : "assignment";
+            tabsEl.querySelectorAll(".tab").forEach((b, i) =>
+              b.setAttribute("aria-selected", String((i === 0 ? "assignment" : "test") === tab)));
+          }
+        }
+        paint();
+      },
+    }, [
+      el("div.subjcard__top", {}, [
+        el("span.subjcard__name", {}, subject.name),
+        el("span.subjcard__pct", {}, pct == null ? "–" : `${pct}%`),
+      ]),
+      el("div.subjcard__bar", {}, [
+        el("div.subjcard__fill", { style: { width: `${pct ?? 0}%` } }),
+      ]),
+      el("div.subjcard__meta", {}, `${sets} set${sets === 1 ? "" : "s"} · ${questions} question${questions === 1 ? "" : "s"}`),
+    ]);
   }
 
   function chip(label, value, color) {
@@ -278,7 +340,9 @@ export function renderMenu() {
       ]),
       el("a.btn", { href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
     ]),
+    dashRow(topicMastery),
     todayStrip(),
+    subjGrid,
     tabsEl,
     chipsRow,
     toolsRow,
@@ -289,42 +353,60 @@ export function renderMenu() {
   return { title: "Menu", node, cleanup: closeCardMenu };
 }
 
-/** A compact row of what actually matters today: review, streak, and the
- *  session you walked away from. Only renders the tiles that apply. */
-function todayStrip() {
+/** The top of the dashboard: how strong you are overall, your streak, and
+ *  what's waiting to be reviewed — the three numbers worth seeing first. */
+function dashRow(topicMastery) {
+  const vals = Object.values(topicMastery);
+  const overall = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
   const due = store.dueQuestions().length;
   const streak = store.streak;
+  const sessions = store.attempts.length;
+
+  const hero = el("div.dash__card.dash__card--hero", {}, [
+    overall == null
+      ? el("span.dash__icon.dash__icon--brand", { style: { width: "72px", height: "72px" } }, icon(ICONS.spark, 28))
+      : ring(overall, "var(--brand)", "ring--lg"),
+    el("div", {}, [
+      el("div.dash__label", {}, overall == null ? "No results yet" : "Overall mastery"),
+      el("div.dash__value", {}, overall == null ? "Start studying" : `${Math.round(overall * 100)}%`),
+      el("p.note", { style: { marginTop: "4px" } }, overall == null
+        ? "Finish a session and your level shows up here."
+        : `${vals.length} topic${vals.length === 1 ? "" : "s"} tracked · ${sessions} session${sessions === 1 ? "" : "s"} done`),
+    ]),
+  ]);
+
+  const streakCard = el("a.dash__card", { href: "#/progress" }, [
+    el("span.dash__icon", {}, icon(ICONS.flame, 20)),
+    el("div", {}, [
+      el("div.dash__value", {}, `${streak} day${streak === 1 ? "" : "s"}`),
+      el("div.dash__label", {}, streak > 0 ? "Study streak" : "Study today to start a streak"),
+    ]),
+  ]);
+
+  const dueCard = el("a.dash__card", { href: due ? "#/review" : "#/progress" }, [
+    el("span", { class: "dash__icon" + (due ? " dash__icon--brand" : "") }, icon(ICONS.spark, 20)),
+    el("div", {}, [
+      el("div.dash__value", {}, String(due)),
+      el("div.dash__label", {}, due ? "Due now — tap to review" : "Due for review"),
+    ]),
+  ]);
+
+  return el("div.dash", {}, [hero, streakCard, dueCard]);
+}
+
+/** The session you walked away from — the one thing worth a full-width nudge. */
+function todayStrip() {
   const openKey = Object.keys(store.state.sessions)[0];
   const open = openKey ? store.state.sessions[openKey] : null;
   const tiles = [];
 
-  if (due) {
-    tiles.push(el("a.tile.tile--accent", { href: "#/review" }, [
-      el("span.tile__icon", {}, icon(ICONS.spark, 18)),
-      el("span", {}, [
-        el("strong", {}, `${due} question${due === 1 ? "" : "s"} due`),
-        el("span.tile__sub", {}, "Review across all sets"),
-      ]),
-    ]));
-  }
-
   if (open) {
     const answered = Object.keys(open.items || {}).length;
-    tiles.push(el("a.tile", { href: open.retryHash || (open.isReview ? "#/review" : `#/session/${open.assignmentId}`) }, [
+    tiles.push(el("a.tile.tile--accent", { href: open.retryHash || (open.isReview ? "#/review" : `#/session/${open.assignmentId}`) }, [
       el("span.tile__icon", {}, icon(ICONS.play, 18)),
       el("span", {}, [
-        el("strong", {}, "Continue"),
+        el("strong", {}, "Continue where you left off"),
         el("span.tile__sub", {}, `${open.title} · ${answered} of ${open.order.length} answered`),
-      ]),
-    ]));
-  }
-
-  if (streak > 0) {
-    tiles.push(el("a.tile", { href: "#/progress" }, [
-      el("span.tile__icon", {}, icon(ICONS.flame, 18)),
-      el("span", {}, [
-        el("strong", {}, `${streak}-day streak`),
-        el("span.tile__sub", {}, "See your progress"),
       ]),
     ]));
   }
@@ -334,11 +416,12 @@ function todayStrip() {
   return strip;
 }
 
-function ring(v, color) {
+function ring(v, color, extraClass) {
   const pct = Math.round(v * 100);
   const wrap = el("span.ring", {
+    class: extraClass || "",
     style: { "--v": pct, "--subject": color },
-    title: `${pct}% mastery — how well you've been answering this set's topics`,
+    title: `${pct}% mastery — how well you've been answering these topics`,
   });
   wrap.innerHTML =
     `<svg viewBox="0 0 36 36" aria-hidden="true">` +
