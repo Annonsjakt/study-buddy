@@ -4,7 +4,11 @@
   "subject": "Matematik",
   "title": "Samband och funktioner",
   "sourceSummary": "Linjära funktioner, proportionella samband, grafens k- och m-värde, och att översätta vardagssituationer till formler.",
-  "topics": ["linjära funktioner", "proportionalitet", "grafer"],
+  "topics": [
+    "linjära funktioner",
+    "proportionalitet",
+    "grafer"
+  ],
   "tutorStyle": "adaptive",
   "questions": [
     {
@@ -13,8 +17,13 @@
       "topic": "linjära funktioner",
       "prompt": "För funktionen $y = 2x + 3$, vad är $y$ när $x = 4$?",
       "opener": "Byt ut $x$ mot 4 och räkna — tänk på ordningen.",
-      "choices": ["9", "14", "11", "24"],
-      "answer": 2,
+      "choices": [
+        "11",
+        "24",
+        "9",
+        "14"
+      ],
+      "answer": 0,
       "explanation": "$y = 2 \\cdot 4 + 3 = 8 + 3 = 11$. Multiplikationen görs före additionen."
     },
     {
@@ -38,8 +47,13 @@
       "topic": "grafer",
       "prompt": "Var skär grafen till $y = 2x + 1$ y-axeln?",
       "opener": "Vad är $x$ i alla punkter som ligger på y-axeln?",
-      "choices": ["I punkten (0, 1)", "I punkten (1, 0)", "I punkten (0, 2)", "I punkten (2, 1)"],
-      "answer": 0,
+      "choices": [
+        "I punkten (0, 2)",
+        "I punkten (2, 1)",
+        "I punkten (0, 1)",
+        "I punkten (1, 0)"
+      ],
+      "answer": 2,
       "explanation": "På y-axeln är $x = 0$. Då blir $y = 2 \\cdot 0 + 1 = 1$, alltså punkten $(0, 1)$ — det är $m$-värdet."
     },
     {
@@ -48,8 +62,13 @@
       "topic": "proportionalitet",
       "prompt": "Vilket av dessa samband är proportionellt?",
       "opener": "Ett proportionellt samband ska ge dubbelt så mycket när du dubblar — vad kräver det av grafen?",
-      "choices": ["$y = x + 5$", "$y = 4x$", "$y = 2x - 3$", "$y = x^2$"],
-      "answer": 1,
+      "choices": [
+        "$y = 2x - 3$",
+        "$y = x^2$",
+        "$y = x + 5$",
+        "$y = 4x$"
+      ],
+      "answer": 3,
       "explanation": "Ett proportionellt samband har formen $y = kx$ och går genom origo. $y = 4x$ uppfyller det; de övriga har antingen ett $m$-värde eller är inte linjära."
     },
     {
@@ -58,8 +77,13 @@
       "topic": "linjära funktioner",
       "prompt": "En webbutik tar 25 kr per vara plus 50 kr i frakt. Vilken formel ger totalkostnaden $y$ för $x$ varor?",
       "opener": "Vilken del av kostnaden ändras med antalet, och vilken är fast?",
-      "choices": ["$y = 25 + 50x$", "$y = 75x$", "$y = 25x + 50$", "$y = 25x - 50$"],
-      "answer": 2,
+      "choices": [
+        "$y = 25x + 50$",
+        "$y = 25x - 50$",
+        "$y = 25 + 50x$",
+        "$y = 75x$"
+      ],
+      "answer": 0,
       "explanation": "Varje vara kostar 25 kr, alltså $25x$, och frakten är fast 50 kr oavsett antal: $y = 25x + 50$."
     },
     {
@@ -68,7 +92,12 @@
       "topic": "proportionalitet",
       "prompt": "En bil kör i 60 km/h. Hur långt kommer den på 2,5 timmar?",
       "opener": "Sträcka är hastighet gånger tid.",
-      "choices": ["120 km", "150 km", "24 km", "180 km"],
+      "choices": [
+        "120 km",
+        "150 km",
+        "24 km",
+        "180 km"
+      ],
       "answer": 1,
       "explanation": "$s = v \\cdot t = 60 \\cdot 2{,}5 = 150$ km."
     },

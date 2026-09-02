@@ -4,7 +4,11 @@
   "subject": "Matematik",
   "title": "Algebra och ekvationer",
   "sourceSummary": "Förenkla uttryck, lösa ekvationer med obekant i båda leden, och beskriva mönster med formler.",
-  "topics": ["algebraiska uttryck", "ekvationer", "mönster"],
+  "topics": [
+    "algebraiska uttryck",
+    "ekvationer",
+    "mönster"
+  ],
   "tutorStyle": "adaptive",
   "questions": [
     {
@@ -13,8 +17,13 @@
       "topic": "ekvationer",
       "prompt": "Lös ekvationen $3x + 5 = 20$.",
       "opener": "Vad behöver du göra bort först för att få $x$ ensamt?",
-      "choices": ["$x = 3$", "$x = 5$", "$x = 15$", "$x = 25$"],
-      "answer": 1,
+      "choices": [
+        "$x = 5$",
+        "$x = 15$",
+        "$x = 25$",
+        "$x = 3$"
+      ],
+      "answer": 0,
       "explanation": "Dra bort 5 från båda leden: $3x = 15$. Dela sedan båda leden med 3: $x = 5$."
     },
     {
@@ -23,8 +32,13 @@
       "topic": "algebraiska uttryck",
       "prompt": "Förenkla $4x + 3 - 2x + 5$.",
       "opener": "Samla det som hör ihop — $x$-termer för sig, siffror för sig.",
-      "choices": ["$2x + 8$", "$6x + 8$", "$2x + 2$", "$10x$"],
-      "answer": 0,
+      "choices": [
+        "$10x$",
+        "$2x + 8$",
+        "$6x + 8$",
+        "$2x + 2$"
+      ],
+      "answer": 1,
       "explanation": "$4x - 2x = 2x$ och $3 + 5 = 8$, alltså $2x + 8$. Termer med $x$ kan inte slås ihop med vanliga tal."
     },
     {
@@ -33,7 +47,12 @@
       "topic": "ekvationer",
       "prompt": "Lös ekvationen $2(x + 3) = 14$.",
       "opener": "Du kan antingen dela med 2 först, eller multiplicera in parentesen.",
-      "choices": ["$x = 2$", "$x = 7$", "$x = 4$", "$x = 11$"],
+      "choices": [
+        "$x = 2$",
+        "$x = 7$",
+        "$x = 4$",
+        "$x = 11$"
+      ],
       "answer": 2,
       "explanation": "Dela båda leden med 2: $x + 3 = 7$. Dra bort 3: $x = 4$."
     },
@@ -43,7 +62,12 @@
       "topic": "ekvationer",
       "prompt": "Lös ekvationen $5x - 3 = 2x + 9$.",
       "opener": "Obekanta i båda leden — samla alla $x$ på en sida först.",
-      "choices": ["$x = 2$", "$x = 12$", "$x = 6$", "$x = 4$"],
+      "choices": [
+        "$x = 2$",
+        "$x = 12$",
+        "$x = 6$",
+        "$x = 4$"
+      ],
       "answer": 3,
       "explanation": "Dra bort $2x$ från båda leden: $3x - 3 = 9$. Lägg till 3: $3x = 12$. Dela med 3: $x = 4$."
     },
@@ -53,7 +77,12 @@
       "topic": "algebraiska uttryck",
       "prompt": "Vad är värdet av $3x^2$ när $x = -2$?",
       "opener": "Räkna ut potensen innan du multiplicerar med 3 — och tänk på tecknet.",
-      "choices": ["12", "-12", "36", "-36"],
+      "choices": [
+        "12",
+        "-12",
+        "36",
+        "-36"
+      ],
       "answer": 0,
       "explanation": "$(-2)^2 = 4$ eftersom minus gånger minus blir plus. Sedan $3 \\cdot 4 = 12$."
     },
@@ -63,8 +92,13 @@
       "topic": "mönster",
       "prompt": "Talföljden börjar 3, 7, 11, 15, … Vilket uttryck ger det $n$:te talet?",
       "opener": "Hur mycket ökar det varje steg, och var börjar följden?",
-      "choices": ["$3n$", "$n + 4$", "$4n - 1$", "$4n + 3$"],
-      "answer": 2,
+      "choices": [
+        "$n + 4$",
+        "$4n - 1$",
+        "$4n + 3$",
+        "$3n$"
+      ],
+      "answer": 1,
       "explanation": "Följden ökar med 4 varje steg, så uttrycket innehåller $4n$. För $n = 1$ ska det bli 3: $4 \\cdot 1 - 1 = 3$. ✓"
     },
     {

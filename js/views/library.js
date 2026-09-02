@@ -35,11 +35,12 @@ export async function renderLibrary() {
     for (const level of index.levels) {
       const subjects = index.subjects.filter((s) => s.level === level.id);
       if (!subjects.length) continue;
-      for (const subject of subjects) root.appendChild(subjectSection(level, subject));
+      root.appendChild(el("h2", { style: { margin: "8px 0 12px" } }, level.label));
+      for (const subject of subjects) root.appendChild(subjectSection(subject));
     }
   }
 
-  function subjectSection(level, subject) {
+  function subjectSection(subject) {
     const sets = index.sets.filter((s) => s.subject === subject.id);
     const missing = sets.filter((s) => !isImported(s.id));
 
@@ -59,7 +60,7 @@ export async function renderLibrary() {
     return el("section.panel", { style: { marginBottom: "24px" } }, [
       el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
         el("div", {}, [
-          el("h3", {}, `${subject.name} — ${level.label}`),
+          el("h3", {}, subject.name),
           el("p.note", { style: { marginTop: "4px" } }, subject.description),
         ]),
         missing.length ? addAllBtn : el("span.note", {}, "Alla set tillagda ✓"),

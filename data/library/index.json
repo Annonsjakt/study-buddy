@@ -1,7 +1,8 @@
 {
   "version": 1,
   "levels": [
-    { "id": "ak9", "label": "Årskurs 9" }
+    { "id": "ak9", "label": "Årskurs 9" },
+    { "id": "gymnasiet", "label": "Gymnasiet" }
   ],
   "subjects": [
     {
@@ -9,6 +10,12 @@
       "level": "ak9",
       "name": "Matematik",
       "description": "Centralt innehåll för åk 9 — det som brukar komma på prov och nationella provet."
+    },
+    {
+      "id": "gy-matematik-1",
+      "level": "gymnasiet",
+      "name": "Matematik 1",
+      "description": "Kursen alla gymnasieelever läser (Ma1a/1b/1c) — innehållet som återkommer på prov och nationellt prov."
     }
   ],
   "sets": [
@@ -59,6 +66,55 @@
       "summary": "Lägesmått, sannolikhet i flera steg och kombinatorik.",
       "count": 8,
       "file": "data/library/ak9-matematik-statistik.json"
+    },
+
+    {
+      "id": "lib-ma1-tal",
+      "subject": "gy-matematik-1",
+      "title": "Taluppfattning och potenser",
+      "summary": "Potenslagar, grundpotensform, prefix och avrundning.",
+      "count": 8,
+      "file": "data/library/gy-ma1-tal.json"
+    },
+    {
+      "id": "lib-ma1-algebra",
+      "subject": "gy-matematik-1",
+      "title": "Algebra, ekvationer och olikheter",
+      "summary": "Parenteser, ekvationer, olikheter och att lösa ut en variabel ur en formel.",
+      "count": 8,
+      "file": "data/library/gy-ma1-algebra.json"
+    },
+    {
+      "id": "lib-ma1-procent",
+      "subject": "gy-matematik-1",
+      "title": "Procent, förändringsfaktor och index",
+      "summary": "Förändringsfaktor, upprepad förändring, procentenheter och index.",
+      "count": 8,
+      "file": "data/library/gy-ma1-procent.json"
+    },
+    {
+      "id": "lib-ma1-geometri",
+      "subject": "gy-matematik-1",
+      "title": "Geometri, likformighet och skala",
+      "summary": "Pythagoras sats, likformighet samt längd-, area- och volymskala.",
+      "count": 8,
+      "file": "data/library/gy-ma1-geometri.json"
+    },
+    {
+      "id": "lib-ma1-samband",
+      "subject": "gy-matematik-1",
+      "title": "Samband och förändring",
+      "summary": "Räta linjens ekvation, linjära modeller och exponentiell förändring.",
+      "count": 8,
+      "file": "data/library/gy-ma1-samband.json"
+    },
+    {
+      "id": "lib-ma1-statistik",
+      "subject": "gy-matematik-1",
+      "title": "Sannolikhet och statistik",
+      "summary": "Lägesmått, spridningsmått, beroende händelser och källkritik.",
+      "count": 8,
+      "file": "data/library/gy-ma1-statistik.json"
     }
   ]
 }

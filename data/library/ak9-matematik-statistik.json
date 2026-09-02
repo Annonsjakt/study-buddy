@@ -4,7 +4,11 @@
   "subject": "Matematik",
   "title": "Sannolikhet och statistik",
   "sourceSummary": "Lägesmått (medelvärde, median, typvärde), sannolikhet i ett och två steg, och kombinatorik.",
-  "topics": ["lägesmått", "sannolikhet", "kombinatorik"],
+  "topics": [
+    "lägesmått",
+    "sannolikhet",
+    "kombinatorik"
+  ],
   "tutorStyle": "adaptive",
   "questions": [
     {
@@ -13,8 +17,13 @@
       "topic": "lägesmått",
       "prompt": "Vad är medelvärdet av talen 4, 7, 9 och 12?",
       "opener": "Lägg ihop allt först — sedan delar du med något.",
-      "choices": ["7", "8", "9", "32"],
-      "answer": 1,
+      "choices": [
+        "32",
+        "7",
+        "8",
+        "9"
+      ],
+      "answer": 2,
       "explanation": "$4 + 7 + 9 + 12 = 32$, och $32 / 4 = 8$."
     },
     {
@@ -23,8 +32,13 @@
       "topic": "lägesmått",
       "prompt": "Vad är medianen i talföljden 3, 5, 8, 9, 12?",
       "opener": "Medianen handlar om placering i mitten, inte om att räkna ut något.",
-      "choices": ["7,4", "5", "8", "9"],
-      "answer": 2,
+      "choices": [
+        "9",
+        "7,4",
+        "5",
+        "8"
+      ],
+      "answer": 3,
       "explanation": "Talen är redan i storleksordning och det är fem tal, så medianen är det tredje: 8."
     },
     {
@@ -33,8 +47,13 @@
       "topic": "lägesmått",
       "prompt": "Vad är medianen i talföljden 2, 4, 6, 10?",
       "opener": "Jämnt antal tal — då finns ingen enskild mittpunkt.",
-      "choices": ["4", "5", "6", "5,5"],
-      "answer": 1,
+      "choices": [
+        "5",
+        "6",
+        "5,5",
+        "4"
+      ],
+      "answer": 0,
       "explanation": "Vid jämnt antal tar man medelvärdet av de två mittersta: $(4 + 6)/2 = 5$."
     },
     {
@@ -43,8 +62,13 @@
       "topic": "sannolikhet",
       "prompt": "Du kastar en vanlig sexsidig tärning. Vad är sannolikheten att få en fyra?",
       "opener": "Hur många utfall är gynnsamma, och hur många är möjliga totalt?",
-      "choices": ["$\\frac{1}{4}$", "$\\frac{4}{6}$", "$\\frac{1}{6}$", "$\\frac{1}{2}$"],
-      "answer": 2,
+      "choices": [
+        "$\\frac{4}{6}$",
+        "$\\frac{1}{6}$",
+        "$\\frac{1}{2}$",
+        "$\\frac{1}{4}$"
+      ],
+      "answer": 1,
       "explanation": "Ett gynnsamt utfall (fyran) av sex möjliga: $\\frac{1}{6} \\approx 17\\ \\%$."
     },
     {
@@ -53,8 +77,13 @@
       "topic": "sannolikhet",
       "prompt": "I en påse finns 3 röda och 7 blå kulor. Du drar en kula utan att titta. Vad är sannolikheten att den är röd?",
       "opener": "Hur många kulor finns det totalt i påsen?",
-      "choices": ["30 %", "3 %", "43 %", "70 %"],
-      "answer": 0,
+      "choices": [
+        "43 %",
+        "70 %",
+        "30 %",
+        "3 %"
+      ],
+      "answer": 2,
       "explanation": "Totalt 10 kulor, varav 3 röda: $\\frac{3}{10} = 0{,}3 = 30\\ \\%$."
     },
     {
@@ -63,8 +92,13 @@
       "topic": "kombinatorik",
       "prompt": "Du har 3 tröjor och 4 par byxor. Hur många olika kombinationer kan du sätta ihop?",
       "opener": "För varje tröja — hur många byxor kan du välja till?",
-      "choices": ["7", "34", "12", "16"],
-      "answer": 2,
+      "choices": [
+        "16",
+        "7",
+        "34",
+        "12"
+      ],
+      "answer": 3,
       "explanation": "Varje tröja kan kombineras med alla fyra byxorna: $3 \\cdot 4 = 12$ kombinationer."
     },
     {
