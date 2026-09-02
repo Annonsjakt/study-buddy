@@ -12,6 +12,18 @@
       "description": "Centralt innehåll för åk 9 — det som brukar komma på prov och nationella provet."
     },
     {
+      "id": "ak9-svenska",
+      "level": "ak9",
+      "name": "Svenska",
+      "description": "Ordklasser, språkriktighet, läsförståelse, litterära begrepp och källkritik."
+    },
+    {
+      "id": "ak9-engelska",
+      "level": "ak9",
+      "name": "Engelska",
+      "description": "Grammatik, ordförråd och läsförståelse. Frågorna är på engelska, förklaringarna på svenska."
+    },
+    {
       "id": "gy-matematik-1",
       "level": "gymnasiet",
       "name": "Matematik 1",
@@ -78,6 +90,88 @@
       "summary": "Lägesmått, sannolikhet i flera steg och kombinatorik.",
       "count": 8,
       "file": "data/library/ak9-matematik-statistik.json"
+    },
+
+    {
+      "id": "lib-sv9-ordklasser",
+      "subject": "ak9-svenska",
+      "title": "Ordklasser och satsdelar",
+      "summary": "Substantiv, verb, adjektiv, pronomen samt subjekt, predikat och objekt.",
+      "count": 8,
+      "file": "data/library/ak9-sv-ordklasser.json"
+    },
+    {
+      "id": "lib-sv9-sprakriktighet",
+      "subject": "ak9-svenska",
+      "title": "Skrivregler och språkriktighet",
+      "summary": "De och dem, särskrivning, kommatering och stor bokstav.",
+      "count": 8,
+      "file": "data/library/ak9-sv-sprakriktighet.json"
+    },
+    {
+      "id": "lib-sv9-lasforstaelse",
+      "subject": "ak9-svenska",
+      "title": "Läsförståelse",
+      "summary": "Huvudbudskap, slutsatser och sammanfattning.",
+      "count": 8,
+      "file": "data/library/ak9-sv-lasforstaelse.json"
+    },
+    {
+      "id": "lib-sv9-litteratur",
+      "subject": "ak9-svenska",
+      "title": "Litterära begrepp",
+      "summary": "Genre, berättarperspektiv, miljö och tema samt bildspråk.",
+      "count": 8,
+      "file": "data/library/ak9-sv-litteratur.json"
+    },
+    {
+      "id": "lib-sv9-kallkritik",
+      "subject": "ak9-svenska",
+      "title": "Källkritik och sakprosa",
+      "summary": "Källgranskning, fakta och åsikt samt argumenterande text.",
+      "count": 8,
+      "file": "data/library/ak9-sv-kallkritik.json"
+    },
+
+    {
+      "id": "lib-en9-tenses",
+      "subject": "ak9-engelska",
+      "title": "Grammar: tempus (tenses)",
+      "summary": "Present simple, present continuous, past simple och framtid.",
+      "count": 8,
+      "file": "data/library/ak9-en-tenses.json"
+    },
+    {
+      "id": "lib-en9-vocabulary",
+      "subject": "ak9-engelska",
+      "title": "Vocabulary: vardagsord och phrasal verbs",
+      "summary": "Vanliga phrasal verbs och ord som lätt blandas ihop.",
+      "count": 8,
+      "file": "data/library/ak9-en-vocabulary.json"
+    },
+    {
+      "id": "lib-en9-reading",
+      "subject": "ak9-engelska",
+      "title": "Reading comprehension",
+      "summary": "Huvudbudskap, slutledning och ord i sammanhang.",
+      "count": 8,
+      "file": "data/library/ak9-en-reading.json"
+    },
+    {
+      "id": "lib-en9-writing",
+      "subject": "ak9-engelska",
+      "title": "Writing: meningsbyggnad och vanliga fel",
+      "summary": "Ordföljd, verbändelser och typiska svensk-engelska-fel.",
+      "count": 8,
+      "file": "data/library/ak9-en-writing.json"
+    },
+    {
+      "id": "lib-en9-wordconfusion",
+      "subject": "ak9-engelska",
+      "title": "Vanliga ordförväxlingar",
+      "summary": "Its/it's, your/you're, there/their/they're.",
+      "count": 8,
+      "file": "data/library/ak9-en-wordconfusion.json"
     },
 
     {
