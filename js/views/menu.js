@@ -233,12 +233,13 @@ export function renderMenu() {
       el("h3", { style: { marginBottom: "6px" } },
         isFirstRun ? "Your library is empty" : `No ${tab === "assignment" ? "assignments" : "tests"} yet`),
       el("p", {}, isFirstRun
-        ? "Make a set from your own notes, a PDF, a photo, or just a topic — or load the demo sets to see how it works."
+        ? "Börja med färdiga övningar ur biblioteket — eller gör ett eget set från dina anteckningar, en PDF, ett foto eller bara ett ämne."
         : tab === "assignment"
           ? "Make one from your notes, a PDF, a photo, or just a topic."
           : "Create one the same way — just mark it as a test."),
       el("div", { style: { display: "flex", gap: "10px", justifyContent: "center", marginTop: "16px", flexWrap: "wrap" } }, [
-        el("a.btn", { href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
+        isFirstRun && el("a.btn", { href: "#/bibliotek" }, [icon(ICONS.book, 18), "Öppna övningsbiblioteket"]),
+        el("a", { class: isFirstRun ? "btn btn--ghost" : "btn", href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
         isFirstRun && store.demoStatus.loaded === 0 && el("button.btn.btn--ghost", {
           type: "button",
           onclick: async (e) => {

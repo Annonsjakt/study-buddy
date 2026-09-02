@@ -198,6 +198,16 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .subjcard__fill { height: 100%; border-radius: inherit; background: var(--subject); transition: width var(--dur-slow) var(--ease-out); }
 .subjcard__meta { font-size: var(--fs-sm); color: var(--ink-soft); }
 
+/* ---------- library ---------- */
+.libgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s-3); margin-top: var(--s-4); }
+.libcard {
+  border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4);
+  background: var(--surface); display: flex; flex-direction: column; gap: var(--s-3);
+  justify-content: space-between; min-width: 0;
+}
+.libcard__title { font-family: var(--font-display); font-weight: 600; font-size: var(--fs-md); }
+.libcard__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); flex-wrap: wrap; }
+
 /* ---------- today strip ---------- */
 .today { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: var(--s-3); margin-bottom: var(--s-5); }
 .tile {

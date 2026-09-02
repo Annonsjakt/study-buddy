@@ -12,6 +12,7 @@ import { renderProgress } from "./views/progress.js";
 import { renderSettings } from "./views/settings.js";
 import { renderLogin } from "./views/login.js";
 import { renderParentHub, renderParentStudent } from "./views/parent-dashboard.js";
+import { renderLibrary } from "./views/library.js";
 
 const app = document.getElementById("app");
 
@@ -29,6 +30,7 @@ const routes = [
   { rx: /^\/parent$/, view: () => renderParentHub() },
   { rx: /^\/parent\/(.+)$/, view: (m) => renderParentStudent(m[1]) },
   { rx: /^\/national\/mix\/(.+)$/, view: (m, qs) => renderNationalMix(m[1], qs) },
+  { rx: /^\/bibliotek$/, view: () => renderLibrary() },
 ];
 
 let currentCleanup = null;
@@ -59,6 +61,7 @@ function shell(contentNode) {
           "aria-label": `${streak} day study streak`,
           title: `${streak}-day study streak`,
         }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
+        el("a.iconbtn", { href: "#/bibliotek", "aria-label": "Övningsbibliotek", title: "Övningsbibliotek" }, [icon(ICONS.book, 18)]),
         el("a.iconbtn", { href: "#/progress", "aria-label": "Progress", title: "Progress" }, [icon(ICONS.chart, 18)]),
         store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
         el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
