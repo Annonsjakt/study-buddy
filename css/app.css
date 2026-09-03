@@ -103,8 +103,9 @@ h1:focus-visible, h2:focus-visible {
 .sidebar__streak {
   display: flex; align-items: center; gap: var(--s-2);
   padding: var(--s-3); margin-top: var(--s-4); border-radius: var(--r-md);
-  background: var(--surface-sunk); color: var(--ink-soft); font-size: var(--fs-sm); font-weight: 700;
+  background: var(--surface-sunk); color: var(--ink); font-size: var(--fs-sm); font-weight: 700;
 }
+.sidebar__streak svg { color: var(--retry); flex: none; }
 
 .topbar {
   position: sticky; top: 0; z-index: 20;
@@ -175,6 +176,13 @@ h1:focus-visible, h2:focus-visible {
   .home { display: grid; grid-template-columns: 1fr 300px; align-items: start; gap: var(--s-6); }
 }
 .examcard__count { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl); margin: var(--s-2) 0 2px; }
+.examcard .field { margin-bottom: var(--s-3); }
+.examcard .field > span { font-size: 12px; margin-bottom: 4px; }
+.examcard input[type=date] {
+  width: auto; padding: 6px var(--s-2); font-size: var(--fs-sm);
+  border-radius: var(--r-sm); border-color: var(--line);
+}
+.examcard input[type=text] { padding: var(--s-2) var(--s-3); font-size: var(--fs-sm); border-radius: var(--r-sm); }
 
 .tabs { display: inline-flex; background: var(--surface-sunk); border-radius: var(--r-full); padding: 4px; gap: 4px; }
 .tab {
