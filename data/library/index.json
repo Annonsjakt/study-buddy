@@ -2,6 +2,14 @@
   "version": 1,
   "levels": [
     {
+      "id": "ak7",
+      "label": "Årskurs 7"
+    },
+    {
+      "id": "ak8",
+      "label": "Årskurs 8"
+    },
+    {
       "id": "ak9",
       "label": "Årskurs 9"
     },
@@ -88,6 +96,42 @@
       "level": "ak9",
       "name": "Religionskunskap",
       "description": "Världsreligionerna, etik och livsfrågor — icke-konfessionellt och jämförande, så som ämnet undervisas i grundskolan."
+    },
+    {
+      "id": "ak7-matematik",
+      "level": "ak7",
+      "name": "Matematik",
+      "description": "Grunderna i högstadiematematiken: tal och räknesätt, bråk och procent, geometri samt de första stegen i algebra."
+    },
+    {
+      "id": "ak7-svenska",
+      "level": "ak7",
+      "name": "Svenska",
+      "description": "Grunderna i svenska för åk 7: ordklasser, skrivregler, läsförståelse, berättande texter och muntlig framställning."
+    },
+    {
+      "id": "ak7-engelska",
+      "level": "ak7",
+      "name": "Engelska",
+      "description": "Grundläggande engelsk grammatik, ordförråd, läsförståelse och skrivande för åk7 — frågorna är på engelska medan ledtrådar och förklaringar är på svenska."
+    },
+    {
+      "id": "ak8-matematik",
+      "level": "ak8",
+      "name": "Matematik",
+      "description": "Matematiken i årskurs 8: ekvationer och algebraiska uttryck, geometri med volym och skala, procent och förändringsfaktor, statistik samt potenser och grundpotensform."
+    },
+    {
+      "id": "ak8-svenska",
+      "level": "ak8",
+      "name": "Svenska",
+      "description": "Svenska för åk 8: satsdelar och meningsbyggnad, språkriktighet, litterär analys, argumenterande text samt källkritik och referat."
+    },
+    {
+      "id": "ak8-engelska",
+      "level": "ak8",
+      "name": "Engelska",
+      "description": "Grammatik, ordförråd, läsförståelse och skrivande för åk 8. Frågorna är på engelska, förklaringarna på svenska."
     }
   ],
   "sets": [
@@ -642,6 +686,246 @@
       "summary": "Livsåskådningar, existentiella frågor, religionsfrihet och sekularisering.",
       "count": 8,
       "file": "data/library/ak9-rel-livsfragor.json"
+    },
+    {
+      "id": "lib-ma7-tal",
+      "subject": "ak7-matematik",
+      "title": "Tal och räknesätt",
+      "summary": "Negativa tal, prioriteringsregler, avrundning och överslagsräkning.",
+      "count": 8,
+      "file": "data/library/ak7-ma-tal.json"
+    },
+    {
+      "id": "lib-ma7-brak",
+      "subject": "ak7-matematik",
+      "title": "Bråk och decimaltal",
+      "summary": "Förkorta, förlänga, jämföra och addera bråk samt omvandla till decimaltal och procent.",
+      "count": 8,
+      "file": "data/library/ak7-ma-brak.json"
+    },
+    {
+      "id": "lib-ma7-procent",
+      "subject": "ak7-matematik",
+      "title": "Procent och andelar",
+      "summary": "Andelen av ett tal, hur många procent något är och enkla höjningar och sänkningar.",
+      "count": 8,
+      "file": "data/library/ak7-ma-procent.json"
+    },
+    {
+      "id": "lib-ma7-geometri",
+      "subject": "ak7-matematik",
+      "title": "Geometri: vinklar, omkrets och area",
+      "summary": "Vinkeltyper, vinkelsumman i en triangel, omkrets och area samt enhetsomvandling.",
+      "count": 8,
+      "file": "data/library/ak7-ma-geometri.json"
+    },
+    {
+      "id": "lib-ma7-algebra",
+      "subject": "ak7-matematik",
+      "title": "Algebra och enkla ekvationer",
+      "summary": "Variabler, förenkling av uttryck, insättning av värden och enkla ekvationer.",
+      "count": 8,
+      "file": "data/library/ak7-ma-algebra.json"
+    },
+    {
+      "id": "lib-sv7-ordklasser",
+      "subject": "ak7-svenska",
+      "title": "Ordklasser",
+      "summary": "Känn igen substantiv, verb, adjektiv, pronomen och räkneord i en mening, och lär dig hur orden böjs.",
+      "count": 8,
+      "file": "data/library/ak7-sv-ordklasser.json"
+    },
+    {
+      "id": "lib-sv7-skrivregler",
+      "subject": "ak7-svenska",
+      "title": "Skrivregler och stavning",
+      "summary": "Stor bokstav och punkt, komma vid uppräkning, vanliga stavfel, särskrivning och hur man skriver dialog.",
+      "count": 8,
+      "file": "data/library/ak7-sv-skrivregler.json"
+    },
+    {
+      "id": "lib-sv7-lasforstaelse",
+      "subject": "ak7-svenska",
+      "title": "Läsförståelse",
+      "summary": "Hitta information i texten, förstå huvudbudskapet, dra enkla slutsatser och tolka okända ord med hjälp av sammanhanget.",
+      "count": 8,
+      "file": "data/library/ak7-sv-lasforstaelse.json"
+    },
+    {
+      "id": "lib-sv7-berattande",
+      "subject": "ak7-svenska",
+      "title": "Berättande texter",
+      "summary": "Berättelsens uppbyggnad, miljö- och personbeskrivning, berättarperspektiv och konsten att visa istället för att berätta.",
+      "count": 8,
+      "file": "data/library/ak7-sv-berattande.json"
+    },
+    {
+      "id": "lib-sv7-muntligt",
+      "subject": "ak7-svenska",
+      "title": "Muntlig framställning och samtal",
+      "summary": "Förbered och håll ett kort anförande, använd röst och kroppsspråk, lyssna aktivt och skilj talspråk från skriftspråk.",
+      "count": 8,
+      "file": "data/library/ak7-sv-muntligt.json"
+    },
+    {
+      "id": "lib-en7-present",
+      "subject": "ak7-engelska",
+      "title": "Grammar: present simple och present continuous",
+      "summary": "Vanor med present simple, pågående handlingar med present continuous samt do/does i frågor och nekande satser.",
+      "count": 8,
+      "file": "data/library/ak7-en-present.json"
+    },
+    {
+      "id": "lib-en7-past",
+      "subject": "ak7-engelska",
+      "title": "Grammar: past simple",
+      "summary": "Dåtid med -ed, de vanligaste oregelbundna verben och did/didn't i frågor och nekande satser.",
+      "count": 8,
+      "file": "data/library/ak7-en-past.json"
+    },
+    {
+      "id": "lib-en7-vocabulary",
+      "subject": "ak7-engelska",
+      "title": "Vocabulary: vardagsord och fraser",
+      "summary": "Vardagsord om skola, familj, fritid och mat tillsammans med artighetsfraser, there is/there are, some/any och a/an/the.",
+      "count": 8,
+      "file": "data/library/ak7-en-vocabulary.json"
+    },
+    {
+      "id": "lib-en7-reading",
+      "subject": "ak7-engelska",
+      "title": "Reading comprehension",
+      "summary": "Korta engelska texter där du tränar på att hitta information, förstå huvudbudskapet, dra slutsatser och tolka ord i sammanhang.",
+      "count": 8,
+      "file": "data/library/ak7-en-reading.json"
+    },
+    {
+      "id": "lib-en7-writing",
+      "subject": "ak7-engelska",
+      "title": "Writing: meningsbyggnad och vanliga fel",
+      "summary": "Engelsk ordföljd i påståenden och frågor, vanliga svensk-engelska fel och bindeorden and, but och because.",
+      "count": 8,
+      "file": "data/library/ak7-en-writing.json"
+    },
+    {
+      "id": "lib-ma8-ekvationer",
+      "subject": "ak8-matematik",
+      "title": "Ekvationer och algebraiska uttryck",
+      "summary": "Parenteser i uttryck, ekvationer med obekant i båda leden och att teckna en egen ekvation utifrån en text.",
+      "count": 8,
+      "file": "data/library/ak8-ma-ekvationer.json"
+    },
+    {
+      "id": "lib-ma8-geometri",
+      "subject": "ak8-matematik",
+      "title": "Geometri: area, volym och skala",
+      "summary": "Area och omkrets för parallellogram, triangel och cirkel, volym för rätblock och cylinder, skala och enhetsomvandling.",
+      "count": 8,
+      "file": "data/library/ak8-ma-geometri.json"
+    },
+    {
+      "id": "lib-ma8-procent",
+      "subject": "ak8-matematik",
+      "title": "Procent och förändringsfaktor",
+      "summary": "Räkna med förändringsfaktor vid höjning och rabatt, räkna baklänges till ursprungspriset och håll isär procent och procentenheter.",
+      "count": 8,
+      "file": "data/library/ak8-ma-procent.json"
+    },
+    {
+      "id": "lib-ma8-statistik",
+      "subject": "ak8-matematik",
+      "title": "Statistik och diagram",
+      "summary": "Medelvärde, median, typvärde och variationsbredd samt att läsa och granska stapel-, linje- och cirkeldiagram.",
+      "count": 8,
+      "file": "data/library/ak8-ma-statistik.json"
+    },
+    {
+      "id": "lib-ma8-potenser",
+      "subject": "ak8-matematik",
+      "title": "Potenser och grundpotensform",
+      "summary": "Potenslagarna för samma bas, exponenten 0, grundpotensform för stora och små tal samt prefixen kilo, mega och milli.",
+      "count": 8,
+      "file": "data/library/ak8-ma-potenser.json"
+    },
+    {
+      "id": "lib-sv8-satsdelar",
+      "subject": "ak8-svenska",
+      "title": "Satsdelar och meningsbyggnad",
+      "summary": "Ta ut subjekt, predikat och objekt, skilj huvudsats från bisats och håll koll på fundament och ordföljd.",
+      "count": 8,
+      "file": "data/library/ak8-sv-satsdelar.json"
+    },
+    {
+      "id": "lib-sv8-sprakriktighet",
+      "subject": "ak8-svenska",
+      "title": "Språkriktighet",
+      "summary": "De, dem och dom, särskrivning, satsradning, komma vid bisats och talspråk som inte hör hemma i skrift.",
+      "count": 8,
+      "file": "data/library/ak8-sv-sprakriktighet.json"
+    },
+    {
+      "id": "lib-sv8-litteratur",
+      "subject": "ak8-svenska",
+      "title": "Litterära begrepp och analys",
+      "summary": "Genrer, berättarperspektiv, miljö, tema och motiv, bildspråk och karaktärsutveckling i en bokanalys.",
+      "count": 8,
+      "file": "data/library/ak8-sv-litteratur.json"
+    },
+    {
+      "id": "lib-sv8-argumenterande",
+      "subject": "ak8-svenska",
+      "title": "Argumenterande text",
+      "summary": "Formulera en tes, bygg argument, bemöt motargument och skriv insändare och debattartikel med tydlig struktur.",
+      "count": 8,
+      "file": "data/library/ak8-sv-argumenterande.json"
+    },
+    {
+      "id": "lib-sv8-kallor",
+      "subject": "ak8-svenska",
+      "title": "Källkritik och referat",
+      "summary": "Bedöm källors trovärdighet, skilj fakta från åsikt, använd referatmarkörer och undvik plagiat genom rätt källhänvisning.",
+      "count": 8,
+      "file": "data/library/ak8-sv-kallor.json"
+    },
+    {
+      "id": "lib-en8-perfect",
+      "subject": "ak8-engelska",
+      "title": "Grammar: present perfect",
+      "summary": "Have/has + perfektparticip, skillnaden mot past simple samt ever, never, just, already, yet, for och since.",
+      "count": 8,
+      "file": "data/library/ak8-en-perfect.json"
+    },
+    {
+      "id": "lib-en8-adjectives",
+      "subject": "ak8-engelska",
+      "title": "Grammar: komparation och adverb",
+      "summary": "Komparation med -er/-est och more/most, oregelbundna former samt skillnaden mellan adjektiv och adverb.",
+      "count": 8,
+      "file": "data/library/ak8-en-adjectives.json"
+    },
+    {
+      "id": "lib-en8-vocabulary",
+      "subject": "ak8-engelska",
+      "title": "Vocabulary: phrasal verbs och kollokationer",
+      "summary": "Vanliga phrasal verbs, do- och make-kollokationer, say/tell/speak/talk samt prefix och suffix.",
+      "count": 8,
+      "file": "data/library/ak8-en-vocabulary.json"
+    },
+    {
+      "id": "lib-en8-reading",
+      "subject": "ak8-engelska",
+      "title": "Reading comprehension",
+      "summary": "Korta engelska texter där du tränar huvudbudskap, slutledning, ord i sammanhang och skribentens syfte.",
+      "count": 8,
+      "file": "data/library/ak8-en-reading.json"
+    },
+    {
+      "id": "lib-en8-writing",
+      "subject": "ak8-engelska",
+      "title": "Writing: texttyper och sambandsord",
+      "summary": "Sambandsord, styckeindelning med kärnmening, formellt kontra informellt språk och korta mejl eller berättelser.",
+      "count": 8,
+      "file": "data/library/ak8-en-writing.json"
     }
   ]
 }
