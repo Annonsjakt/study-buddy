@@ -74,9 +74,9 @@ function shell(contentNode) {
         href: item.href,
         "aria-current": isActive(item.match) ? "page" : null,
       }, [icon(item.icon, 18), item.label]))),
-    streak > 0 && el("div.sidebar__streak", {
+    el("div.sidebar__streak", {
       "aria-label": `${streak} day study streak`,
-    }, [icon(ICONS.flame, 16), `${streak}-dagars streak`]),
+    }, [icon(ICONS.flame, 16), streak > 0 ? `${streak}-dagars streak` : "Ingen streak än"]),
   ]);
 
   return el("div.shell", {}, [
@@ -89,7 +89,7 @@ function shell(contentNode) {
             "StudyBuddy",
           ]),
           el("span.topbar__spacer"),
-          streak > 0 && el("span.streakbadge", {
+          el("span.streakbadge", {
             "aria-label": `${streak} day study streak`,
             title: `${streak}-day study streak`,
           }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
