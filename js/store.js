@@ -46,7 +46,7 @@ export const nationalMixId = (subjectId) => `${NATIONAL_MIX_PREFIX}${subjectId}`
 function seedState() {
   return {
     version: SCHEMA_VERSION,
-    settings: { preset: "balanced", tutorVerbosity: "normal" },
+    settings: { preset: "balanced", tutorVerbosity: "normal", examDate: null, examLabel: "" },
     subjects: DEFAULT_SUBJECTS.map((name, i) => ({
       id: uid(), name, color: PALETTE[i % PALETTE.length].name,
     })),

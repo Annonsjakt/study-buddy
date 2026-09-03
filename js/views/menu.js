@@ -332,24 +332,27 @@ export function renderMenu() {
 
   paint();
 
-  const node = el("div", {}, [
-    el("div.home__head", {}, [
-      el("div", {}, [
-        el("h1", {}, greeting()),
-        el("p.home__hi", {}, store.hasKey()
-          ? "Pick something to study, or make a new set."
-          : "Running in demo mode — see Settings for how to turn on live mode."),
+  const node = el("div.home", {}, [
+    el("div.home__main", {}, [
+      el("div.home__head", {}, [
+        el("div", {}, [
+          el("h1", {}, greeting()),
+          el("p.home__hi", {}, store.hasKey()
+            ? "Pick something to study, or make a new set."
+            : "Running in demo mode — see Settings for how to turn on live mode."),
+        ]),
+        el("a.btn", { href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
       ]),
-      el("a.btn", { href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
+      dashRow(topicMastery),
+      todayStrip(),
+      subjGrid,
+      tabsEl,
+      chipsRow,
+      toolsRow,
+      countLabel,
+      grid,
     ]),
-    dashRow(topicMastery),
-    todayStrip(),
-    subjGrid,
-    tabsEl,
-    chipsRow,
-    toolsRow,
-    countLabel,
-    grid,
+    el("aside.home__aside", {}, [examCard(), tipCard()]),
   ]);
 
   return { title: "Menu", node, cleanup: closeCardMenu };
@@ -437,4 +440,98 @@ function ring(v, color, extraClass) {
 function greeting() {
   const h = new Date().getHours();
   return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+}
+
+/** Right-rail card: a countdown to whatever exam the student is aiming at
+ *  (a real nationellt prov date, or anything else they type in). Self-paints
+ *  so opening/closing the edit form never triggers a full menu re-render. */
+function examCard() {
+  const wrap = el("div.panel.examcard");
+  let editing = !store.settings.examDate;
+
+  function paint() {
+    clear(wrap);
+    const { examDate, examLabel } = store.settings;
+
+    if (editing) {
+      const dateInput = el("input", { type: "date", value: examDate || "" });
+      const labelInput = el("input", {
+        type: "text", maxlength: "60", value: examLabel || "",
+        placeholder: "t.ex. Nationellt prov matematik",
+      });
+      wrap.append(
+        el("h3", { style: { marginBottom: "12px" } }, "Nästa prov"),
+        el("div.field", {}, [el("span", {}, "Datum"), dateInput]),
+        el("div.field", { style: { marginBottom: "var(--s-3)" } }, [el("span", {}, "Vad handlar det om? (valfritt)"), labelInput]),
+        el("div", { style: { display: "flex", gap: "8px" } }, [
+          el("button.btn.btn--sm", {
+            type: "button",
+            onclick: () => {
+              if (!dateInput.value) { toast("Välj ett datum först"); return; }
+              store.setSettings({ examDate: dateInput.value, examLabel: labelInput.value.trim() });
+              editing = false;
+              paint();
+            },
+          }, "Spara"),
+          examDate ? el("button.btn.btn--ghost.btn--sm", {
+            type: "button", onclick: () => { editing = false; paint(); },
+          }, "Avbryt") : null,
+        ].filter(Boolean)),
+      );
+      return;
+    }
+
+    const days = daysUntil(examDate);
+    wrap.append(
+      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" } }, [
+        el("h3", {}, "Nästa prov"),
+        el("button.linkbtn", { type: "button", onclick: () => { editing = true; paint(); } }, "Ändra"),
+      ]),
+      el("div.examcard__count", {}, countdownLabel(days)),
+      examLabel ? el("p.note", {}, examLabel) : null,
+      el("p.note", { style: { marginTop: examLabel ? "0" : "4px" } }, formatSwedishDate(examDate)),
+    );
+  }
+
+  paint();
+  return wrap;
+}
+
+function daysUntil(dateStr) {
+  const target = new Date(dateStr + "T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((target - today) / 86400000);
+}
+
+function countdownLabel(days) {
+  if (days < 0) return "Har varit";
+  if (days === 0) return "Idag";
+  if (days === 1) return "Imorgon";
+  return `${days} dagar kvar`;
+}
+
+function formatSwedishDate(dateStr) {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" });
+}
+
+const STUDY_TIPS = [
+  "Testa dig själv innan du läser om ett kapitel — att aktivt minnas fastnar bättre än att bara läsa igen.",
+  "Korta, återkommande pass slår långa plugg-maraton. Kör 25 fokuserade minuter, ta sedan en riktig paus.",
+  "Blanda gärna flera ämnen istället för att köra ett i taget — hjärnan lär sig bättre av växling än av att nöta samma sak länge.",
+  "Förklara det du just lärt dig högt för dig själv, som om du undervisade någon annan. Kan du inte förklara det enkelt kan du det inte riktigt än.",
+  "Plugga det svåraste momentet först, medan du fortfarande är pigg och fokuserad.",
+  "Sömn är en del av inlärningen — hjärnan befäster minnen medan du sover, så en sen kvällsrepetition är inte bortkastad.",
+  "Gamla fel är guld värt. Gå igenom det du svarade fel på förra gången innan du kör ett nytt set.",
+];
+
+/** Deterministic per calendar day, so it doesn't change on every reload. */
+function tipCard() {
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  const tip = STUDY_TIPS[dayIndex % STUDY_TIPS.length];
+  return el("div.panel", {}, [
+    el("h3", { style: { marginBottom: "8px" } }, "Dagens studietips"),
+    el("p.note", {}, tip),
+  ]);
 }
