@@ -12,9 +12,9 @@ let sortBy = "recent";
 let query = "";
 
 const SORTS = [
-  ["recent", "Recently added"],
-  ["name", "Name (A–Z)"],
-  ["weakest", "Weakest first"],
+  ["recent", "Newest"],
+  ["name", "A–Z"],
+  ["weakest", "Weakest"],
 ];
 
 export function renderMenu() {
@@ -346,11 +346,13 @@ export function renderMenu() {
       dashRow(topicMastery),
       todayStrip(),
       subjGrid,
-      tabsEl,
-      chipsRow,
-      toolsRow,
-      countLabel,
-      grid,
+      el("section.panel.setspanel", {}, [
+        el("h3", { style: { marginBottom: "var(--s-4)" } }, "Your sets"),
+        el("div.setsrow", {}, [tabsEl, toolsRow]),
+        chipsRow,
+        countLabel,
+        grid,
+      ]),
     ]),
     el("aside.home__aside", {}, [examCard(), tipCard()]),
   ]);

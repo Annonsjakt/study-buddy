@@ -279,6 +279,12 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .tile--accent { border-color: var(--brand); background: var(--brand-tint); }
 .tile--accent .tile__icon { background: var(--brand); color: #fff; }
 
+/* ---------- your sets panel ---------- */
+.setspanel { margin-bottom: var(--s-5); }
+.setsrow { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); flex-wrap: wrap; margin-bottom: var(--s-4); }
+.setsrow .tools { margin-bottom: 0; flex: 1; min-width: 200px; justify-content: flex-end; }
+.setsrow .search { flex: 0 1 180px; min-width: 120px; }
+
 /* ---------- search & sort ---------- */
 .tools { display: flex; gap: var(--s-3); margin-bottom: var(--s-4); flex-wrap: wrap; }
 .search { position: relative; display: flex; align-items: center; flex: 1; min-width: 180px; color: var(--ink-faint); }
