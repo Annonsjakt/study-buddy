@@ -67,6 +67,44 @@ h1:focus-visible, h2:focus-visible {
 
 /* ---------- app shell ---------- */
 #app { min-height: 100%; display: flex; flex-direction: column; }
+.shell { flex: 1; display: flex; align-items: stretch; }
+.shell__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+/* Desktop-only left nav — hidden by default, the topbar's icon links
+   cover the same ground on narrow screens. */
+.sidebar { display: none; }
+@media (min-width: 900px) {
+  .sidebar {
+    display: flex; flex-direction: column; flex: none;
+    width: 232px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: var(--s-5) var(--s-3);
+    background: var(--surface); border-right: 1px solid var(--line);
+  }
+  /* The sidebar now carries brand, nav and streak — the topbar would just
+     repeat all three. */
+  .topbar { display: none; }
+}
+.sidebar__brand {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg);
+  color: var(--ink); text-decoration: none;
+  padding: 0 var(--s-2); margin-bottom: var(--s-6);
+}
+.sidebar__brand img { width: 28px; height: 28px; }
+.sidebar__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.sidebar__link {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3); border-radius: var(--r-md);
+  color: var(--ink-soft); text-decoration: none; font-weight: 600; font-size: var(--fs-sm);
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.sidebar__link:hover { background: var(--surface-sunk); color: var(--ink); }
+.sidebar__link.is-active { background: var(--brand-tint); color: var(--brand-ink); }
+.sidebar__streak {
+  display: flex; align-items: center; gap: var(--s-2);
+  padding: var(--s-3); margin-top: var(--s-4); border-radius: var(--r-md);
+  background: var(--surface-sunk); color: var(--ink-soft); font-size: var(--fs-sm); font-weight: 700;
+}
 
 .topbar {
   position: sticky; top: 0; z-index: 20;

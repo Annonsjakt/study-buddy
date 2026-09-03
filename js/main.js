@@ -47,27 +47,62 @@ function parseHash() {
   return () => renderMenu();
 }
 
+const NAV_ITEMS = [
+  { href: "#/", match: "/", icon: ICONS.home, label: "Hem" },
+  { href: "#/bibliotek", match: "/bibliotek", icon: ICONS.book, label: "Bibliotek" },
+  { href: "#/create", match: "/create", icon: ICONS.plus, label: "Skapa" },
+  { href: "#/progress", match: "/progress", icon: ICONS.chart, label: "Framsteg" },
+];
+
 function shell(contentNode) {
   const streak = store.streak;
-  return el("div", {}, [
-    el("header.topbar", {}, [
-      el("div.topbar__inner", {}, [
-        el("a.brand", { href: "#/" }, [
-          el("img", { src: "assets/favicon.svg", alt: "" }),
-          "StudyBuddy",
-        ]),
-        el("span.topbar__spacer"),
-        streak > 0 && el("span.streakbadge", {
-          "aria-label": `${streak} day study streak`,
-          title: `${streak}-day study streak`,
-        }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
-        el("a.iconbtn", { href: "#/bibliotek", "aria-label": "Övningsbibliotek", title: "Övningsbibliotek" }, [icon(ICONS.book, 18)]),
-        el("a.iconbtn", { href: "#/progress", "aria-label": "Progress", title: "Progress" }, [icon(ICONS.chart, 18)]),
-        store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
-        el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
-      ]),
+  const path = "/" + (location.hash.replace(/^#\/?/, "").split("?")[0]);
+  const isActive = (match) => match === "/" ? (path === "/") : path.startsWith(match);
+
+  const navItems = [...NAV_ITEMS];
+  if (store.authed) navItems.push({ href: "#/parent", match: "/parent", icon: ICONS.users, label: "Förälder/lärare" });
+  navItems.push({ href: "#/settings", match: "/settings", icon: ICONS.gear, label: "Inställningar" });
+
+  const sidebar = el("nav.sidebar", { "aria-label": "Huvudmeny" }, [
+    el("a.sidebar__brand", { href: "#/" }, [
+      el("img", { src: "assets/favicon.svg", alt: "" }),
+      "StudyBuddy",
     ]),
-    el("main.content", { id: "main" }, [contentNode]),
+    el("div.sidebar__nav", {}, navItems.map((item) =>
+      el("a", {
+        class: "sidebar__link" + (isActive(item.match) ? " is-active" : ""),
+        href: item.href,
+        "aria-current": isActive(item.match) ? "page" : null,
+      }, [icon(item.icon, 18), item.label]))),
+    streak > 0 && el("div.sidebar__streak", {
+      "aria-label": `${streak} day study streak`,
+    }, [icon(ICONS.flame, 16), `${streak}-dagars streak`]),
+  ]);
+
+  return el("div.shell", {}, [
+    sidebar,
+    el("div.shell__main", {}, [
+      el("header.topbar", {}, [
+        el("div.topbar__inner", {}, [
+          el("a.brand", { href: "#/" }, [
+            el("img", { src: "assets/favicon.svg", alt: "" }),
+            "StudyBuddy",
+          ]),
+          el("span.topbar__spacer"),
+          streak > 0 && el("span.streakbadge", {
+            "aria-label": `${streak} day study streak`,
+            title: `${streak}-day study streak`,
+          }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
+          el("div.topbar__nav-icons", {}, [
+            el("a.iconbtn", { href: "#/bibliotek", "aria-label": "Övningsbibliotek", title: "Övningsbibliotek" }, [icon(ICONS.book, 18)]),
+            el("a.iconbtn", { href: "#/progress", "aria-label": "Progress", title: "Progress" }, [icon(ICONS.chart, 18)]),
+            store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
+            el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
+          ].filter(Boolean)),
+        ]),
+      ]),
+      el("main.content", { id: "main" }, [contentNode]),
+    ]),
   ]);
 }
 
