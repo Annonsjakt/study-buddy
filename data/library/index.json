@@ -1,8 +1,14 @@
 {
   "version": 1,
   "levels": [
-    { "id": "ak9", "label": "Årskurs 9" },
-    { "id": "gymnasiet", "label": "Gymnasiet" }
+    {
+      "id": "ak9",
+      "label": "Årskurs 9"
+    },
+    {
+      "id": "gymnasiet",
+      "label": "Gymnasiet"
+    }
   ],
   "subjects": [
     {
@@ -40,6 +46,48 @@
       "level": "gymnasiet",
       "name": "Engelska 5",
       "description": "Grammatik, ordförråd och läsförståelse. Frågorna är på engelska, förklaringarna på svenska."
+    },
+    {
+      "id": "ak9-biologi",
+      "level": "ak9",
+      "name": "Biologi",
+      "description": "Centralt innehåll för åk 9 — celler, genetik, evolution, ekologi och kroppen, det som brukar komma på prov."
+    },
+    {
+      "id": "ak9-fysik",
+      "level": "ak9",
+      "name": "Fysik",
+      "description": "Fysik för åk 9 — krafter, energi, el, tryck, ljud, ljus och universum."
+    },
+    {
+      "id": "ak9-kemi",
+      "level": "ak9",
+      "name": "Kemi",
+      "description": "Grundläggande kemi för åk 9 — atomer, reaktioner, syror och baser, organisk kemi samt material och kretslopp."
+    },
+    {
+      "id": "ak9-historia",
+      "level": "ak9",
+      "name": "Historia",
+      "description": "Övningar i historia för åk 9: industriella revolutionen, världskrigen, kalla kriget, kolonialism och Sveriges demokratiska utveckling."
+    },
+    {
+      "id": "ak9-samhallskunskap",
+      "level": "ak9",
+      "name": "Samhällskunskap",
+      "description": "Centralt innehåll för åk 9 — demokrati, ekonomi, lagar och rättigheter, media och internationellt samarbete, det som brukar komma på prov."
+    },
+    {
+      "id": "ak9-geografi",
+      "level": "ak9",
+      "name": "Geografi",
+      "description": "Övningar i geografi för åk 9: kartor och klimat, befolkning, naturresurser, hållbar utveckling och världens länder."
+    },
+    {
+      "id": "ak9-religion",
+      "level": "ak9",
+      "name": "Religionskunskap",
+      "description": "Världsreligionerna, etik och livsfrågor — icke-konfessionellt och jämförande, så som ämnet undervisas i grundskolan."
     }
   ],
   "sets": [
@@ -91,7 +139,6 @@
       "count": 8,
       "file": "data/library/ak9-matematik-statistik.json"
     },
-
     {
       "id": "lib-sv9-ordklasser",
       "subject": "ak9-svenska",
@@ -132,7 +179,6 @@
       "count": 8,
       "file": "data/library/ak9-sv-kallkritik.json"
     },
-
     {
       "id": "lib-en9-tenses",
       "subject": "ak9-engelska",
@@ -173,7 +219,6 @@
       "count": 8,
       "file": "data/library/ak9-en-wordconfusion.json"
     },
-
     {
       "id": "lib-ma1-tal",
       "subject": "gy-matematik-1",
@@ -222,7 +267,6 @@
       "count": 8,
       "file": "data/library/gy-ma1-statistik.json"
     },
-
     {
       "id": "lib-sv1-retorik",
       "subject": "gy-svenska-1",
@@ -271,7 +315,6 @@
       "count": 8,
       "file": "data/library/gy-sv1-sprakhistoria.json"
     },
-
     {
       "id": "lib-en5-tenses",
       "subject": "gy-engelska-5",
@@ -319,6 +362,286 @@
       "summary": "Formellt kontra informellt, sambandsord och styckets uppbyggnad.",
       "count": 8,
       "file": "data/library/gy-en5-writing.json"
+    },
+    {
+      "id": "lib-bio-celler",
+      "subject": "ak9-biologi",
+      "title": "Celler och organsystem",
+      "summary": "Cellens delar, växt- och djurceller, samt vävnader, organ och organsystem.",
+      "count": 8,
+      "file": "data/library/ak9-bio-celler.json"
+    },
+    {
+      "id": "lib-bio-genetik",
+      "subject": "ak9-biologi",
+      "title": "Genetik och ärftlighet",
+      "summary": "DNA, gener och kromosomer, dominant/recessiv arv och korsningsschema.",
+      "count": 8,
+      "file": "data/library/ak9-bio-genetik.json"
+    },
+    {
+      "id": "lib-bio-evolution",
+      "subject": "ak9-biologi",
+      "title": "Evolution och naturligt urval",
+      "summary": "Darwins evolutionsteori, naturligt urval, anpassning och artbildning.",
+      "count": 8,
+      "file": "data/library/ak9-bio-evolution.json"
+    },
+    {
+      "id": "lib-bio-ekologi",
+      "subject": "ak9-biologi",
+      "title": "Ekologi och kretslopp",
+      "summary": "Näringskedjor, kretslopp för kol och vatten, samt ekosystemets delar.",
+      "count": 8,
+      "file": "data/library/ak9-bio-ekologi.json"
+    },
+    {
+      "id": "lib-bio-kroppen",
+      "subject": "ak9-biologi",
+      "title": "Kroppen, hälsa och pubertet",
+      "summary": "Pubertet, hormoner, befruktning, preventivmedel och kroppens organsystem.",
+      "count": 8,
+      "file": "data/library/ak9-bio-kroppen.json"
+    },
+    {
+      "id": "lib-fys-krafter",
+      "subject": "ak9-fysik",
+      "title": "Krafter och rörelse",
+      "summary": "Newtons lagar, friktion, tyngdkraft och jämvikt.",
+      "count": 8,
+      "file": "data/library/ak9-fys-krafter.json"
+    },
+    {
+      "id": "lib-fys-energi",
+      "subject": "ak9-fysik",
+      "title": "Energi och energiomvandlingar",
+      "summary": "Energiformer, energiprincipen och förnybara kontra icke-förnybara energikällor.",
+      "count": 8,
+      "file": "data/library/ak9-fys-energi.json"
+    },
+    {
+      "id": "lib-fys-el",
+      "subject": "ak9-fysik",
+      "title": "Elektricitet och magnetism",
+      "summary": "Ström, spänning och resistans, kopplingar samt magnetism.",
+      "count": 8,
+      "file": "data/library/ak9-fys-el.json"
+    },
+    {
+      "id": "lib-fys-tryck",
+      "subject": "ak9-fysik",
+      "title": "Tryck och väder",
+      "summary": "Tryck, lufttryck, hög- och lågtryck samt vattnets kretslopp.",
+      "count": 8,
+      "file": "data/library/ak9-fys-tryck.json"
+    },
+    {
+      "id": "lib-fys-ljud-ljus",
+      "subject": "ak9-fysik",
+      "title": "Ljud, ljus och universum",
+      "summary": "Ljudvågor, ljusets reflektion och brytning samt solsystemet och universum.",
+      "count": 8,
+      "file": "data/library/ak9-fys-ljud-ljus.json"
+    },
+    {
+      "id": "lib-kemi-atomer",
+      "subject": "ak9-kemi",
+      "title": "Atomer, grundämnen och periodiska systemet",
+      "summary": "Atomens uppbyggnad, periodiska systemets grupper och perioder, samt grundidén bakom joner.",
+      "count": 8,
+      "file": "data/library/ak9-kemi-atomer.json"
+    },
+    {
+      "id": "lib-kemi-reaktioner",
+      "subject": "ak9-kemi",
+      "title": "Kemiska reaktioner och bindningar",
+      "summary": "Kemisk kontra fysikalisk förändring, kovalent bindning och jonbindning, balansering av reaktionsformler samt exoterma/endoterma reaktioner.",
+      "count": 8,
+      "file": "data/library/ak9-kemi-reaktioner.json"
+    },
+    {
+      "id": "lib-kemi-syrabas",
+      "subject": "ak9-kemi",
+      "title": "Syror, baser och pH",
+      "summary": "pH-skalan, kännetecken för syror och baser, neutralisation och vardagliga exempel.",
+      "count": 8,
+      "file": "data/library/ak9-kemi-syrabas.json"
+    },
+    {
+      "id": "lib-kemi-organisk",
+      "subject": "ak9-kemi",
+      "title": "Organisk kemi och kolföreningar",
+      "summary": "Kolatomens speciella egenskaper, kolväten och hur organisk kemi hänger ihop med plast och fossila bränslen.",
+      "count": 8,
+      "file": "data/library/ak9-kemi-organisk.json"
+    },
+    {
+      "id": "lib-kemi-material",
+      "subject": "ak9-kemi",
+      "title": "Material, metaller och kretslopp",
+      "summary": "Metallers egenskaper, återvinning och materialkretslopp, vanliga vardagsmaterial samt korrosion och rost.",
+      "count": 8,
+      "file": "data/library/ak9-kemi-material.json"
+    },
+    {
+      "id": "lib-hist-industriella",
+      "subject": "ak9-historia",
+      "title": "Industriella revolutionen",
+      "summary": "Hur ångmaskinen, fabriker och nya uppfinningar förvandlade Europa från jordbrukssamhälle till industrisamhälle, samt urbanisering, arbetsvillkor och fackföreningarnas framväxt.",
+      "count": 8,
+      "file": "data/library/ak9-hist-industriella.json"
+    },
+    {
+      "id": "lib-hist-varldskrigen",
+      "subject": "ak9-historia",
+      "title": "Världskrigen",
+      "summary": "Orsakerna till första och andra världskriget, Versaillesfredens roll i nazismens uppkomst, viktiga vändpunkter och konsekvenser som FN:s bildande.",
+      "count": 8,
+      "file": "data/library/ak9-hist-varldskrigen.json"
+    },
+    {
+      "id": "lib-hist-kallakriget",
+      "subject": "ak9-historia",
+      "title": "Kalla kriget",
+      "summary": "Konflikten mellan USA och Sovjetunionen, järnridån och Berlinmuren, kapprustning med kärnvapen och rymdkapplöpning, samt kalla krigets slut.",
+      "count": 8,
+      "file": "data/library/ak9-hist-kallakriget.json"
+    },
+    {
+      "id": "lib-hist-kolonialism",
+      "subject": "ak9-historia",
+      "title": "Kolonialism och imperialism",
+      "summary": "Vad kolonialism och imperialism innebar, europeiska stormakters kolonier, konsekvenser för koloniserade områden och avkoloniseringen efter andra världskriget.",
+      "count": 8,
+      "file": "data/library/ak9-hist-kolonialism.json"
+    },
+    {
+      "id": "lib-hist-sverige",
+      "subject": "ak9-historia",
+      "title": "Sveriges historia och demokratins framväxt",
+      "summary": "Allmän rösträtts införande, parlamentarismens genombrott, viktiga reformer som folkhemmet och arbetarrörelsen, samt Sveriges neutralitetspolitik under världskrigen.",
+      "count": 8,
+      "file": "data/library/ak9-hist-sverige.json"
+    },
+    {
+      "id": "lib-sam-demokrati",
+      "subject": "ak9-samhallskunskap",
+      "title": "Demokrati och politiska system",
+      "summary": "Vad demokrati innebär, riksdag, regering och kommun, allmänna val och skillnaden mot diktatur.",
+      "count": 8,
+      "file": "data/library/ak9-sam-demokrati.json"
+    },
+    {
+      "id": "lib-sam-ekonomi",
+      "subject": "ak9-samhallskunskap",
+      "title": "Privatekonomi och samhällsekonomi",
+      "summary": "Budget och sparande, skatter, utbud och efterfrågan samt vad inflation innebär.",
+      "count": 8,
+      "file": "data/library/ak9-sam-ekonomi.json"
+    },
+    {
+      "id": "lib-sam-lagar",
+      "subject": "ak9-samhallskunskap",
+      "title": "Lagar, rättigheter och rättssystemet",
+      "summary": "Mänskliga rättigheter, hur en rättegång går till, brottmål mot tvistemål och barnkonventionen.",
+      "count": 8,
+      "file": "data/library/ak9-sam-lagar.json"
+    },
+    {
+      "id": "lib-sam-media",
+      "subject": "ak9-samhallskunskap",
+      "title": "Media och källkritik",
+      "summary": "Mediernas roll i demokratin, yttrande- och tryckfrihet samt källkritik, propaganda och desinformation.",
+      "count": 8,
+      "file": "data/library/ak9-sam-media.json"
+    },
+    {
+      "id": "lib-sam-internationellt",
+      "subject": "ak9-samhallskunskap",
+      "title": "EU och internationellt samarbete",
+      "summary": "Vad EU och FN är, varför länder samarbetar internationellt och Sveriges internationella roll.",
+      "count": 8,
+      "file": "data/library/ak9-sam-internationellt.json"
+    },
+    {
+      "id": "lib-geo-kartor",
+      "subject": "ak9-geografi",
+      "title": "Kartkunskap och klimatzoner",
+      "summary": "Kartprojektioner, skala, väderstreck och koordinater samt hur klimatzoner hänger ihop med breddgrad och höjd över havet.",
+      "count": 8,
+      "file": "data/library/ak9-geo-kartor.json"
+    },
+    {
+      "id": "lib-geo-befolkning",
+      "subject": "ak9-geografi",
+      "title": "Befolkning och urbanisering",
+      "summary": "Befolkningstäthet och befolkningsfördelning, urbanisering, migration med push- och pull-faktorer samt grundläggande demografiska begrepp.",
+      "count": 8,
+      "file": "data/library/ak9-geo-befolkning.json"
+    },
+    {
+      "id": "lib-geo-naturresurser",
+      "subject": "ak9-geografi",
+      "title": "Naturresurser och energikällor",
+      "summary": "Förnybara och icke-förnybara resurser, hur naturresurser är fördelade globalt, energikällors miljöpåverkan och kopplingen till konflikter.",
+      "count": 8,
+      "file": "data/library/ak9-geo-naturresurser.json"
+    },
+    {
+      "id": "lib-geo-hallbarhet",
+      "subject": "ak9-geografi",
+      "title": "Hållbar utveckling och klimatförändringar",
+      "summary": "Ekologisk, social och ekonomisk hållbarhet, växthuseffekten, klimatförändringarnas konsekvenser och FN:s globala mål.",
+      "count": 8,
+      "file": "data/library/ak9-geo-hallbarhet.json"
+    },
+    {
+      "id": "lib-geo-varlden",
+      "subject": "ak9-geografi",
+      "title": "Världsdelar, länder och geografiska mönster",
+      "summary": "Världsdelar och hav, skillnader mellan hög- och låginkomstländer, globalisering och världshandel samt geografiska landmärken.",
+      "count": 8,
+      "file": "data/library/ak9-geo-varlden.json"
+    },
+    {
+      "id": "lib-rel-kristendom",
+      "subject": "ak9-religion",
+      "title": "Kristendom",
+      "summary": "Grundläggande tro, kyrkans inriktningar, bibeln och de stora högtiderna.",
+      "count": 8,
+      "file": "data/library/ak9-rel-kristendom.json"
+    },
+    {
+      "id": "lib-rel-islam",
+      "subject": "ak9-religion",
+      "title": "Islam",
+      "summary": "Gudstro, Muhammed, de fem pelarna, sunni/shia och Koranen.",
+      "count": 8,
+      "file": "data/library/ak9-rel-islam.json"
+    },
+    {
+      "id": "lib-rel-judendom-etc",
+      "subject": "ak9-religion",
+      "title": "Judendom, hinduism och buddhism",
+      "summary": "Toran, karma och reinkarnation, de fyra ädla sanningarna samt religionsjämförelse.",
+      "count": 8,
+      "file": "data/library/ak9-rel-judendom-etc.json"
+    },
+    {
+      "id": "lib-rel-etik",
+      "subject": "ak9-religion",
+      "title": "Etik och moraliska dilemman",
+      "summary": "Pliktetik, konsekvensetik, sinnelagsetik och kopplingen mellan religion och moral.",
+      "count": 8,
+      "file": "data/library/ak9-rel-etik.json"
+    },
+    {
+      "id": "lib-rel-livsfragor",
+      "subject": "ak9-religion",
+      "title": "Livsfrågor och identitet",
+      "summary": "Livsåskådningar, existentiella frågor, religionsfrihet och sekularisering.",
+      "count": 8,
+      "file": "data/library/ak9-rel-livsfragor.json"
     }
   ]
 }
