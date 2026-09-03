@@ -53,7 +53,7 @@ export function renderCreate(prefill) {
 
   /* ---- step 1: source ---- */
   function sourceStep() {
-    const opt = (key, emoji, label, desc) => el("button.source-opt", {
+    const opt = (key, iconPath, label, desc) => el("button.source-opt", {
       type: "button",
       onclick: () => {
         // Leaving the Nationellt prov source: don't leave a stale lock behind.
@@ -64,16 +64,16 @@ export function renderCreate(prefill) {
         }
         state.source = key; state.step = "input"; paint();
       },
-    }, [el("span", {}, emoji), label, el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, desc)]);
+    }, [icon(iconPath, 26), label, el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, desc)]);
 
     return el("div.panel", {}, [
       el("p", { style: { marginBottom: "16px" } }, "Where should the questions come from?"),
       el("div.source-grid", {}, [
-        opt("paste", "📝", "Paste text", "Notes, an article, a chapter"),
-        opt("pdf", "📄", "Upload PDF", "A worksheet, textbook page, or ZIP"),
-        opt("photo", "📷", "Upload photo", "A picture of a page or board"),
-        opt("topic", "💡", "Just a topic", "e.g. “Grade 5 fractions”"),
-        opt("nationalprov", "🎓", "Nationellt prov", "Öva inför nationella prov"),
+        opt("paste", ICONS.pencil, "Paste text", "Notes, an article, a chapter"),
+        opt("pdf", ICONS.fileText, "Upload PDF", "A worksheet, textbook page, or ZIP"),
+        opt("photo", ICONS.camera, "Upload photo", "A picture of a page or board"),
+        opt("topic", ICONS.bulb, "Just a topic", "e.g. “Grade 5 fractions”"),
+        opt("nationalprov", ICONS.graduation, "Nationellt prov", "Öva inför nationella prov"),
       ]),
       !store.hasKey() && el("p.note.note--warn", { style: { marginTop: "16px" } }, [
         "Generating needs the tutor server (see ", el("a", { href: "#/settings" }, "Settings"), ")",

@@ -114,7 +114,7 @@ export async function renderLibrary() {
         "Färdiga övningar du kan börja plugga på direkt — ingen egen uppladdning behövs. Välj nivå för att se ämnen."),
       el("div.source-grid", {}, levels.map((lvl) =>
         el("button.source-opt", { type: "button", onclick: () => { state.level = lvl.id; paint(); } }, [
-          el("span", {}, "🎓"), lvl.label,
+          icon(ICONS.graduation, 26), lvl.label,
         ]))),
     ]);
   }
@@ -127,7 +127,7 @@ export async function renderLibrary() {
       el("p", { style: { marginBottom: "16px" } }, `${level?.label} — vilket ämne vill du plugga?`),
       el("div.source-grid", {}, subjects.map((subject) =>
         el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
-          el("span", {}, "📘"), subject.name,
+          icon(ICONS.book, 26), subject.name,
           el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subject.description),
         ]))),
     ]);

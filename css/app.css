@@ -106,13 +106,13 @@ h1:focus-visible, h2:focus-visible {
 .btn {
   font-family: var(--font-display); font-weight: 600; font-size: var(--fs-md);
   display: inline-flex; align-items: center; gap: var(--s-2);
-  padding: var(--s-3) var(--s-5); border-radius: var(--r-full);
+  padding: var(--s-3) var(--s-5); border-radius: var(--r-md);
   border: none; cursor: pointer; text-decoration: none;
   background: var(--brand); color: #fff;
   box-shadow: var(--shadow-1);
   transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast), background var(--dur-fast);
 }
-.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+.btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-2); }
 .btn:active { transform: translateY(0); }
 .btn--ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); box-shadow: none; }
 .btn--ghost:hover { background: var(--surface-sunk); }
@@ -397,6 +397,14 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .nav-row { display: flex; justify-content: space-between; gap: var(--s-3); margin-top: var(--s-5); }
 
 /* ---------- tutor chat ---------- */
+.mascot { position: relative; display: inline-flex; flex: none; }
+.mascot__dot {
+  position: absolute; right: -2px; bottom: -2px; width: 10px; height: 10px;
+  border-radius: var(--r-full); border: 2px solid var(--surface);
+}
+.mascot__dot--pulse { animation: mascot-pulse 1.1s ease-in-out infinite; }
+@keyframes mascot-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+
 .tutor { position: sticky; top: 76px; display: flex; flex-direction: column; max-height: calc(100vh - 100px); }
 .tutor__head { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-4); border-bottom: 1px solid var(--line); }
 .tutor__title { font-family: var(--font-display); font-weight: 600; }
@@ -474,7 +482,8 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .source-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s-3); }
 .source-opt { cursor: pointer; padding: var(--s-5) var(--s-4); border-radius: var(--r-md); border: 2px solid var(--line-strong); background: var(--surface); text-align: center; font-family: var(--font-display); font-weight: 600; transition: transform var(--dur-fast) var(--ease-spring), border-color var(--dur-fast); }
 .source-opt:hover { transform: translateY(-2px); border-color: var(--brand); }
-.source-opt span { display: block; font-size: 26px; margin-bottom: var(--s-2); }
+.source-opt span { display: block; margin-bottom: var(--s-2); }
+.source-opt svg { display: block; margin: 0 auto var(--s-2); color: var(--brand); }
 
 .field { display: block; margin-bottom: var(--s-4); }
 .field > span { display: block; font-weight: 700; font-size: var(--fs-sm); margin-bottom: var(--s-2); }

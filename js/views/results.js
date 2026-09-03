@@ -44,7 +44,7 @@ export function renderResults(attemptId) {
   const deltaEntries = Object.entries(deltas).sort((a, b) => (b[1].after - b[1].before) - (a[1].after - a[1].before));
 
   const node = el("div.results", {}, [
-    el("h1", {}, great ? "Great work! 🎉" : "Nice effort 💪"),
+    el("h1", {}, great ? "Great work" : "Nice effort"),
     el("p.note", {}, heading + (attempt.examMode ? " · exam mode" : attempt.wasTest ? " · test" : "")),
     ringWrap,
     el("p.note", { style: { marginTop: "-8px" } }, [
