@@ -175,14 +175,17 @@ h1:focus-visible, h2:focus-visible {
 @media (min-width: 1150px) {
   .home { display: grid; grid-template-columns: 1fr 300px; align-items: start; gap: var(--s-6); }
 }
-.examcard__count { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl); margin: var(--s-2) 0 2px; }
-.examcard .field { margin-bottom: var(--s-3); }
-.examcard .field > span { font-size: 12px; margin-bottom: 4px; }
+.examcard { padding: var(--s-4); }
+.examcard h3 { font-size: var(--fs-sm); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-soft); }
+.examcard__count { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg); margin: 6px 0 1px; }
+.examcard .field { margin-bottom: var(--s-2); }
+.examcard .field > span { font-size: 11px; font-weight: 600; color: var(--ink-faint); margin-bottom: 3px; }
 .examcard input[type=date] {
-  width: auto; padding: 6px var(--s-2); font-size: var(--fs-sm);
+  width: auto; padding: 5px var(--s-2); font-size: 13px;
   border-radius: var(--r-sm); border-color: var(--line);
 }
-.examcard input[type=text] { padding: var(--s-2) var(--s-3); font-size: var(--fs-sm); border-radius: var(--r-sm); }
+.examcard input[type=text] { padding: 5px var(--s-2); font-size: 13px; border-radius: var(--r-sm); }
+.examcard .btn.btn--sm { padding: 5px var(--s-3); font-size: 12px; }
 
 .tabs { display: inline-flex; background: var(--surface-sunk); border-radius: var(--r-full); padding: 4px; gap: 4px; }
 .tab {

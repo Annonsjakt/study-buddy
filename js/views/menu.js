@@ -462,10 +462,10 @@ function examCard() {
         placeholder: "t.ex. Nationellt prov matematik",
       });
       wrap.append(
-        el("h3", { style: { marginBottom: "12px" } }, "Nästa prov"),
+        el("h3", { style: { marginBottom: "10px" } }, "Nästa prov"),
         el("div.field", {}, [el("span", {}, "Datum"), dateInput]),
-        el("div.field", { style: { marginBottom: "var(--s-3)" } }, [el("span", {}, "Vad handlar det om? (valfritt)"), labelInput]),
-        el("div", { style: { display: "flex", gap: "8px" } }, [
+        el("div.field", {}, [el("span", {}, "Vad handlar det om? (valfritt)"), labelInput]),
+        el("div", { style: { display: "flex", gap: "6px" } }, [
           el("button.btn.btn--sm", {
             type: "button",
             onclick: () => {
