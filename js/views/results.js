@@ -45,13 +45,14 @@ export function renderResults(attemptId) {
 
   const node = el("div.results", {}, [
     el("h1", {}, great ? "Great work! 🎉" : "Nice effort 💪"),
-    el("p.note", {}, heading + (attempt.wasTest ? " · test" : "")),
+    el("p.note", {}, heading + (attempt.examMode ? " · exam mode" : attempt.wasTest ? " · test" : "")),
     ringWrap,
     el("p.note", { style: { marginTop: "-8px" } }, [
       icon(ICONS.clock, 14),
       " ",
-      elapsedLabel(attempt),
+      elapsedLabel(attempt) + (attempt.timeLimitMin ? ` (limit ${attempt.timeLimitMin} min)` : ""),
     ]),
+    attempt.timedOut ? el("p.note.note--warn", {}, "Time ran out — this was submitted automatically.") : null,
 
     deltaEntries.length ? el("div", {}, [
       el("h3", { style: { marginBottom: "8px" } }, "Topic mastery"),

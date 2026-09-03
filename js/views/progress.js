@@ -43,7 +43,7 @@ export function renderProgress() {
   // ---- due for review ----
   const dueItems = store.dueQuestions();
 
-  const node = el("div.dash", {}, [
+  const node = el("div.progress-dash", {}, [
     el("h1", {}, "Your progress"),
 
     el("section.panel", {}, [
@@ -62,7 +62,7 @@ export function renderProgress() {
         : el("p.note", {}, "Finish a session to start building mastery scores. Weakest topics show first."),
     ]),
 
-    el("section.panel", {}, [
+    el("section.panel.panel--full", {}, [
       el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" } }, [
         el("h3", {}, `Due for review${dueItems.length ? ` (${dueItems.length})` : ""}`),
         dueItems.length ? el("a.btn.btn--sm", { href: "#/review" }, [icon(ICONS.spark, 16), "Review today"]) : null,

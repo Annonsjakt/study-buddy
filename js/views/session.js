@@ -6,28 +6,41 @@
 // can resume.
 
 import { store, REVIEW_ID, PRACTICE_ID, NATIONAL_MIX_PREFIX, nationalMixId } from "../store.js";
-import { el, clear, icon, ICONS, uid } from "../lib/dom.js";
+import { el, clear, icon, ICONS, uid, toast } from "../lib/dom.js";
 import { announce } from "../lib/a11y.js";
 import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
 
-export async function renderSession(assignmentId) {
+export async function renderSession(assignmentId, qs) {
   const assignment = store.getAssignment(assignmentId);
   if (!assignment) return notFound("That set no longer exists.");
   if (!assignment.questions.length) return notFound("That set has no questions yet.");
+
+  // ?exam=1 runs ANY set — assignment or library import — under test
+  // conditions (locked tutor, no immediate feedback, on-screen clock)
+  // without touching how the set itself is stored or tagged.
+  const examMode = qs?.get("exam") === "1";
+  const rawMin = examMode ? Number(qs?.get("min")) : 0;
+  const timeLimitMin = rawMin > 0 ? Math.max(1, Math.min(240, rawMin)) : null;
+  const examQuery = examMode ? `?exam=1${timeLimitMin ? `&min=${timeLimitMin}` : ""}` : "";
 
   // Repeat runs are shuffled so a retry tests the material, not the order.
   const isRetry = store.attempts.some((a) => a.assignmentId === assignment.id);
 
   return runSession({
-    key: assignment.id,
+    // Exam-mode and normal runs of the same set are kept as separate
+    // sessions — otherwise resuming one would silently resume the other,
+    // with the wrong tutor-lock/timer state attached.
+    key: examMode ? `${assignment.id}::exam` : assignment.id,
     assignmentId: assignment.id,
     title: assignment.title,
     type: assignment.type,
-    retryHash: `#/session/${assignment.id}`,
+    examMode,
+    timeLimitMin,
+    retryHash: `#/session/${assignment.id}${examQuery}`,
     questionIds: assignment.questions.map((q) => q.id),
-    shuffle: isRetry,
+    shuffle: isRetry || examMode,
   });
 }
 
@@ -127,11 +140,53 @@ function runSession(config) {
   state.skipped = state.skipped || [];
   state.choiceOrder = state.choiceOrder || {};
 
-  // In a test the tutor is locked: one attempt per question, no hints, no
-  // reveal. All the teaching happens afterwards, on the results screen.
-  const testMode = config.type === "test" && !config.forceTutor;
+  // In a test — or any set launched in exam mode — the tutor is locked: one
+  // attempt per question, no hints, no reveal. All the teaching happens
+  // afterwards, on the results screen.
+  const testMode = (config.type === "test" || config.examMode) && !config.forceTutor;
 
   const tutor = new TutorChat({ locked: testMode });
+
+  // ----- exam clock: counts down to state.deadlineAt if a limit was set,
+  // otherwise counts up from the start — either way it keeps running across
+  // a resume, since deadlineAt/startedAt live in the persisted session. -----
+  const timerText = el("span");
+  const timerEl = el("div.examtimer", { hidden: !testMode }, [icon(ICONS.clock, 14), timerText]);
+  let timerHandle = null;
+  let autoSubmitted = false;
+
+  function formatClock(ms) {
+    const total = Math.max(0, Math.round(ms / 1000));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function tickTimer() {
+    if (state.deadlineAt) {
+      const remaining = state.deadlineAt - Date.now();
+      timerEl.classList.toggle("examtimer--warn", remaining <= 60000);
+      timerText.textContent = formatClock(remaining);
+      if (remaining <= 0 && !autoSubmitted) {
+        autoSubmitted = true;
+        stopTimer();
+        toast("Time's up — your answers were submitted automatically.");
+        finish({ timedOut: true });
+      }
+    } else {
+      timerText.textContent = formatClock(Date.now() - state.startedAt);
+    }
+  }
+
+  function startTimer() {
+    if (!testMode || timerHandle) return;
+    tickTimer();
+    timerHandle = setInterval(tickTimer, 1000);
+  }
+
+  function stopTimer() {
+    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
+  }
 
   const fill = el("div.progressbar__fill");
   const label = el("div.progress-label");
@@ -157,6 +212,8 @@ function runSession(config) {
       assignmentId: config.assignmentId,
       title: config.title,
       type: config.type,
+      examMode: config.examMode,
+      timeLimitMin: config.timeLimitMin,
       retryHash: config.retryHash,
       isReview: config.assignmentId === REVIEW_ID,
       order: state.order,
@@ -165,6 +222,7 @@ function runSession(config) {
       skipped: state.skipped,
       choiceOrder: state.choiceOrder,
       startedAt: state.startedAt,
+      deadlineAt: state.deadlineAt,
     });
   }
 
@@ -273,7 +331,8 @@ function runSession(config) {
     }
   }
 
-  function finish() {
+  function finish(opts = {}) {
+    stopTimer();
     const answered = Object.values(state.items);
     const correct = answered.filter((i) => i.correct).length;
     const attempt = {
@@ -282,7 +341,10 @@ function runSession(config) {
       isReview: config.assignmentId === REVIEW_ID,
       title: config.title,
       retryHash: config.retryHash,
-      wasTest: config.type === "test",
+      wasTest: testMode,
+      examMode: !!config.examMode,
+      timeLimitMin: config.timeLimitMin || null,
+      timedOut: !!opts.timedOut,
       startedAt: state.startedAt,
       finishedAt: Date.now(),
       scorePct: answered.length ? Math.round((correct / answered.length) * 100) : 0,
@@ -327,6 +389,7 @@ function runSession(config) {
   } else {
     loadQuestion();
   }
+  startTimer();
 
   /* ----- keyboard shortcuts ----- */
   function onKeyDown(e) {
@@ -397,7 +460,10 @@ function runSession(config) {
   const node = el("div", {}, [
     el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", marginBottom: "8px", flexWrap: "wrap" } }, [
       el("h2", {}, config.title),
-      el("span.badge", {}, badgeLabel(config)),
+      el("div", { style: { display: "flex", gap: "8px", alignItems: "center", flex: "none" } }, [
+        timerEl,
+        el("span.badge", {}, badgeLabel(config)),
+      ]),
     ]),
     testMode ? el("p.note.note--warn", { style: { marginBottom: "10px" } },
       "Test mode: one attempt per question and no hints. The tutor will go through it with you afterwards.") : null,
@@ -425,6 +491,7 @@ function runSession(config) {
     cleanup: () => {
       document.removeEventListener("keydown", onKeyDown);
       closeShortcuts();
+      stopTimer();
       tutor.destroy();
     },
   };
@@ -441,7 +508,9 @@ function freshState(config) {
       }
     }
   }
-  return { ...config, order, cursor: 0, items: {}, skipped: [], choiceOrder, startedAt: Date.now() };
+  const startedAt = Date.now();
+  const deadlineAt = config.examMode && config.timeLimitMin ? startedAt + config.timeLimitMin * 60000 : null;
+  return { ...config, order, cursor: 0, items: {}, skipped: [], choiceOrder, startedAt, deadlineAt };
 }
 
 function shuffled(arr) {
@@ -457,6 +526,7 @@ function badgeLabel(config) {
   if (config.assignmentId === REVIEW_ID) return "Review";
   if (config.assignmentId === PRACTICE_ID) return "Practice";
   if (config.assignmentId?.startsWith?.(NATIONAL_MIX_PREFIX)) return "Nationellt prov";
+  if (config.examMode) return "Exam mode";
   return config.type === "test" ? "Test" : "Assignment";
 }
 

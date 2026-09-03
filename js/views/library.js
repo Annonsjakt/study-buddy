@@ -22,28 +22,87 @@ export async function renderLibrary() {
   }
 
   const root = el("div");
-  const state = { level: null, subject: null };
+  const state = { level: null, subject: null, query: "" };
+
+  // Built once so typing never loses focus — paintBody() only ever touches
+  // bodyEl, never this input or the header above it.
+  const searchInput = el("input.search__input", {
+    type: "search",
+    placeholder: "Sök i biblioteket — ämne, kurs eller set…",
+    "aria-label": "Sök i övningsbiblioteket",
+    value: state.query,
+    oninput: (e) => { state.query = e.target.value; paintBody(); },
+    onkeydown: (e) => {
+      if (e.key === "Escape" && state.query) { e.preventDefault(); state.query = ""; searchInput.value = ""; paintBody(); }
+    },
+  });
+  const searchWrap = el("div.search", { style: { marginBottom: "16px" } }, [icon(ICONS.search, 16), searchInput]);
+  const headerEl = el("div");
+  const bodyEl = el("div");
 
   function paint() {
-    clear(root);
-    root.appendChild(header());
-    if (!state.level) root.appendChild(levelPicker());
-    else if (!state.subject) root.appendChild(subjectPicker());
-    else root.appendChild(setList());
+    paintHeader();
+    paintBody();
   }
 
-  function header() {
+  function paintHeader() {
+    clear(headerEl);
     const back = state.subject
       ? () => { state.subject = null; paint(); }
       : state.level
         ? () => { state.level = null; paint(); }
         : null;
 
-    return el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
+    headerEl.appendChild(el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
       back
         ? el("button.iconbtn", { type: "button", "aria-label": "Tillbaka", onclick: back }, [icon(ICONS.back, 18)])
         : el("a.iconbtn", { href: "#/", "aria-label": "Tillbaka" }, [icon(ICONS.back, 18)]),
       el("h1", {}, "Övningsbibliotek"),
+    ]));
+  }
+
+  function paintBody() {
+    clear(bodyEl);
+    const q = state.query.trim().toLowerCase();
+    if (q) bodyEl.appendChild(searchResults(q));
+    else if (!state.level) bodyEl.appendChild(levelPicker());
+    else if (!state.subject) bodyEl.appendChild(subjectPicker());
+    else bodyEl.appendChild(setList());
+  }
+
+  /* ---- sök: träffar över hela biblioteket, oavsett var man står ---- */
+  function searchResults(q) {
+    const matches = index.sets.filter((s) => {
+      const subject = index.subjects.find((sub) => sub.id === s.subject);
+      const level = index.levels.find((l) => l.id === subject?.level);
+      const haystack = [s.title, s.summary, subject?.name, level?.label].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+
+    if (!matches.length) {
+      return el("div.panel", {}, [
+        el("p.note", {}, `Inga träffar för "${state.query.trim()}". Prova ett ämne, en kurs eller en årskurs.`),
+      ]);
+    }
+
+    const bySubject = new Map();
+    for (const s of matches) {
+      if (!bySubject.has(s.subject)) bySubject.set(s.subject, []);
+      bySubject.get(s.subject).push(s);
+    }
+
+    const sections = [...bySubject.entries()].map(([subjId, sets]) => {
+      const subject = index.subjects.find((s) => s.id === subjId);
+      const level = index.levels.find((l) => l.id === subject?.level);
+      return el("section.panel", { style: { marginBottom: "20px" } }, [
+        el("p.note", { style: { marginBottom: "8px" } }, [level?.label, subject?.name].filter(Boolean).join(" · ")),
+        el("div.libgrid", {}, sets.map(setCard)),
+      ]);
+    });
+
+    return el("div", {}, [
+      el("p.note", { style: { marginBottom: "12px" } }, `${matches.length} träff${matches.length === 1 ? "" : "ar"}`),
+      ...sections,
     ]);
   }
 
@@ -127,6 +186,15 @@ export async function renderLibrary() {
           },
         }, [icon(ICONS.plus, 16), "Lägg till"]);
 
+    // Same set, exam conditions: locked tutor, no facit förrän efteråt, med
+    // tidtagning — bara tillgängligt när setet redan finns i biblioteket.
+    const examAction = imported
+      ? el("a.btn.btn--ghost.btn--sm", {
+          href: `#/session/${entry.id}?exam=1`,
+          title: "Provläge: tidtagning, inga ledtrådar och facit visas först när du är klar.",
+        }, [icon(ICONS.clock, 16), "Provläge"])
+      : null;
+
     return el("div.libcard", {}, [
       el("div", {}, [
         el("div.libcard__title", {}, entry.title),
@@ -134,11 +202,14 @@ export async function renderLibrary() {
       ]),
       el("div.libcard__foot", {}, [
         el("span.note", {}, `${entry.count} frågor`),
-        action,
+        el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } }, [examAction, action].filter(Boolean)),
       ]),
     ]);
   }
 
+  root.appendChild(headerEl);
+  root.appendChild(searchWrap);
+  root.appendChild(bodyEl);
   paint();
   return { title: "Övningsbibliotek", node: root };
 }

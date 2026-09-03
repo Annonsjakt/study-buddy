@@ -257,6 +257,7 @@ export function renderMenu() {
   function openCardMenu(anchor, a) {
     closeCardMenu();
     const menu = el("div.cardmenu", { role: "menu" }, [
+      item(ICONS.clock, "Start in exam mode", () => { location.hash = `#/session/${a.id}?exam=1`; }),
       item(ICONS.pencil, "Rename", () => rename(a)),
       item(ICONS.chart, "Edit questions", () => { location.hash = `#/edit/${a.id}`; }),
       item(ICONS.copy, "Duplicate", () => {
