@@ -92,6 +92,22 @@
 }
 
 /* ---------------------------------------------------------------
+   Reading mode: a more legible typeface (Atkinson Hyperlegible, designed
+   for low-vision and dyslexic readers) plus roomier spacing. Toggled from
+   Settings > Accessibility, applied as data-readmode on <html> — see
+   js/lib/readmode.js.
+   --------------------------------------------------------------- */
+html[data-readmode] {
+  --font-body:    "Atkinson Hyperlegible", "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-display: "Atkinson Hyperlegible", "Inter", "Segoe UI", system-ui, sans-serif;
+  --lh-body:  1.85;
+  --lh-tight: 1.5;
+}
+html[data-readmode] body { letter-spacing: .02em; word-spacing: .12em; }
+/* Italics are harder to decode for many dyslexic readers — underline instead. */
+html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decoration: underline; }
+
+/* ---------------------------------------------------------------
    Dark theme.
    Same restrained shapes and colour meanings, just re-grounded: the
    cool grey becomes a cool charcoal, subject colours brighten enough

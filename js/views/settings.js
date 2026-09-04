@@ -5,6 +5,7 @@ import { el, clear, toast, icon, ICONS } from "../lib/dom.js";
 import { localDayKey } from "../lib/activity.js";
 import { PRESETS, DEFAULT_PRESET } from "../claude.js";
 import { THEMES, getTheme, setTheme } from "../lib/theme.js";
+import { getReadMode, setReadMode } from "../lib/readmode.js";
 
 export function renderSettings() {
   const s = store.settings;
@@ -54,6 +55,13 @@ export function renderSettings() {
   themeSel.value = getTheme();
   themeSel.addEventListener("change", () => { setTheme(themeSel.value); toast("Theme updated"); });
 
+  const readModeCheck = el("input", { type: "checkbox", id: "readmode-toggle" });
+  readModeCheck.checked = getReadMode();
+  readModeCheck.addEventListener("change", () => {
+    setReadMode(readModeCheck.checked);
+    toast(readModeCheck.checked ? "Dyslexivänligt läge på" : "Dyslexivänligt läge av");
+  });
+
   const node = el("div.settings", {}, [
     el("h1", {}, "Settings"),
 
@@ -61,6 +69,18 @@ export function renderSettings() {
       el("h3", {}, "Appearance"),
       el("label.field", { style: { marginTop: "12px", marginBottom: "0" } }, [
         el("span", {}, "Theme"), themeSel,
+      ]),
+    ]),
+
+    el("section.panel", {}, [
+      el("h3", {}, "Accessibility"),
+      el("label", { style: { display: "flex", alignItems: "flex-start", gap: "10px", marginTop: "12px" } }, [
+        readModeCheck,
+        el("span", {}, [
+          el("strong", {}, "Dyslexivänligt läge"),
+          el("p.note", { style: { margin: "2px 0 0" } },
+            "Byter till Atkinson Hyperlegible — ett typsnitt gjort för lässvårigheter — med större rad-, bokstavs- och ordavstånd."),
+        ]),
       ]),
     ]),
 

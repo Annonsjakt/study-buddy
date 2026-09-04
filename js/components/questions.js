@@ -8,6 +8,7 @@ import { el, clear, icon, ICONS } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
 import { gradeAnswer } from "../claude.js";
 import { fromCorrect } from "../lib/srs.js";
+import { speak, speechSupported, htmlToText } from "../lib/speech.js";
 
 export function renderQuestion(opts) {
   switch (opts.question.kind) {
@@ -20,9 +21,22 @@ export function renderQuestion(opts) {
 
 function shell(question, body, { showPrompt = true } = {}) {
   return el("div.question", {}, [
-    showPrompt && el("div.question__prompt", { html: renderRich(question.prompt) }),
+    showPrompt && el("div.question__promptrow", {}, [
+      el("div.question__prompt", { html: renderRich(question.prompt) }),
+      listenBtn(question.prompt, "Läs upp frågan"),
+    ].filter(Boolean)),
     body,
   ].filter(Boolean));
+}
+
+/** Small speaker button that reads a question's rich-text field aloud via
+ *  the browser's own text-to-speech — absent entirely where unsupported. */
+function listenBtn(richText, label) {
+  if (!speechSupported || !richText) return null;
+  return el("button.iconbtn.iconbtn--sm.question__listen", {
+    type: "button", "aria-label": label, title: label,
+    onclick: () => speak(htmlToText(renderRich(richText))),
+  }, icon(ICONS.volume, 15));
 }
 
 /* ---------------- multiple choice ---------------- */
@@ -251,7 +265,13 @@ function flashcard({ question, tutor, onDone }) {
     result, handleKey,
     el: shell(question, el("div", {}, [
       card,
-      el("p.note", { style: { marginTop: "10px" } }, "Tap the card to flip, or press Space."),
+      el("div.flashcard__hint", {}, [
+        el("p.note", {}, "Tap the card to flip, or press Space."),
+        speechSupported ? el("button.iconbtn.iconbtn--sm.question__listen", {
+          type: "button", "aria-label": "Läs upp", title: "Läs upp",
+          onclick: () => speak(htmlToText(renderRich(flipped ? question.answer : question.prompt))),
+        }, icon(ICONS.volume, 15)) : null,
+      ].filter(Boolean)),
       rate,
     ]), { showPrompt: false }),
   };
