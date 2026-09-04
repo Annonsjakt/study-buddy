@@ -7,6 +7,16 @@ import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { loadLibraryIndex, isImported, importSet } from "../data/library.js";
 import { t, plural } from "../lib/i18n.js";
 
+// The library's actual course content (subject names, descriptions,
+// question sets) stays Swedish — it's Swedish-curriculum material, not UI
+// chrome. But these four level labels double as navigation categories, so
+// they get a translation for the handful of ids we ship.
+const LEVEL_KEYS = { ak7: "library.levelAk7", ak8: "library.levelAk8", ak9: "library.levelAk9", gymnasiet: "library.levelGymnasiet" };
+function levelLabel(lvl) {
+  const key = lvl && LEVEL_KEYS[lvl.id];
+  return key ? t(key) : lvl?.label;
+}
+
 export async function renderLibrary() {
   let index;
   try {
@@ -76,7 +86,7 @@ export async function renderLibrary() {
     const matches = index.sets.filter((s) => {
       const subject = index.subjects.find((sub) => sub.id === s.subject);
       const level = index.levels.find((l) => l.id === subject?.level);
-      const haystack = [s.title, s.summary, subject?.name, level?.label].filter(Boolean).join(" ").toLowerCase();
+      const haystack = [s.title, s.summary, subject?.name, levelLabel(level)].filter(Boolean).join(" ").toLowerCase();
       return haystack.includes(q);
     });
 
@@ -96,7 +106,7 @@ export async function renderLibrary() {
       const subject = index.subjects.find((s) => s.id === subjId);
       const level = index.levels.find((l) => l.id === subject?.level);
       return el("section.panel", { style: { marginBottom: "20px" } }, [
-        el("p.note", { style: { marginBottom: "8px" } }, [level?.label, subject?.name].filter(Boolean).join(" · ")),
+        el("p.note", { style: { marginBottom: "8px" } }, [levelLabel(level), subject?.name].filter(Boolean).join(" · ")),
         el("div.libgrid", {}, sets.map(setCard)),
       ]);
     });
@@ -114,7 +124,7 @@ export async function renderLibrary() {
       el("p", { style: { marginBottom: "16px" } }, t("library.levelIntro")),
       el("div.source-grid", {}, levels.map((lvl) =>
         el("button.source-opt", { type: "button", onclick: () => { state.level = lvl.id; paint(); } }, [
-          icon(ICONS.graduation, 26), lvl.label,
+          icon(ICONS.graduation, 26), levelLabel(lvl),
         ]))),
     ]);
   }
@@ -124,7 +134,7 @@ export async function renderLibrary() {
     const level = index.levels.find((l) => l.id === state.level);
     const subjects = index.subjects.filter((s) => s.level === state.level);
     return el("div.panel", {}, [
-      el("p", { style: { marginBottom: "16px" } }, t("library.subjectIntro", { level: level?.label })),
+      el("p", { style: { marginBottom: "16px" } }, t("library.subjectIntro", { level: levelLabel(level) })),
       el("div.source-grid", {}, subjects.map((subject) =>
         el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
           icon(ICONS.book, 26), subject.name,

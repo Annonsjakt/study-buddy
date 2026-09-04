@@ -411,6 +411,10 @@ export const STRINGS = {
     "library.examModeTooltip": "Exam mode: timed, no hints, and the answer key only shows once you're done.",
     "library.questionsOne": "1 question",
     "library.questionsMany": "{n} questions",
+    "library.levelAk7": "Grade 7",
+    "library.levelAk8": "Grade 8",
+    "library.levelAk9": "Grade 9",
+    "library.levelGymnasiet": "Upper secondary school",
 
     // ---- sign in ----
     "login.signIn": "Sign in",
@@ -986,6 +990,10 @@ export const STRINGS = {
     "library.examModeTooltip": "Provläge: tidtagning, inga ledtrådar och facit visas först när du är klar.",
     "library.questionsOne": "1 fråga",
     "library.questionsMany": "{n} frågor",
+    "library.levelAk7": "Årskurs 7",
+    "library.levelAk8": "Årskurs 8",
+    "library.levelAk9": "Årskurs 9",
+    "library.levelGymnasiet": "Gymnasiet",
 
     // ---- logga in ----
     "login.signIn": "Logga in",
