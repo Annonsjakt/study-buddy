@@ -2,7 +2,7 @@
 // subject grid, then the Assignments | Tests tabs, filters and card grid.
 
 import { store } from "../store.js";
-import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
+import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { masteryByTopic, masteryForAssignment, masteryForSubject } from "../lib/mastery.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
@@ -461,8 +461,8 @@ function examCard() {
         type: "text", maxlength: "60", value: examLabel || "",
         placeholder: "t.ex. Nationellt prov matematik",
       });
-      wrap.append(
-        el("h3", { style: { marginBottom: "10px" } }, "Nästa prov"),
+      append(wrap, [
+        el("h3", {}, "Nästa prov"),
         el("div.field", {}, [el("span", {}, "Datum"), dateInput]),
         el("div.field", {}, [el("span", {}, "Vad handlar det om? (valfritt)"), labelInput]),
         el("div", { style: { display: "flex", gap: "6px" } }, [
@@ -479,20 +479,25 @@ function examCard() {
             type: "button", onclick: () => { editing = false; paint(); },
           }, "Avbryt") : null,
         ].filter(Boolean)),
-      );
+      ]);
       return;
     }
 
     const days = daysUntil(examDate);
-    wrap.append(
-      el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" } }, [
+    const caption = [formatSwedishDate(examDate), examLabel || null].filter(Boolean).join(" · ");
+    append(wrap, [
+      el("div.examcard__top", {}, [
         el("h3", {}, "Nästa prov"),
         el("button.linkbtn", { type: "button", onclick: () => { editing = true; paint(); } }, "Ändra"),
       ]),
-      el("div.examcard__count", {}, countdownLabel(days)),
-      examLabel ? el("p.note", {}, examLabel) : null,
-      el("p.note", { style: { marginTop: examLabel ? "0" : "4px" } }, formatSwedishDate(examDate)),
-    );
+      el("div.examcard__row", {}, [
+        el("span.examcard__icon", {}, icon(ICONS.graduation, 16)),
+        el("div", {}, [
+          el("div.examcard__value", {}, countdownLabel(days)),
+          el("p.note.examcard__caption", {}, caption),
+        ]),
+      ]),
+    ]);
   }
 
   paint();

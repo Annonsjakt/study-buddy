@@ -176,8 +176,18 @@ h1:focus-visible, h2:focus-visible {
   .home { display: grid; grid-template-columns: 1fr 300px; align-items: start; gap: var(--s-6); }
 }
 .examcard { padding: var(--s-4); }
-.examcard h3 { font-size: var(--fs-sm); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-soft); }
-.examcard__count { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg); margin: 6px 0 1px; }
+.examcard h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-faint); margin: 0 0 var(--s-3); }
+.examcard__top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: var(--s-3); }
+.examcard__top h3 { margin: 0; }
+.examcard__top .linkbtn { font-size: 12px; }
+.examcard__row { display: flex; align-items: center; gap: var(--s-3); min-width: 0; }
+.examcard__row > div { min-width: 0; }
+.examcard__icon {
+  width: 32px; height: 32px; flex: none; border-radius: var(--r-full);
+  display: grid; place-items: center; background: var(--surface-sunk); color: var(--ink-soft);
+}
+.examcard__value { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg); line-height: 1.2; }
+.examcard__caption { margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .examcard .field { margin-bottom: var(--s-2); }
 .examcard .field > span { font-size: 11px; font-weight: 600; color: var(--ink-faint); margin-bottom: 3px; }
 .examcard input[type=date] {
