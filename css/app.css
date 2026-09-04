@@ -130,7 +130,6 @@ h1:focus-visible, h2:focus-visible {
 .sidebar__theme-btn[aria-pressed="true"] { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow-1); }
 
 .topbar {
-  position: sticky; top: 0; z-index: 20;
   background: color-mix(in srgb, var(--canvas) 88%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
