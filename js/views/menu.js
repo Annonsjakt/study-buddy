@@ -4,18 +4,13 @@
 import { store } from "../store.js";
 import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { masteryByTopic, masteryForAssignment, masteryForSubject } from "../lib/mastery.js";
+import { t, plural, getLang } from "../lib/i18n.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
 let tab = "assignment";
 let subjectFilter = "all";
 let sortBy = "recent";
 let query = "";
-
-const SORTS = [
-  ["recent", "Newest"],
-  ["name", "A–Z"],
-  ["weakest", "Weakest"],
-];
 
 export function renderMenu() {
   const topicMastery = masteryByTopic(store.attempts);
@@ -26,12 +21,17 @@ export function renderMenu() {
   const countLabel = el("p.note");
 
   const searchInput = el("input.search__input", {
-    type: "search", placeholder: "Search sets…", value: query,
-    "aria-label": "Search your sets",
+    type: "search", placeholder: t("sets.searchPlaceholder"), value: query,
+    "aria-label": t("sets.searchPlaceholder"),
     oninput: (e) => { query = e.target.value; paint(); },
   });
   const searchWrap = el("div.search", {}, [icon(ICONS.search, 16), searchInput]);
 
+  const SORTS = [
+    ["recent", t("sets.sortNewest")],
+    ["name", t("sets.sortAZ")],
+    ["weakest", t("sets.sortWeakest")],
+  ];
   const sortSel = el("select.sortsel", {
     "aria-label": "Sort sets",
     onchange: (e) => { sortBy = e.target.value; paint(); },
@@ -68,7 +68,7 @@ export function renderMenu() {
     // subject chips, limited to subjects present in this tab
     clear(chipsRow);
     const inTab = store.assignments.filter((a) => a.type === tab);
-    chipsRow.appendChild(chip("All", "all", null));
+    chipsRow.appendChild(chip(t("sets.chipAll"), "all", null));
     for (const s of store.subjects) {
       if (!inTab.some((a) => a.subjectId === s.id)) continue;
       chipsRow.appendChild(chip(s.name, s.id, store.subjectColor(s.id)));
@@ -95,9 +95,11 @@ export function renderMenu() {
     if (q && !items.length) {
       const otherTab = tab === "assignment" ? "test" : "assignment";
       const otherHits = store.assignments.filter((a) => a.type === otherTab && matchesQuery(a, q)).length;
-      countLabel.appendChild(document.createTextNode(
-        `No ${tab === "assignment" ? "assignments" : "tests"} match “${query.trim()}”. `));
+      const tabNoun = tab === "assignment" ? t("sets.assignmentsNoun") : t("sets.testsNoun");
+      countLabel.appendChild(document.createTextNode(t("sets.noMatch", { tab: tabNoun, query: query.trim() })));
       if (otherHits) {
+        const otherNoun = otherTab === "assignment" ? t("sets.assignmentsNoun") : t("sets.testsNoun");
+        const target = otherTab === "assignment" ? t("sets.tabAssignments") : t("sets.tabTests");
         countLabel.appendChild(el("button.linkbtn", {
           type: "button",
           onclick: () => {
@@ -106,7 +108,7 @@ export function renderMenu() {
               b.setAttribute("aria-selected", String((i === 0 ? "assignment" : "test") === tab)));
             paint();
           },
-        }, `${otherHits} ${otherTab === "test" ? "test" : "assignment"}${otherHits === 1 ? "" : "s"} match — switch to ${otherTab === "test" ? "Tests" : "Assignments"}`));
+        }, t("sets.matchSwitch", { n: otherHits, tab: otherNoun, target })));
       }
     }
     countLabel.hidden = !q || !!items.length;
@@ -168,7 +170,7 @@ export function renderMenu() {
       el("div.subjcard__bar", {}, [
         el("div.subjcard__fill", { style: { width: `${pct ?? 0}%` } }),
       ]),
-      el("div.subjcard__meta", {}, `${sets} set${sets === 1 ? "" : "s"} · ${questions} question${questions === 1 ? "" : "s"}`),
+      el("div.subjcard__meta", {}, `${plural(sets, "sets.setCount", "sets.setsCount")} · ${plural(questions, "sets.questionCount", "sets.questionsCount")}`),
     ]);
   }
 
@@ -205,14 +207,14 @@ export function renderMenu() {
     }, [
       menuBtn,
       el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", paddingRight: "28px" } }, [
-        el("span.acard__tag", {}, subject?.name || "General"),
-        open && el("span.acard__tag.acard__tag--open", {}, "In progress"),
+        el("span.acard__tag", {}, subject?.name || t("sets.generalSubject")),
+        open && el("span.acard__tag.acard__tag--open", {}, t("sets.inProgress")),
       ].filter(Boolean)),
       el("div.acard__title", {}, a.title),
       el("div.acard__meta", {}, [
         el("span", {}, open
-          ? `${openCount} of ${a.questions.length} answered`
-          : `${a.questions.length} question${a.questions.length === 1 ? "" : "s"}${attempts ? ` · done ${attempts}×` : ""}`),
+          ? t("sets.answeredProgress", { answered: openCount, total: a.questions.length })
+          : plural(a.questions.length, "sets.questionCount", "sets.questionsCount") + (attempts ? t("sets.doneTimes", { n: attempts }) : "")),
         m == null ? el("span", { style: { color: "var(--subject)" }, "aria-hidden": "true" }, icon(ICONS.arrow, 18))
           : ring(m, color.solid),
       ]),
@@ -223,7 +225,7 @@ export function renderMenu() {
     return el("button.acard.acard--new", {
       type: "button",
       onclick: () => { location.hash = "#/create"; },
-    }, [icon(ICONS.plus, 22), "New " + (tab === "assignment" ? "assignment" : "test")]);
+    }, [icon(ICONS.plus, 22), tab === "assignment" ? t("sets.newAssignment") : t("sets.newTest")]);
   }
 
   function emptyState() {
@@ -231,23 +233,21 @@ export function renderMenu() {
     return el("div.empty", { style: { gridColumn: "1 / -1" } }, [
       icon(ICONS.spark, 26),
       el("h3", { style: { marginBottom: "6px" } },
-        isFirstRun ? "Your library is empty" : `No ${tab === "assignment" ? "assignments" : "tests"} yet`),
+        isFirstRun ? t("empty.libraryTitle") : tab === "assignment" ? t("empty.noAssignments") : t("empty.noTests")),
       el("p", {}, isFirstRun
-        ? "Börja med färdiga övningar ur biblioteket — eller gör ett eget set från dina anteckningar, en PDF, ett foto eller bara ett ämne."
-        : tab === "assignment"
-          ? "Make one from your notes, a PDF, a photo, or just a topic."
-          : "Create one the same way — just mark it as a test."),
+        ? t("empty.libraryBody")
+        : tab === "assignment" ? t("empty.assignmentBody") : t("empty.testBody")),
       el("div", { style: { display: "flex", gap: "10px", justifyContent: "center", marginTop: "16px", flexWrap: "wrap" } }, [
-        isFirstRun && el("a.btn", { href: "#/bibliotek" }, [icon(ICONS.book, 18), "Öppna övningsbiblioteket"]),
-        el("a", { class: isFirstRun ? "btn btn--ghost" : "btn", href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
+        isFirstRun && el("a.btn", { href: "#/bibliotek" }, [icon(ICONS.book, 18), t("empty.openLibrary")]),
+        el("a", { class: isFirstRun ? "btn btn--ghost" : "btn", href: "#/create" }, [icon(ICONS.plus, 18), t("menu.newSet")]),
         isFirstRun && store.demoStatus.loaded === 0 && el("button.btn.btn--ghost", {
           type: "button",
           onclick: async (e) => {
             e.currentTarget.disabled = true;
-            try { await store.loadDemoContent(); toast("Demo sets added"); }
-            catch { toast("Couldn't load the demo sets"); e.currentTarget.disabled = false; }
+            try { await store.loadDemoContent(); toast(t("empty.demoAdded")); }
+            catch { toast(t("empty.demoFailed")); e.currentTarget.disabled = false; }
           },
-        }, [icon(ICONS.play, 16), "Try a demo"]),
+        }, [icon(ICONS.play, 16), t("empty.tryDemo")]),
       ].filter(Boolean)),
     ]);
   }
@@ -257,14 +257,14 @@ export function renderMenu() {
   function openCardMenu(anchor, a) {
     closeCardMenu();
     const menu = el("div.cardmenu", { role: "menu" }, [
-      item(ICONS.clock, "Start in exam mode", () => { location.hash = `#/session/${a.id}?exam=1`; }),
-      item(ICONS.pencil, "Rename", () => rename(a)),
-      item(ICONS.chart, "Edit questions", () => { location.hash = `#/edit/${a.id}`; }),
-      item(ICONS.copy, "Duplicate", () => {
+      item(ICONS.clock, t("cardmenu.examMode"), () => { location.hash = `#/session/${a.id}?exam=1`; }),
+      item(ICONS.pencil, t("cardmenu.rename"), () => rename(a)),
+      item(ICONS.chart, t("cardmenu.editQuestions"), () => { location.hash = `#/edit/${a.id}`; }),
+      item(ICONS.copy, t("cardmenu.duplicate"), () => {
         const copy = store.duplicateAssignment(a.id);
-        if (copy) toast(`Copied as “${copy.title}”`);
+        if (copy) toast(t("cardmenu.copiedAs", { title: copy.title }));
       }),
-      item(ICONS.trash, "Delete", () => remove(a), true),
+      item(ICONS.trash, t("cardmenu.delete"), () => remove(a), true),
     ]);
 
     function item(path, label, fn, danger) {
@@ -295,28 +295,28 @@ export function renderMenu() {
   }
 
   function rename(a) {
-    const next = prompt("Rename this set:", a.title);
+    const next = prompt(t("cardmenu.renamePrompt"), a.title);
     if (next == null) return;
     const clean = next.trim();
-    if (!clean) { toast("A set needs a name"); return; }
+    if (!clean) { toast(t("cardmenu.renameNeedsName")); return; }
     if (clean === a.title) return;
     store.updateAssignment(a.id, { title: clean });
-    toast("Renamed");
+    toast(t("cardmenu.renamed"));
   }
 
   function remove(a) {
     const attempts = store.attempts.filter((x) => x.assignmentId === a.id).length;
-    const extra = attempts ? `\n\nThis also removes ${attempts} recorded attempt${attempts === 1 ? "" : "s"} from your history.` : "";
-    if (!confirm(`Delete “${a.title}”?${extra}\n\nThis can't be undone.`)) return;
+    const extra = attempts ? t(attempts === 1 ? "cardmenu.deleteExtra" : "cardmenu.deleteExtraMany", { n: attempts }) : "";
+    if (!confirm(t("cardmenu.deleteConfirm", { title: a.title, extra }))) return;
     store.deleteAssignment(a.id);
-    toast("Deleted");
+    toast(t("cardmenu.deleted"));
   }
 
   /* ---------------- header + today strip ---------------- */
 
   const tabsEl = el("div.tabs", { role: "tablist" }, [
-    tabBtn("Assignments", "assignment"),
-    tabBtn("Tests", "test"),
+    tabBtn(t("sets.tabAssignments"), "assignment"),
+    tabBtn(t("sets.tabTests"), "test"),
   ]);
   function tabBtn(label, value) {
     return el("button.tab", {
@@ -337,17 +337,15 @@ export function renderMenu() {
       el("div.home__head", {}, [
         el("div", {}, [
           el("h1", {}, greeting()),
-          el("p.home__hi", {}, store.hasKey()
-            ? "Pick something to study, or make a new set."
-            : "Running in demo mode — see Settings for how to turn on live mode."),
+          el("p.home__hi", {}, store.hasKey() ? t("menu.hintLive") : t("menu.hintDemo")),
         ]),
-        el("a.btn", { href: "#/create" }, [icon(ICONS.plus, 18), "New set"]),
+        el("a.btn", { href: "#/create" }, [icon(ICONS.plus, 18), t("menu.newSet")]),
       ]),
       dashRow(topicMastery),
       todayStrip(),
       subjGrid,
       el("section.panel.setspanel", {}, [
-        el("h3", { style: { marginBottom: "var(--s-4)" } }, "Your sets"),
+        el("h3", { style: { marginBottom: "var(--s-4)" } }, t("sets.heading")),
         el("div.setsrow", {}, [tabsEl, toolsRow]),
         chipsRow,
         countLabel,
@@ -357,7 +355,7 @@ export function renderMenu() {
     el("aside.home__aside", {}, [examCard(), tipCard()]),
   ]);
 
-  return { title: "Menu", node, cleanup: closeCardMenu };
+  return { title: t("menu.pageTitle"), node, cleanup: closeCardMenu };
 }
 
 /** The top of the dashboard: how strong you are overall, your streak, and
@@ -374,11 +372,14 @@ function dashRow(topicMastery) {
       ? el("span.dash__icon.dash__icon--brand", { style: { width: "72px", height: "72px" } }, icon(ICONS.spark, 28))
       : ring(overall, "var(--brand)", "ring--lg"),
     el("div", {}, [
-      el("div.dash__label", {}, overall == null ? "No results yet" : "Overall mastery"),
-      el("div.dash__value", {}, overall == null ? "Start studying" : `${Math.round(overall * 100)}%`),
+      el("div.dash__label", {}, overall == null ? t("dash.noResults") : t("dash.overallMastery")),
+      el("div.dash__value", {}, overall == null ? t("dash.startStudying") : `${Math.round(overall * 100)}%`),
       el("p.note", { style: { marginTop: "4px" } }, overall == null
-        ? "Finish a session and your level shows up here."
-        : `${vals.length} topic${vals.length === 1 ? "" : "s"} tracked · ${sessions} session${sessions === 1 ? "" : "s"} done`),
+        ? t("dash.heroHintEmpty")
+        : t("dash.heroHint", {
+            topics: plural(vals.length, "dash.topic", "dash.topics"),
+            sessions: plural(sessions, "dash.session", "dash.sessions"),
+          })),
     ]),
   ]);
 
@@ -386,7 +387,7 @@ function dashRow(topicMastery) {
     el("span.dash__icon", {}, icon(ICONS.flame, 20)),
     el("div", {}, [
       el("div.dash__value", {}, String(streak)),
-      el("div.dash__label", {}, streak > 0 ? `day${streak === 1 ? "" : "s"} streak` : "Study today to start a streak"),
+      el("div.dash__label", {}, streak > 0 ? t(streak === 1 ? "dash.dayStreak" : "dash.daysStreak") : t("dash.streakEmpty")),
     ]),
   ]);
 
@@ -394,7 +395,7 @@ function dashRow(topicMastery) {
     el("span", { class: "dash__icon" + (due ? " dash__icon--brand" : "") }, icon(ICONS.spark, 20)),
     el("div", {}, [
       el("div.dash__value", {}, String(due)),
-      el("div.dash__label", {}, due ? "Due now — tap to review" : "Due for review"),
+      el("div.dash__label", {}, due ? t("dash.dueNow") : t("dash.dueForReview")),
     ]),
   ]);
 
@@ -412,8 +413,8 @@ function todayStrip() {
     tiles.push(el("a.tile.tile--accent", { href: open.retryHash || (open.isReview ? "#/review" : `#/session/${open.assignmentId}`) }, [
       el("span.tile__icon", {}, icon(ICONS.play, 18)),
       el("span", {}, [
-        el("strong", {}, "Continue where you left off"),
-        el("span.tile__sub", {}, `${open.title} · ${answered} of ${open.order.length} answered`),
+        el("strong", {}, t("today.continue")),
+        el("span.tile__sub", {}, t("today.progress", { title: open.title, n: answered, total: open.order.length })),
       ]),
     ]));
   }
@@ -441,7 +442,7 @@ function ring(v, color, extraClass) {
 
 function greeting() {
   const h = new Date().getHours();
-  return h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  return h < 12 ? t("greeting.morning") : h < 18 ? t("greeting.afternoon") : t("greeting.evening");
 }
 
 /** Right-rail card: a countdown to whatever exam the student is aiming at
@@ -459,36 +460,36 @@ function examCard() {
       const dateInput = el("input", { type: "date", value: examDate || "" });
       const labelInput = el("input", {
         type: "text", maxlength: "60", value: examLabel || "",
-        placeholder: "t.ex. Nationellt prov matematik",
+        placeholder: t("examcard.aboutPlaceholder"),
       });
       append(wrap, [
-        el("h3", {}, "Nästa prov"),
-        el("div.field", {}, [el("span", {}, "Datum"), dateInput]),
-        el("div.field", {}, [el("span", {}, "Vad handlar det om? (valfritt)"), labelInput]),
+        el("h3", {}, t("examcard.title")),
+        el("div.field", {}, [el("span", {}, t("examcard.date")), dateInput]),
+        el("div.field", {}, [el("span", {}, t("examcard.about")), labelInput]),
         el("div", { style: { display: "flex", gap: "6px" } }, [
           el("button.btn.btn--sm", {
             type: "button",
             onclick: () => {
-              if (!dateInput.value) { toast("Välj ett datum först"); return; }
+              if (!dateInput.value) { toast(t("examcard.pickDateFirst")); return; }
               store.setSettings({ examDate: dateInput.value, examLabel: labelInput.value.trim() });
               editing = false;
               paint();
             },
-          }, "Spara"),
+          }, t("examcard.save")),
           examDate ? el("button.btn.btn--ghost.btn--sm", {
             type: "button", onclick: () => { editing = false; paint(); },
-          }, "Avbryt") : null,
+          }, t("examcard.cancel")) : null,
         ].filter(Boolean)),
       ]);
       return;
     }
 
     const days = daysUntil(examDate);
-    const caption = [formatSwedishDate(examDate), examLabel || null].filter(Boolean).join(" · ");
+    const caption = [formatExamDate(examDate), examLabel || null].filter(Boolean).join(" · ");
     append(wrap, [
       el("div.examcard__top", {}, [
-        el("h3", {}, "Nästa prov"),
-        el("button.linkbtn", { type: "button", onclick: () => { editing = true; paint(); } }, "Ändra"),
+        el("h3", {}, t("examcard.title")),
+        el("button.linkbtn", { type: "button", onclick: () => { editing = true; paint(); } }, t("examcard.change")),
       ]),
       el("div.examcard__row", {}, [
         el("span.examcard__icon", {}, icon(ICONS.graduation, 16)),
@@ -512,33 +513,26 @@ function daysUntil(dateStr) {
 }
 
 function countdownLabel(days) {
-  if (days < 0) return "Har varit";
-  if (days === 0) return "Idag";
-  if (days === 1) return "Imorgon";
-  return `${days} dagar kvar`;
+  if (days < 0) return t("examcard.past");
+  if (days === 0) return t("examcard.today");
+  if (days === 1) return t("examcard.tomorrow");
+  return t("examcard.daysLeft", { n: days });
 }
 
-function formatSwedishDate(dateStr) {
+function formatExamDate(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("sv-SE", { day: "numeric", month: "long", year: "numeric" });
+  const locale = getLang() === "sv" ? "sv-SE" : "en-GB";
+  return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
 }
 
-const STUDY_TIPS = [
-  "Testa dig själv innan du läser om ett kapitel — att aktivt minnas fastnar bättre än att bara läsa igen.",
-  "Korta, återkommande pass slår långa plugg-maraton. Kör 25 fokuserade minuter, ta sedan en riktig paus.",
-  "Blanda gärna flera ämnen istället för att köra ett i taget — hjärnan lär sig bättre av växling än av att nöta samma sak länge.",
-  "Förklara det du just lärt dig högt för dig själv, som om du undervisade någon annan. Kan du inte förklara det enkelt kan du det inte riktigt än.",
-  "Plugga det svåraste momentet först, medan du fortfarande är pigg och fokuserad.",
-  "Sömn är en del av inlärningen — hjärnan befäster minnen medan du sover, så en sen kvällsrepetition är inte bortkastad.",
-  "Gamla fel är guld värt. Gå igenom det du svarade fel på förra gången innan du kör ett nytt set.",
-];
+const TIP_COUNT = 7;
 
 /** Deterministic per calendar day, so it doesn't change on every reload. */
 function tipCard() {
   const dayIndex = Math.floor(Date.now() / 86400000);
-  const tip = STUDY_TIPS[dayIndex % STUDY_TIPS.length];
+  const tip = t(`tips.${dayIndex % TIP_COUNT}`);
   return el("div.panel", {}, [
-    el("h3", { style: { marginBottom: "8px" } }, "Dagens studietips"),
+    el("h3", { style: { marginBottom: "8px" } }, t("tips.heading")),
     el("p.note", {}, tip),
   ]);
 }

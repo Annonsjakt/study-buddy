@@ -6,6 +6,7 @@ import { localDayKey } from "../lib/activity.js";
 import { PRESETS, DEFAULT_PRESET } from "../claude.js";
 import { THEMES, getTheme, setTheme } from "../lib/theme.js";
 import { getReadMode, setReadMode } from "../lib/readmode.js";
+import { LANGS, getLang, setLang, t } from "../lib/i18n.js";
 
 export function renderSettings() {
   const s = store.settings;
@@ -55,6 +56,17 @@ export function renderSettings() {
   themeSel.value = getTheme();
   themeSel.addEventListener("change", () => { setTheme(themeSel.value); toast("Theme updated"); });
 
+  const langSel = el("select", { "aria-label": t("settings.language") },
+    LANGS.map(([v, label]) => opt(v, label)));
+  langSel.value = getLang();
+  // setLang fires sb:langchange, which re-renders the whole app — so the toast
+  // has to be queued after that render, not before it.
+  langSel.addEventListener("change", () => {
+    const chosen = langSel.value;
+    setLang(chosen);
+    setTimeout(() => toast(t("settings.langUpdated")), 0);
+  });
+
   const readModeCheck = el("input", { type: "checkbox", id: "readmode-toggle" });
   readModeCheck.checked = getReadMode();
   readModeCheck.addEventListener("change", () => {
@@ -67,8 +79,11 @@ export function renderSettings() {
 
     el("section.panel", {}, [
       el("h3", {}, "Appearance"),
-      el("label.field", { style: { marginTop: "12px", marginBottom: "0" } }, [
+      el("label.field", { style: { marginTop: "12px" } }, [
         el("span", {}, "Theme"), themeSel,
+      ]),
+      el("label.field", { style: { marginBottom: "0" } }, [
+        el("span", {}, t("settings.language")), langSel,
       ]),
     ]),
 

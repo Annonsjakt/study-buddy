@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="sv">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -32,6 +32,15 @@
           document.documentElement.setAttribute("data-readmode", "");
         }
       } catch (e) {}
+      try {
+        var supported = ["sv", "en"];
+        var l = localStorage.getItem("studybuddy.lang");
+        // Every bundled set is Swedish curriculum content, so that's the
+        // default when the student hasn't chosen — not a browser-language guess.
+        document.documentElement.setAttribute("lang", supported.indexOf(l) >= 0 ? l : "sv");
+      } catch (e) {
+        document.documentElement.setAttribute("lang", "sv");
+      }
     })();
   </script>
 

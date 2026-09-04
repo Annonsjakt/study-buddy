@@ -5,6 +5,7 @@ import { el, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
 import { announce, focusHeading } from "./lib/a11y.js";
 import { getTheme, setTheme } from "./lib/theme.js";
 import { openPopover, closePopover } from "./lib/popover.js";
+import { t, plural, LANGS, getLang, setLang, applyLang } from "./lib/i18n.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
 import { renderEdit } from "./views/edit.js";
@@ -49,28 +50,29 @@ function parseHash() {
   return () => renderMenu();
 }
 
-const NAV_ITEMS = [
-  { href: "#/", match: "/", icon: ICONS.home, label: "Hem" },
-  { href: "#/bibliotek", match: "/bibliotek", icon: ICONS.book, label: "Bibliotek" },
-  { href: "#/create", match: "/create", icon: ICONS.plus, label: "Skapa" },
-  { href: "#/progress", match: "/progress", icon: ICONS.chart, label: "Framsteg" },
-];
+function navItems() {
+  const items = [
+    { href: "#/", match: "/", icon: ICONS.home, label: t("nav.home") },
+    { href: "#/bibliotek", match: "/bibliotek", icon: ICONS.book, label: t("nav.library") },
+    { href: "#/create", match: "/create", icon: ICONS.plus, label: t("nav.create") },
+    { href: "#/progress", match: "/progress", icon: ICONS.chart, label: t("nav.progress") },
+  ];
+  if (store.authed) items.push({ href: "#/parent", match: "/parent", icon: ICONS.users, label: t("nav.parent") });
+  items.push({ href: "#/settings", match: "/settings", icon: ICONS.gear, label: t("nav.settings") });
+  return items;
+}
 
 function shell(contentNode) {
   const streak = store.streak;
   const path = "/" + (location.hash.replace(/^#\/?/, "").split("?")[0]);
   const isActive = (match) => match === "/" ? (path === "/") : path.startsWith(match);
 
-  const navItems = [...NAV_ITEMS];
-  if (store.authed) navItems.push({ href: "#/parent", match: "/parent", icon: ICONS.users, label: "Förälder/lärare" });
-  navItems.push({ href: "#/settings", match: "/settings", icon: ICONS.gear, label: "Inställningar" });
-
-  const sidebar = el("nav.sidebar", { "aria-label": "Huvudmeny" }, [
+  const sidebar = el("nav.sidebar", { "aria-label": t("nav.mainMenu") }, [
     el("a.sidebar__brand", { href: "#/" }, [
       el("img", { src: "assets/favicon.svg", alt: "" }),
       "StudyBuddy",
     ]),
-    el("div.sidebar__nav", {}, navItems.map((item) =>
+    el("div.sidebar__nav", {}, navItems().map((item) =>
       el("a", {
         class: "sidebar__link" + (isActive(item.match) ? " is-active" : ""),
         href: item.href,
@@ -80,9 +82,10 @@ function shell(contentNode) {
       "aria-label": `${streak} day study streak`,
     }, [
       el("span.sidebar__streak-icon", {}, icon(ICONS.flame, 18)),
-      streak > 0 ? `${streak}-dagars streak` : "Ingen streak än",
+      streak > 0 ? t("streak.days", { n: streak }) : t("streak.none"),
     ]),
     themePicker(),
+    langPicker(),
   ]);
 
   return el("div.shell", {}, [
@@ -97,13 +100,13 @@ function shell(contentNode) {
           el("span.topbar__spacer"),
           el("span.streakbadge", {
             "aria-label": `${streak} day study streak`,
-            title: `${streak}-day study streak`,
+            title: t("streak.days", { n: streak }),
           }, [icon(ICONS.flame, 14), el("span.tabular", {}, String(streak))]),
           el("div.topbar__nav-icons", {}, [
-            el("a.iconbtn", { href: "#/bibliotek", "aria-label": "Övningsbibliotek", title: "Övningsbibliotek" }, [icon(ICONS.book, 18)]),
-            el("a.iconbtn", { href: "#/progress", "aria-label": "Progress", title: "Progress" }, [icon(ICONS.chart, 18)]),
-            store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
-            el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
+            el("a.iconbtn", { href: "#/bibliotek", "aria-label": t("nav.library"), title: t("nav.library") }, [icon(ICONS.book, 18)]),
+            el("a.iconbtn", { href: "#/progress", "aria-label": t("nav.progress"), title: t("nav.progress") }, [icon(ICONS.chart, 18)]),
+            store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": t("nav.parent"), title: t("nav.parent") }, [icon(ICONS.users, 18)]),
+            el("a.iconbtn", { href: "#/settings", "aria-label": t("nav.settings"), title: t("nav.settings") }, [icon(ICONS.gear, 18)]),
           ].filter(Boolean)),
           topbarActions(),
         ]),
@@ -113,21 +116,20 @@ function shell(contentNode) {
   ]);
 }
 
-const THEME_OPTIONS = [
-  ["light", ICONS.sun, "Light"],
-  ["system", ICONS.monitor, "Match my device"],
-  ["dark", ICONS.moon, "Dark"],
-];
-
 /** Segmented light/system/dark switcher for the sidebar. Self-painting so a
  *  click doesn't have to re-render the whole shell just to update itself. */
 function themePicker() {
-  const wrap = el("div.sidebar__theme", { role: "group", "aria-label": "Theme" });
+  const wrap = el("div.sidebar__theme", { role: "group", "aria-label": t("theme.group") });
 
   function paint() {
     clear(wrap);
     const current = getTheme();
-    for (const [value, path, label] of THEME_OPTIONS) {
+    const options = [
+      ["light", ICONS.sun, t("theme.light")],
+      ["system", ICONS.monitor, t("theme.system")],
+      ["dark", ICONS.moon, t("theme.dark")],
+    ];
+    for (const [value, path, label] of options) {
       wrap.appendChild(el("button.sidebar__theme-btn", {
         type: "button",
         "aria-pressed": String(value === current),
@@ -139,6 +141,22 @@ function themePicker() {
 
   paint();
   return wrap;
+}
+
+/** Segmented Swedish/English switcher, right under the theme picker. Firing
+ *  setLang() triggers a full app re-render (see the sb:langchange listener
+ *  below), so this one doesn't need its own repaint like themePicker does. */
+function langPicker() {
+  const current = getLang();
+  return el("div.sidebar__theme", { role: "group", "aria-label": "Language" },
+    LANGS.map(([code, label, flag]) =>
+      el("button.sidebar__theme-btn", {
+        type: "button",
+        "aria-pressed": String(code === current),
+        "aria-label": label, title: label,
+        html: flag,
+        onclick: () => setLang(code),
+      })));
 }
 
 /** Notification bell + account button, top-right in every topbar (mobile's
@@ -158,32 +176,32 @@ function topbarActions() {
   const hasNotif = due > 0 || examSoon;
 
   const bellBtn = el("button.iconbtn.topbar__bell", {
-    type: "button", "aria-label": "Notiser", "aria-haspopup": "menu", title: "Notiser",
+    type: "button", "aria-label": t("topbar.notifications"), "aria-haspopup": "menu", title: t("topbar.notifications"),
     onclick: (e) => {
       e.stopPropagation();
       const items = [];
-      if (due > 0) items.push(popoverLink("#/review", ICONS.spark, `${due} fråg${due === 1 ? "a" : "or"} väntar på repetition`));
+      if (due > 0) items.push(popoverLink("#/review", ICONS.spark, plural(due, "notif.dueReviewOne", "notif.dueReviewMany")));
       if (examSoon) items.push(popoverLink("#/", ICONS.graduation,
-        examDays === 0 ? "Provet är idag" : examDays === 1 ? "Provet är imorgon" : `Provet är om ${examDays} dagar`));
-      if (!items.length) items.push(el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, "Inga nya notiser."));
+        examDays === 0 ? t("notif.examToday") : examDays === 1 ? t("notif.examTomorrow") : t("notif.examInDays", { n: examDays })));
+      if (!items.length) items.push(el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, t("notif.none")));
       openPopover(e.currentTarget, items, { align: "right" });
     },
   }, [icon(ICONS.bell, 18), hasNotif ? el("span.topbar__dot") : null].filter(Boolean));
 
   const profileBtn = el("button.iconbtn.topbar__profile", {
-    type: "button", "aria-label": "Konto", "aria-haspopup": "menu", title: "Konto",
+    type: "button", "aria-label": t("topbar.account"), "aria-haspopup": "menu", title: t("topbar.account"),
     onclick: (e) => {
       e.stopPropagation();
       const items = store.authed ? [
-        el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, `Inloggad som ${store.authEmail}`),
-        popoverLink("#/settings", ICONS.gear, "Inställningar"),
+        el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, t("account.signedInAs", { email: store.authEmail })),
+        popoverLink("#/settings", ICONS.gear, t("account.settings")),
         el("button.cardmenu__item.cardmenu__item--danger", {
           type: "button",
-          onclick: async () => { closePopover(); await store.logout(); toast("Signed out — local mode"); },
-        }, [icon(ICONS.logout, 15), "Logga ut"]),
+          onclick: async () => { closePopover(); await store.logout(); toast(t("account.signOutDone")); },
+        }, [icon(ICONS.logout, 15), t("account.signOut")]),
       ] : [
-        popoverLink("#/login", ICONS.user, "Logga in / skapa konto"),
-        popoverLink("#/settings", ICONS.gear, "Inställningar"),
+        popoverLink("#/login", ICONS.user, t("account.signIn")),
+        popoverLink("#/settings", ICONS.gear, t("account.settings")),
       ];
       openPopover(e.currentTarget, items, { align: "right" });
     },
@@ -204,7 +222,7 @@ async function render() {
   const viewFn = parseHash();
   mount(app, shell(el("div", {
     style: { padding: "40px", textAlign: "center", color: "var(--ink-faint)" },
-  }, "Loading…")));
+  }, t("common.loading"))));
 
   try {
     const result = await viewFn();
@@ -226,15 +244,17 @@ async function render() {
   } catch (e) {
     console.error(e);
     mount(app, shell(el("div.empty", {}, [
-      el("h2", {}, "Something went wrong"),
+      el("h2", {}, t("common.error")),
       el("p", {}, String(e?.message || e)),
-      el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, "Back to menu"),
+      el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
     ])));
-    announce("Something went wrong.");
+    announce(t("common.error"));
   }
 }
 
 window.addEventListener("hashchange", render);
+// A language switch re-renders exactly like a navigation.
+window.addEventListener("sb:langchange", () => { applyLang(); render(); });
 
 // Offline support + home-screen install. Only over http(s) — a service worker
 // can't register from file://, and failing to register is not fatal.
