@@ -5,6 +5,7 @@ import { uid } from "./lib/dom.js";
 import { localDayKey, currentStreak } from "./lib/activity.js";
 import { findQuestion as findQuestionPure, dueQuestions as dueQuestionsPure } from "./lib/library.js";
 import { PROXY_HEALTH_URL, AUTH_SIGNUP_URL, AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL, STATE_URL } from "./config.js";
+import { t } from "./lib/i18n.js";
 
 const KEY = "studybuddy.v1";
 const SCHEMA_VERSION = 5;
@@ -235,7 +236,7 @@ class Store extends EventTarget {
   }
 
   ensureSubject(name) {
-    const clean = (name || "General").trim();
+    const clean = (name || t("sets.generalSubject")).trim();
     let s = this.state.subjects.find((x) => x.name.toLowerCase() === clean.toLowerCase());
     if (!s) {
       const used = new Set(this.state.subjects.map((x) => x.color));
@@ -265,7 +266,7 @@ class Store extends EventTarget {
       id: doc.id && !this.getAssignment(doc.id) ? doc.id : uid(),
       type: doc.type === "test" ? "test" : "assignment",
       subjectId: subject.id,
-      title: doc.title || "Untitled",
+      title: doc.title || t("store.untitled"),
       sourceSummary: doc.sourceSummary || "",
       createdAt: Date.now(),
       tutorStyle: doc.tutorStyle || "adaptive",
@@ -379,7 +380,7 @@ class Store extends EventTarget {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.error?.message || "Could not create an account.");
+    if (!res.ok) throw new Error(data?.error?.message || t("store.couldNotCreateAccount"));
     this.authed = true;
     this.authEmail = data.email;
     this._setSyncVersion(0);
@@ -394,7 +395,7 @@ class Store extends EventTarget {
       body: JSON.stringify({ email, password }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.error?.message || "Could not sign in.");
+    if (!res.ok) throw new Error(data?.error?.message || t("store.couldNotSignIn"));
     this.authed = true;
     this.authEmail = data.email;
     await this._pullOnLogin();

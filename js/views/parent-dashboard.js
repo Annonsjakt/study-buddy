@@ -12,6 +12,7 @@ import {
   LINKS_URL, INVITE_CODE_URL, REDEEM_CODE_URL, ASSIGNED_FOR_ME_URL, ASSIGN_URL,
   studentStateUrl, unlinkUrl, clearAssignedUrl,
 } from "../config.js";
+import { t } from "../lib/i18n.js";
 
 async function api(url, opts) {
   const res = await fetch(url, {
@@ -20,25 +21,25 @@ async function api(url, opts) {
     ...opts,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error?.message || "Request failed.");
+  if (!res.ok) throw new Error(data?.error?.message || t("parent.requestFailed"));
   return data;
 }
 
 function signedOutNode() {
   return el("div.settings", {}, [
-    el("h1", {}, "Parent / teacher"),
+    el("h1", {}, t("parent.title")),
     el("section.panel", {}, [
-      el("p.note", { style: { marginBottom: "12px" } }, "Sign in to link accounts, assign work, and see progress."),
-      el("a.btn", { href: "#/login" }, "Sign in"),
+      el("p.note", { style: { marginBottom: "12px" } }, t("parent.signInIntro")),
+      el("a.btn", { href: "#/login" }, t("login.signIn")),
     ]),
-    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), "Back to menu"]),
+    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("common.backToMenu")]),
   ]);
 }
 
 // ---------- hub: /parent ----------
 
 export function renderParentHub() {
-  if (!store.authed) return { title: "Parent / teacher", node: signedOutNode() };
+  if (!store.authed) return { title: t("parent.title"), node: signedOutNode() };
 
   const studentsPanel = el("section.panel");
   const parentsPanel = el("section.panel");
@@ -56,17 +57,17 @@ export function renderParentHub() {
   function paintStudents(list) {
     clear(studentsPanel);
     studentsPanel.append(
-      el("h3", { style: { marginBottom: "8px" } }, "Students you're linked to"),
+      el("h3", { style: { marginBottom: "8px" } }, t("parent.studentsHeading")),
       list.length
         ? el("div", { style: { display: "grid", gap: "8px" } }, list.map(studentRow))
-        : el("p.note", { style: { marginBottom: "12px" } }, "None yet — redeem a student's invite code below."),
+        : el("p.note", { style: { marginBottom: "12px" } }, t("parent.noneYet")),
       redeemForm(),
     );
   }
 
   function studentRow(link) {
     const assignRow = el("div", { style: { display: "none", marginTop: "8px" } });
-    const assignBtn = el("button.btn.btn--ghost.btn--sm", { type: "button" }, "Assign a set");
+    const assignBtn = el("button.btn.btn--ghost.btn--sm", { type: "button" }, t("parent.assignSet"));
     assignBtn.addEventListener("click", () => {
       const opening = assignRow.style.display === "none";
       assignRow.style.display = opening ? "flex" : "none";
@@ -81,11 +82,11 @@ export function renderParentHub() {
           el("button.btn.btn--ghost.btn--sm", {
             type: "button", style: { color: "var(--retry-ink)" },
             onclick: async () => {
-              if (!confirm(`Unlink ${link.studentEmail}?`)) return;
+              if (!confirm(t("parent.unlinkConfirm", { email: link.studentEmail }))) return;
               try { await api(unlinkUrl(link.linkId), { method: "DELETE" }); refreshLinks(); }
               catch (e) { toast(e.message); }
             },
-          }, "Unlink"),
+          }, t("parent.unlink")),
         ]),
       ]),
       assignRow,
@@ -94,23 +95,23 @@ export function renderParentHub() {
 
   function assignPicker(link) {
     if (!store.assignments.length) {
-      return [el("p.note", {}, "You don't have any sets of your own to assign yet — make one from the menu first.")];
+      return [el("p.note", {}, t("parent.noOwnSets"))];
     }
     const sel = el("select", {}, store.assignments.map((a) =>
       el("option", { value: a.id }, `${a.title} (${a.questions.length} questions)`)));
-    const btn = el("button.btn.btn--sm", { type: "button" }, "Assign");
+    const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.assign"));
     btn.addEventListener("click", async () => {
       const a = store.getAssignment(sel.value);
       if (!a) return;
       const doc = {
         title: a.title,
-        subject: store.subjects.find((s) => s.id === a.subjectId)?.name || "General",
+        subject: store.subjects.find((s) => s.id === a.subjectId)?.name || t("sets.generalSubject"),
         questions: a.questions,
       };
       btn.disabled = true;
       try {
         await api(ASSIGN_URL, { method: "POST", body: JSON.stringify({ studentUserId: link.studentUserId, doc }) });
-        toast(`Assigned "${a.title}" to ${link.studentEmail}`);
+        toast(t("parent.assignedToast", { title: a.title, email: link.studentEmail }));
       } catch (e) { toast(e.message); }
       btn.disabled = false;
     });
@@ -118,22 +119,22 @@ export function renderParentHub() {
   }
 
   function redeemForm() {
-    const input = el("input", { type: "text", placeholder: "e.g. AB12CD", style: { textTransform: "uppercase" } });
-    const btn = el("button.btn.btn--sm", { type: "button" }, "Link");
+    const input = el("input", { type: "text", placeholder: t("parent.inviteCodePlaceholder"), style: { textTransform: "uppercase" } });
+    const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.link"));
     btn.addEventListener("click", async () => {
       const code = input.value.trim();
       if (!code) return;
       btn.disabled = true;
       try {
         const data = await api(REDEEM_CODE_URL, { method: "POST", body: JSON.stringify({ code }) });
-        toast(`Linked to ${data.studentEmail}`);
+        toast(t("parent.linkedTo", { email: data.studentEmail }));
         input.value = "";
         refreshLinks();
       } catch (e) { toast(e.message); }
       btn.disabled = false;
     });
     return el("div", { style: { marginTop: "4px" } }, [
-      el("label.field", { style: { marginBottom: "8px" } }, [el("span", {}, "Have a student's invite code?"), input]),
+      el("label.field", { style: { marginBottom: "8px" } }, [el("span", {}, t("parent.haveCode")), input]),
       btn,
     ]);
   }
@@ -141,7 +142,7 @@ export function renderParentHub() {
   function paintParents(list) {
     clear(parentsPanel);
     parentsPanel.append(
-      el("h3", { style: { marginBottom: "8px" } }, "Parents / teachers linked to you"),
+      el("h3", { style: { marginBottom: "8px" } }, t("parent.parentsHeading")),
       list.length
         ? el("div", { style: { display: "grid", gap: "8px" } }, list.map((link) =>
             el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: "var(--r-md)" } }, [
@@ -149,55 +150,55 @@ export function renderParentHub() {
               el("button.btn.btn--ghost.btn--sm", {
                 type: "button", style: { color: "var(--retry-ink)" },
                 onclick: async () => {
-                  if (!confirm(`Unlink ${link.parentEmail}?`)) return;
+                  if (!confirm(t("parent.unlinkConfirm", { email: link.parentEmail }))) return;
                   try { await api(unlinkUrl(link.linkId), { method: "DELETE" }); refreshLinks(); }
                   catch (e) { toast(e.message); }
                 },
-              }, "Unlink"),
+              }, t("parent.unlink")),
             ])))
-        : el("p.note", {}, "No one yet. Generate a code above and share it with a parent or teacher."),
+        : el("p.note", {}, t("parent.noParentsYet")),
     );
   }
 
   async function paintAssigned() {
     clear(assignedPanel);
-    assignedPanel.append(el("h3", { style: { marginBottom: "8px" } }, "Assigned to you"));
+    assignedPanel.append(el("h3", { style: { marginBottom: "8px" } }, t("parent.assignedHeading")));
     let list;
     try { list = await api(ASSIGNED_FOR_ME_URL); }
-    catch (e) { assignedPanel.append(el("p.note", {}, "Couldn't load assigned sets.")); return; }
+    catch (e) { assignedPanel.append(el("p.note", {}, t("parent.couldntLoadAssigned"))); return; }
 
-    if (!list.length) { assignedPanel.append(el("p.note", {}, "Nothing waiting right now.")); return; }
+    if (!list.length) { assignedPanel.append(el("p.note", {}, t("parent.nothingWaiting"))); return; }
     assignedPanel.append(el("div", { style: { display: "grid", gap: "8px" } }, list.map((item) => {
-      const btn = el("button.btn.btn--sm", { type: "button" }, "Add to my library");
+      const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.addToLibrary"));
       btn.addEventListener("click", async () => {
         btn.disabled = true;
         store.addAssignmentDoc(item.doc);
         try { await api(clearAssignedUrl(item.id), { method: "DELETE" }); } catch {}
-        toast(`Added "${item.doc.title}" to your library`);
+        toast(t("parent.addedToLibrary", { title: item.doc.title }));
         paintAssigned();
       });
       return el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: "var(--r-md)", flexWrap: "wrap", gap: "8px" } }, [
-        el("span", {}, [item.doc.title, el("span.note", { style: { display: "block" } }, `from ${item.assignedByEmail}`)]),
+        el("span", {}, [item.doc.title, el("span.note", { style: { display: "block" } }, t("parent.fromEmail", { email: item.assignedByEmail }))]),
         btn,
       ]);
     })));
   }
 
   function paintInvite() {
-    const status = el("p.note", { style: { margin: "6px 0 12px" } }, "Generate a code and share it with a parent or teacher so they can link to your account.");
+    const status = el("p.note", { style: { margin: "6px 0 12px" } }, t("parent.inviteStatus"));
     const codeDisplay = el("p", { style: { display: "none", fontSize: "22px", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "monospace" } });
-    const btn = el("button.btn.btn--sm", { type: "button" }, "Generate invite code");
+    const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.generateCode"));
     btn.addEventListener("click", async () => {
       btn.disabled = true;
       try {
         const data = await api(INVITE_CODE_URL, { method: "POST" });
         codeDisplay.textContent = data.code;
         codeDisplay.style.display = "";
-        status.textContent = "Share this code — it expires in 30 minutes and works once.";
+        status.textContent = t("parent.inviteGenerated");
       } catch (e) { toast(e.message); }
       btn.disabled = false;
     });
-    invitePanel.append(el("h3", { style: { marginBottom: "8px" } }, "Invite a parent"), status, codeDisplay, btn);
+    invitePanel.append(el("h3", { style: { marginBottom: "8px" } }, t("parent.inviteHeading")), status, codeDisplay, btn);
   }
 
   refreshLinks();
@@ -205,21 +206,21 @@ export function renderParentHub() {
   paintInvite();
 
   const node = el("div.settings", {}, [
-    el("h1", {}, "Parent / teacher"),
+    el("h1", {}, t("parent.title")),
     invitePanel,
     studentsPanel,
     parentsPanel,
     assignedPanel,
-    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), "Back to menu"]),
+    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("common.backToMenu")]),
   ]);
 
-  return { title: "Parent / teacher", node };
+  return { title: t("parent.title"), node };
 }
 
 // ---------- per-student read-only detail: /parent/:studentId ----------
 
 export async function renderParentStudent(studentUserId) {
-  if (!store.authed) return { title: "Parent / teacher", node: signedOutNode() };
+  if (!store.authed) return { title: t("parent.title"), node: signedOutNode() };
 
   let blob;
   try {
@@ -227,22 +228,22 @@ export async function renderParentStudent(studentUserId) {
     blob = data.blob;
   } catch (e) {
     return {
-      title: "Parent / teacher",
+      title: t("parent.title"),
       node: el("div.settings", {}, [
-        el("h1", {}, "Not available"),
+        el("h1", {}, t("parent.notAvailable")),
         el("section.panel", {}, [el("p.note", {}, e.message)]),
-        el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), "Back"]),
+        el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), t("parent.back")]),
       ]),
     };
   }
 
   if (!blob) {
     return {
-      title: "Parent / teacher",
+      title: t("parent.title"),
       node: el("div.settings", {}, [
-        el("h1", {}, "No data yet"),
-        el("section.panel", {}, [el("p.note", {}, "This student hasn't synced anything yet.")]),
-        el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), "Back"]),
+        el("h1", {}, t("parent.noDataYet")),
+        el("section.panel", {}, [el("p.note", {}, t("parent.notSyncedYet"))]),
+        el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), t("parent.back")]),
       ]),
     };
   }
@@ -266,28 +267,28 @@ export async function renderParentStudent(studentUserId) {
     });
 
   const node = el("div.settings", {}, [
-    el("h1", {}, "Student progress"),
+    el("h1", {}, t("parent.studentProgress")),
 
     el("section.panel", {}, [
       el("h3", { style: { marginBottom: "10px", display: "flex", alignItems: "center", gap: "10px" } }, [
-        "Study streak",
-        el("span.streakbadge", {}, [icon(ICONS.flame, 13), `${streak} day${streak === 1 ? "" : "s"}`]),
+        t("progress.studyStreak"),
+        el("span.streakbadge", {}, [icon(ICONS.flame, 13), t("streak.days", { n: streak })]),
       ]),
-      el("p.note", {}, `${(blob.activity?.daysStudied || []).length} day(s) studied · ${(blob.attempts || []).length} session(s) completed`),
+      el("p.note", {}, t("parent.daysSessionsStat", { days: (blob.activity?.daysStudied || []).length, sessions: (blob.attempts || []).length })),
     ]),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "8px" } }, "Mastery by subject"),
-      meters.length ? el("div", {}, meters) : el("p.note", {}, "No mastery data yet."),
+      el("h3", { style: { marginBottom: "8px" } }, t("progress.masteryBySubject")),
+      meters.length ? el("div", {}, meters) : el("p.note", {}, t("parent.noMasteryData")),
     ]),
 
     el("section.panel", {}, [
-      el("h3", {}, `Due for review${due.length ? ` (${due.length})` : ""}`),
-      due.length ? el("p.note", {}, `${due.length} question(s) due.`) : el("p.note", {}, "Nothing due right now."),
+      el("h3", {}, t("progress.dueForReview") + (due.length ? ` (${due.length})` : "")),
+      due.length ? el("p.note", {}, t("parent.questionsDue", { n: due.length })) : el("p.note", {}, t("parent.nothingDueNow")),
     ]),
 
-    el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), "Back"]),
+    el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), t("parent.back")]),
   ]);
 
-  return { title: "Student progress", node };
+  return { title: t("parent.studentProgress"), node };
 }

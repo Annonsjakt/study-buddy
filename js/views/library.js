@@ -5,6 +5,7 @@
 import { store } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { loadLibraryIndex, isImported, importSet } from "../data/library.js";
+import { t, plural } from "../lib/i18n.js";
 
 export async function renderLibrary() {
   let index;
@@ -12,11 +13,11 @@ export async function renderLibrary() {
     index = await loadLibraryIndex();
   } catch (e) {
     return {
-      title: "Övningsbibliotek",
+      title: t("library.pageTitle"),
       node: el("div.empty", {}, [
-        el("h2", {}, "Kunde inte ladda biblioteket"),
-        el("p", {}, e.message || "Försök igen om en stund."),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, "Till startsidan"),
+        el("h2", {}, t("library.loadFailed")),
+        el("p", {}, e.message || t("library.tryAgain")),
+        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("library.toHome")),
       ]),
     };
   }
@@ -28,8 +29,8 @@ export async function renderLibrary() {
   // bodyEl, never this input or the header above it.
   const searchInput = el("input.search__input", {
     type: "search",
-    placeholder: "Sök i biblioteket — ämne, kurs eller set…",
-    "aria-label": "Sök i övningsbiblioteket",
+    placeholder: t("library.searchPlaceholder"),
+    "aria-label": t("library.searchAria"),
     value: state.query,
     oninput: (e) => { state.query = e.target.value; paintBody(); },
     onkeydown: (e) => {
@@ -55,9 +56,9 @@ export async function renderLibrary() {
 
     headerEl.appendChild(el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
       back
-        ? el("button.iconbtn", { type: "button", "aria-label": "Tillbaka", onclick: back }, [icon(ICONS.back, 18)])
-        : el("a.iconbtn", { href: "#/", "aria-label": "Tillbaka" }, [icon(ICONS.back, 18)]),
-      el("h1", {}, "Övningsbibliotek"),
+        ? el("button.iconbtn", { type: "button", "aria-label": t("library.back"), onclick: back }, [icon(ICONS.back, 18)])
+        : el("a.iconbtn", { href: "#/", "aria-label": t("library.back") }, [icon(ICONS.back, 18)]),
+      el("h1", {}, t("library.pageTitle")),
     ]));
   }
 
@@ -81,7 +82,7 @@ export async function renderLibrary() {
 
     if (!matches.length) {
       return el("div.panel", {}, [
-        el("p.note", {}, `Inga träffar för "${state.query.trim()}". Prova ett ämne, en kurs eller en årskurs.`),
+        el("p.note", {}, t("library.noMatches", { query: state.query.trim() })),
       ]);
     }
 
@@ -101,7 +102,7 @@ export async function renderLibrary() {
     });
 
     return el("div", {}, [
-      el("p.note", { style: { marginBottom: "12px" } }, `${matches.length} träff${matches.length === 1 ? "" : "ar"}`),
+      el("p.note", { style: { marginBottom: "12px" } }, plural(matches.length, "library.matchOne", "library.matchMany")),
       ...sections,
     ]);
   }
@@ -110,8 +111,7 @@ export async function renderLibrary() {
   function levelPicker() {
     const levels = index.levels.filter((l) => index.subjects.some((s) => s.level === l.id));
     return el("div.panel", {}, [
-      el("p", { style: { marginBottom: "16px" } },
-        "Färdiga övningar du kan börja plugga på direkt — ingen egen uppladdning behövs. Välj nivå för att se ämnen."),
+      el("p", { style: { marginBottom: "16px" } }, t("library.levelIntro")),
       el("div.source-grid", {}, levels.map((lvl) =>
         el("button.source-opt", { type: "button", onclick: () => { state.level = lvl.id; paint(); } }, [
           icon(ICONS.graduation, 26), lvl.label,
@@ -124,7 +124,7 @@ export async function renderLibrary() {
     const level = index.levels.find((l) => l.id === state.level);
     const subjects = index.subjects.filter((s) => s.level === state.level);
     return el("div.panel", {}, [
-      el("p", { style: { marginBottom: "16px" } }, `${level?.label} — vilket ämne vill du plugga?`),
+      el("p", { style: { marginBottom: "16px" } }, t("library.subjectIntro", { level: level?.label })),
       el("div.source-grid", {}, subjects.map((subject) =>
         el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
           icon(ICONS.book, 26), subject.name,
@@ -145,12 +145,12 @@ export async function renderLibrary() {
         e.currentTarget.disabled = true;
         let added = 0;
         for (const s of missing) {
-          try { if (await importSet(s)) added++; } catch { /* hoppa över det som strular */ }
+          try { if (await importSet(s)) added++; } catch { /* skip whatever fails */ }
         }
-        toast(added ? `La till ${added} set` : "Allt fanns redan i ditt bibliotek");
+        toast(added ? plural(added, "library.addedOne", "library.addedMany") : t("library.allAlready"));
         paint();
       },
-    }, [icon(ICONS.plus, 16), `Lägg till alla (${missing.length})`]);
+    }, [icon(ICONS.plus, 16), t("library.addAll", { n: missing.length })]);
 
     return el("div", {}, [
       el("section.panel", { style: { marginBottom: "24px" } }, [
@@ -159,7 +159,7 @@ export async function renderLibrary() {
             el("h3", {}, subject.name),
             el("p.note", { style: { marginTop: "4px" } }, subject.description),
           ]),
-          missing.length ? addAllBtn : el("span.note", {}, "Alla set tillagda ✓"),
+          missing.length ? addAllBtn : el("span.note", {}, t("library.allAdded")),
         ]),
         el("div.libgrid", {}, sets.map(setCard)),
       ]),
@@ -170,29 +170,30 @@ export async function renderLibrary() {
     const imported = isImported(entry.id);
 
     const action = imported
-      ? el("a.btn.btn--ghost.btn--sm", { href: `#/session/${entry.id}` }, [icon(ICONS.play, 16), "Plugga"])
+      ? el("a.btn.btn--ghost.btn--sm", { href: `#/session/${entry.id}` }, [icon(ICONS.play, 16), t("library.study")])
       : el("button.btn.btn--sm", {
           type: "button",
           onclick: async (e) => {
             e.currentTarget.disabled = true;
             try {
               await importSet(entry);
-              toast(`”${entry.title}” tillagt`);
+              toast(t("library.added", { title: entry.title }));
               paint();
             } catch (err) {
-              toast(err.message || "Kunde inte lägga till setet");
+              toast(err.message || t("library.addFailed"));
               e.currentTarget.disabled = false;
             }
           },
-        }, [icon(ICONS.plus, 16), "Lägg till"]);
+        }, [icon(ICONS.plus, 16), t("library.add")]);
 
-    // Same set, exam conditions: locked tutor, no facit förrän efteråt, med
-    // tidtagning — bara tillgängligt när setet redan finns i biblioteket.
+    // Same set, exam conditions: locked tutor, answer key withheld until
+    // done, with a timer — only available once the set is already in the
+    // library.
     const examAction = imported
       ? el("a.btn.btn--ghost.btn--sm", {
           href: `#/session/${entry.id}?exam=1`,
-          title: "Provläge: tidtagning, inga ledtrådar och facit visas först när du är klar.",
-        }, [icon(ICONS.clock, 16), "Provläge"])
+          title: t("library.examModeTooltip"),
+        }, [icon(ICONS.clock, 16), t("library.examMode")])
       : null;
 
     return el("div.libcard", {}, [
@@ -201,7 +202,7 @@ export async function renderLibrary() {
         el("p.note", { style: { margin: "4px 0 0" } }, entry.summary),
       ]),
       el("div.libcard__foot", {}, [
-        el("span.note", {}, `${entry.count} frågor`),
+        el("span.note", {}, plural(entry.count, "library.questionsOne", "library.questionsMany")),
         el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } }, [examAction, action].filter(Boolean)),
       ]),
     ]);
@@ -211,5 +212,5 @@ export async function renderLibrary() {
   root.appendChild(searchWrap);
   root.appendChild(bodyEl);
   paint();
-  return { title: "Övningsbibliotek", node: root };
+  return { title: t("library.pageTitle"), node: root };
 }

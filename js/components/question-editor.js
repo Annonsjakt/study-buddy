@@ -8,12 +8,13 @@
 //   editor.commit()    -> drops blank questions, returns the cleaned list
 
 import { el, clear, icon, ICONS, uid } from "../lib/dom.js";
+import { t } from "../lib/i18n.js";
 
-const KINDS = [
-  ["mc", "Multiple choice"],
-  ["text", "Short answer"],
-  ["flashcard", "Flashcard"],
-  ["worked", "Worked problem"],
+const KINDS = () => [
+  ["mc", t("qedit.mc")],
+  ["text", t("qedit.text")],
+  ["flashcard", t("qedit.flashcard")],
+  ["worked", t("qedit.worked")],
 ];
 
 export function questionEditor(doc, { onChange } = {}) {
@@ -25,7 +26,7 @@ export function questionEditor(doc, { onChange } = {}) {
     clear(list);
     if (!doc.questions.length) {
       list.appendChild(el("p.note", { style: { padding: "16px 0" } },
-        "No questions yet — add one below."));
+        t("qedit.noQuestions")));
     }
     doc.questions.forEach((q, i) => list.appendChild(questionBlock(q, i)));
     changed();
@@ -71,12 +72,12 @@ export function questionEditor(doc, { onChange } = {}) {
             }, "×"),
           ].filter(Boolean)));
         });
-        body.appendChild(el("p.note", { style: { marginTop: "4px" } }, "Select the radio button next to the correct choice."));
+        body.appendChild(el("p.note", { style: { marginTop: "4px" } }, t("qedit.selectCorrect")));
         if (q.choices.length < 5) {
           body.appendChild(el("button.btn.btn--ghost.btn--sm", {
             type: "button", style: { marginTop: "8px" },
             onclick: () => { q.choices.push(""); paintBody(); },
-          }, "+ choice"));
+          }, t("qedit.addChoice")));
         }
       } else {
         const ansTa = el("textarea", {
@@ -85,7 +86,7 @@ export function questionEditor(doc, { onChange } = {}) {
         });
         ansTa.value = typeof q.answer === "string" ? q.answer : "";
         body.appendChild(el("label.field", { style: { marginTop: "8px", marginBottom: "0" } }, [
-          el("span", {}, q.kind === "flashcard" ? "Back of card" : "Model answer"),
+          el("span", {}, q.kind === "flashcard" ? t("qedit.backOfCard") : t("qedit.modelAnswer")),
           ansTa,
         ]));
       }
@@ -104,12 +105,12 @@ export function questionEditor(doc, { onChange } = {}) {
         }
         paintBody();
       },
-    }, KINDS.map(([v, l]) => el("option", { value: v }, l)));
+    }, KINDS().map(([v, l]) => el("option", { value: v }, l)));
     kindSel.value = q.kind;
 
     const topicInput = el("input", {
       type: "text", value: q.topic || "", style: { maxWidth: "170px" },
-      placeholder: "topic", "aria-label": "Topic tag",
+      placeholder: t("qedit.topicPlaceholder"), "aria-label": "Topic tag",
       oninput: (e) => { q.topic = e.target.value.toLowerCase(); },
     });
 
@@ -119,13 +120,13 @@ export function questionEditor(doc, { onChange } = {}) {
       topicInput,
       el("span", { style: { flex: "1" } }),
       el("button.iconbtn.iconbtn--sm", {
-        type: "button", "aria-label": `Delete question ${idx + 1}`, title: "Delete question",
+        type: "button", "aria-label": `Delete question ${idx + 1}`, title: t("qedit.deleteQuestion"),
         style: { color: "var(--retry-ink)" },
         onclick: () => { doc.questions.splice(idx, 1); paint(); },
       }, [icon(ICONS.trash, 15)]),
     ]));
     wrap.appendChild(el("label.field", { style: { marginBottom: "8px" } }, [
-      el("span", {}, "Question"), promptTa,
+      el("span", {}, t("qedit.questionLabel")), promptTa,
     ]));
     wrap.appendChild(body);
     return wrap;

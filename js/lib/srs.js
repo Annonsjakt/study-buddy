@@ -2,6 +2,8 @@
 //   { ease, intervalDays, dueAt (ms), reps, lapses }
 // grade: "again" | "hard" | "good" | "easy"  (also accepts correct:boolean via fromCorrect)
 
+import { t } from "./i18n.js";
+
 const DAY = 86400000;
 
 export function fresh() {
@@ -43,12 +45,12 @@ export function isDue(rec, now = Date.now()) {
 }
 
 export function dueLabel(rec, now = Date.now()) {
-  if (isDue(rec, now)) return "due now";
+  if (isDue(rec, now)) return t("srs.dueNow");
   const days = Math.ceil((rec.dueAt - now) / DAY);
-  if (days <= 1) return "tomorrow";
-  if (days < 7) return `in ${days} days`;
-  if (days < 30) return `in ${Math.round(days / 7)} wk`;
-  return `in ${Math.round(days / 30)} mo`;
+  if (days <= 1) return t("srs.tomorrow");
+  if (days < 7) return t("srs.inDays", { n: days });
+  if (days < 30) return t("srs.inWeeks", { n: Math.round(days / 7) });
+  return t("srs.inMonths", { n: Math.round(days / 30) });
 }
 
 function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }

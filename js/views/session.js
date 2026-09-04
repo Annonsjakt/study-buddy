@@ -11,11 +11,12 @@ import { announce } from "../lib/a11y.js";
 import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
+import { t, plural } from "../lib/i18n.js";
 
 export async function renderSession(assignmentId, qs) {
   const assignment = store.getAssignment(assignmentId);
-  if (!assignment) return notFound("That set no longer exists.");
-  if (!assignment.questions.length) return notFound("That set has no questions yet.");
+  if (!assignment) return notFound(t("session.setGone"));
+  if (!assignment.questions.length) return notFound(t("session.setEmpty"));
 
   // ?exam=1 runs ANY set — assignment or library import — under test
   // conditions (locked tutor, no immediate feedback, on-screen clock)
@@ -48,12 +49,12 @@ export async function renderReview() {
   const due = store.dueQuestions();
   if (!due.length) {
     return {
-      title: "Review",
+      title: t("session.reviewTitle"),
       node: el("div.empty", {}, [
         icon(ICONS.check, 26),
-        el("h2", {}, "Nothing due right now"),
-        el("p", {}, "Spaced repetition brings questions back just before you'd forget them. Come back tomorrow, or study a set to add more."),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, "Back to menu"),
+        el("h2", {}, t("session.nothingDue")),
+        el("p", {}, t("session.nothingDueBody")),
+        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
       ]),
     };
   }
@@ -61,7 +62,7 @@ export async function renderReview() {
   return runSession({
     key: REVIEW_ID,
     assignmentId: REVIEW_ID,
-    title: "Review session",
+    title: t("session.reviewSessionTitle"),
     type: "assignment",
     retryHash: "#/review",
     questionIds: due.map((d) => d.question.id),
@@ -71,7 +72,7 @@ export async function renderReview() {
 /** Practise just the questions missed in a given attempt. */
 export async function renderPractice(attemptId) {
   const attempt = store.attempts.find((a) => a.id === attemptId);
-  if (!attempt) return notFound("That result is no longer available.");
+  if (!attempt) return notFound(t("session.resultGone"));
 
   const ids = (attempt.items || [])
     .filter((i) => !i.correct)
@@ -80,12 +81,12 @@ export async function renderPractice(attemptId) {
 
   if (!ids.length) {
     return {
-      title: "Practice",
+      title: t("session.practiceTitle"),
       node: el("div.empty", {}, [
         icon(ICONS.check, 26),
-        el("h2", {}, "Nothing to practise"),
-        el("p", {}, "You got everything right in that session."),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, "Back to menu"),
+        el("h2", {}, t("session.nothingToPractice")),
+        el("p", {}, t("session.nothingToPracticeBody")),
+        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
       ]),
     };
   }
@@ -93,7 +94,7 @@ export async function renderPractice(attemptId) {
   return runSession({
     key: PRACTICE_ID,
     assignmentId: PRACTICE_ID,
-    title: "Practice",
+    title: t("session.practiceTitle"),
     type: "assignment",
     retryHash: `#/practice/${attemptId}`,
     questionIds: ids,
@@ -109,7 +110,7 @@ export async function renderNationalMix(subjectId, qs) {
   const sets = store.assignments.filter((a) => a.subjectId === subjectId);
   const pool = sets.flatMap((a) => a.questions.map((q) => q.id));
 
-  if (!pool.length) return notFound("Inga importerade set för det här ämnet ännu.");
+  if (!pool.length) return notFound(t("session.noImportedSets"));
 
   const count = Math.max(1, Math.min(Number(qs?.get("count")) || 15, pool.length));
   const ids = shuffled(pool).slice(0, count);
@@ -117,7 +118,7 @@ export async function renderNationalMix(subjectId, qs) {
   return runSession({
     key: nationalMixId(subjectId),
     assignmentId: nationalMixId(subjectId),
-    title: `Blandat – ${subject?.name || "Nationellt prov"}`,
+    title: t("session.mixedTitle", { subject: subject?.name || t("session.nationalTest") }),
     type: "assignment",
     retryHash: `#/national/mix/${subjectId}?count=${count}`,
     questionIds: ids,
@@ -135,7 +136,7 @@ function runSession(config) {
     ? { ...saved, order: saved.order.filter((id) => store.findQuestion(id)) }
     : freshState(config);
 
-  if (!state.order.length) return notFound("These questions are no longer available.");
+  if (!state.order.length) return notFound(t("session.questionsGone"));
   state.cursor = Math.min(state.cursor, state.order.length - 1);
   state.skipped = state.skipped || [];
   state.choiceOrder = state.choiceOrder || {};
@@ -170,7 +171,7 @@ function runSession(config) {
       if (remaining <= 0 && !autoSubmitted) {
         autoSubmitted = true;
         stopTimer();
-        toast("Time's up — your answers were submitted automatically.");
+        toast(t("session.timeUp"));
         finish({ timedOut: true });
       }
     } else {
@@ -191,9 +192,9 @@ function runSession(config) {
   const fill = el("div.progressbar__fill");
   const label = el("div.progress-label");
   const stage = el("div");
-  const nextBtn = el("button.btn", { type: "button", disabled: true, onclick: next }, "Next");
-  const skipBtn = el("button.btn.btn--ghost", { type: "button", onclick: skip }, "Skip for now");
-  const exitBtn = el("button.btn.btn--ghost", { type: "button", onclick: exit }, "Exit");
+  const nextBtn = el("button.btn", { type: "button", disabled: true, onclick: next }, t("session.next"));
+  const skipBtn = el("button.btn.btn--ghost", { type: "button", onclick: skip }, t("session.skip"));
+  const exitBtn = el("button.btn.btn--ghost", { type: "button", onclick: exit }, t("session.exit"));
 
   let currentRenderer = null;
 
@@ -231,8 +232,8 @@ function runSession(config) {
     fill.style.width = `${(done / state.order.length) * 100}%`;
     const skippedLeft = state.skipped.filter((id) => !state.items[id]).length;
     label.textContent =
-      `Question ${state.cursor + 1} of ${state.order.length} · ${done} answered` +
-      (skippedLeft ? ` · ${skippedLeft} skipped` : "");
+      t("session.progressLabel", { n: state.cursor + 1, total: state.order.length, done }) +
+      (skippedLeft ? t("session.progressSkipped", { n: skippedLeft }) : "");
   }
 
   /** Apply this session's shuffled choice order without touching stored data. */
@@ -251,7 +252,7 @@ function runSession(config) {
     const answered = !!state.items[question.id];
     nextBtn.disabled = !answered;
     nextBtn.textContent = unansweredCount() === 0 || (answered && state.cursor === state.order.length - 1)
-      ? "Finish" : "Next";
+      ? t("session.finish") : t("session.next");
 
     // Skipping is only offered while there's somewhere else to go.
     const alreadySkipped = state.skipped.includes(question.id);
@@ -277,7 +278,7 @@ function runSession(config) {
         };
         skipBtn.hidden = true;
         nextBtn.disabled = false;
-        nextBtn.textContent = unansweredCount() === 0 ? "Finish" : "Next";
+        nextBtn.textContent = unansweredCount() === 0 ? t("session.finish") : t("session.next");
         paintProgress();
         persist();
         // An appeal re-fires onDone for the same question; only log it once.
@@ -308,7 +309,7 @@ function runSession(config) {
     if (state.cursor >= state.order.length) state.cursor = state.order.length - 1;
     persist();
     loadQuestion();
-    announce("Skipped. You'll see this one again at the end.");
+    announce(t("session.skippedAnnounce"));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -320,13 +321,13 @@ function runSession(config) {
     state.cursor = remaining;
     persist();
     loadQuestion();
-    announce(`Question ${state.cursor + 1} of ${state.order.length}.`);
+    announce(t("session.questionAnnounce", { n: state.cursor + 1, total: state.order.length }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function exit() {
     persist();
-    if (confirm("Leave this session?\n\nYour progress is saved — you can pick up where you left off.")) {
+    if (confirm(t("session.exitConfirm"))) {
       location.hash = "#/";
     }
   }
@@ -372,16 +373,16 @@ function runSession(config) {
     const done = answeredCount();
     const remaining = state.order.length - done;
     stage.appendChild(el("div.panel.resume", {}, [
-      el("h3", {}, "Pick up where you left off?"),
+      el("h3", {}, t("session.resumeTitle")),
       el("p.note", { style: { margin: "6px 0 16px" } },
-        `You answered ${done} of ${state.order.length} question${state.order.length === 1 ? "" : "s"} last time` +
-        (remaining ? ` — ${remaining} to go.` : ", so you're ready to finish.")),
+        plural(state.order.length, "session.resumeBodyOne", "session.resumeBodyMany", { done, total: state.order.length }) +
+        (remaining ? t("session.resumeMore", { n: remaining }) : t("session.resumeReady"))),
       el("div", { style: { display: "flex", gap: "10px", flexWrap: "wrap" } }, [
         el("button.btn", {
           type: "button",
           onclick: () => { state.cursor = firstUnansweredIndex(); persist(); loadQuestion(); },
-        }, [icon(ICONS.arrow, 18), "Continue"]),
-        el("button.btn.btn--ghost", { type: "button", onclick: startOver }, "Start over"),
+        }, [icon(ICONS.arrow, 18), t("session.continue")]),
+        el("button.btn.btn--ghost", { type: "button", onclick: startOver }, t("session.startOver")),
       ]),
     ]));
     skipBtn.hidden = true;
@@ -423,17 +424,17 @@ function runSession(config) {
     shortcutsEl = el("div.modal", { role: "dialog", "aria-modal": "true", "aria-label": "Keyboard shortcuts",
       onclick: (e) => { if (e.target === shortcutsEl) closeShortcuts(); } }, [
       el("div.modal__card", {}, [
-        el("h3", { style: { marginBottom: "12px" } }, "Keyboard shortcuts"),
+        el("h3", { style: { marginBottom: "12px" } }, t("session.shortcutsTitle")),
         el("table.preset-table", {}, [el("tbody", {}, [
-          keyRow("A – D  or  1 – 4", "Pick a multiple-choice answer"),
-          keyRow("Enter", "Check your answer, then move on"),
-          keyRow("→", "Next question"),
-          keyRow("S", "Skip for now"),
-          keyRow("Space", "Flip a flashcard"),
-          keyRow("?", "Show this list"),
-          keyRow("Esc", "Close"),
+          keyRow("A – D  or  1 – 4", t("session.shortcutPickMc")),
+          keyRow("Enter", t("session.shortcutCheck")),
+          keyRow("→", t("session.shortcutNext")),
+          keyRow("S", t("session.shortcutSkip")),
+          keyRow("Space", t("session.shortcutFlip")),
+          keyRow("?", t("session.shortcutShow")),
+          keyRow("Esc", t("session.close")),
         ])]),
-        el("button.btn.btn--ghost.btn--sm", { type: "button", style: { marginTop: "16px" }, onclick: closeShortcuts }, "Close"),
+        el("button.btn.btn--ghost.btn--sm", { type: "button", style: { marginTop: "16px" }, onclick: closeShortcuts }, t("session.close")),
       ]),
     ]);
     document.body.appendChild(shortcutsEl);
@@ -451,10 +452,10 @@ function runSession(config) {
     onclick: () => {
       tutor.el.classList.toggle("is-open");
       const open = tutor.el.classList.contains("is-open");
-      hintFab.textContent = open ? "Hide tutor" : "Need a hint?";
+      hintFab.textContent = open ? t("session.hideTutor") : t("session.needHint");
       if (open) tutor.el.querySelector(".tutor__log")?.scrollTo(0, 0);
     },
-  }, "Need a hint?");
+  }, t("session.needHint"));
   if (testMode) hintFab.hidden = true;
 
   const node = el("div", {}, [
@@ -466,7 +467,7 @@ function runSession(config) {
       ]),
     ]),
     testMode ? el("p.note.note--warn", { style: { marginBottom: "10px" } },
-      "Test mode: one attempt per question and no hints. The tutor will go through it with you afterwards.") : null,
+      t("session.testModeWarn")) : null,
     el("div.progressbar", {}, [fill]),
     label,
     el("div.session", {}, [
@@ -481,7 +482,7 @@ function runSession(config) {
     ]),
     hintFab,
     el("p.note.kbdhint", {}, [
-      "Tip: press ", el("kbd", {}, "?"), " for keyboard shortcuts.",
+      t("session.kbdHintPre"), el("kbd", {}, "?"), t("session.kbdHintPost"),
     ]),
   ].filter(Boolean));
 
@@ -523,20 +524,20 @@ function shuffled(arr) {
 }
 
 function badgeLabel(config) {
-  if (config.assignmentId === REVIEW_ID) return "Review";
-  if (config.assignmentId === PRACTICE_ID) return "Practice";
-  if (config.assignmentId?.startsWith?.(NATIONAL_MIX_PREFIX)) return "Nationellt prov";
-  if (config.examMode) return "Exam mode";
-  return config.type === "test" ? "Test" : "Assignment";
+  if (config.assignmentId === REVIEW_ID) return t("session.badgeReview");
+  if (config.assignmentId === PRACTICE_ID) return t("session.badgePractice");
+  if (config.assignmentId?.startsWith?.(NATIONAL_MIX_PREFIX)) return t("session.nationalTest");
+  if (config.examMode) return t("session.badgeExamMode");
+  return config.type === "test" ? t("session.badgeTest") : t("session.badgeAssignment");
 }
 
 function notFound(message) {
   return {
-    title: "Not found",
+    title: t("session.notFoundTitle"),
     node: el("div.empty", {}, [
-      el("h2", {}, "Nothing to study here"),
+      el("h2", {}, t("session.nothingToStudy")),
       el("p", {}, message),
-      el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, "Back to menu"),
+      el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
     ]),
   };
 }

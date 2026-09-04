@@ -2,12 +2,16 @@
 // Read straight from localStorage at startup so the page never flashes the
 // wrong palette before the store has finished loading.
 
+import { t } from "./i18n.js";
+
 const KEY = "studybuddy.theme";
-export const THEMES = [
-  ["system", "Match my device"],
-  ["light", "Light"],
-  ["dark", "Dark"],
-];
+export function THEMES() {
+  return [
+    ["system", t("theme.system")],
+    ["light", t("theme.light")],
+    ["dark", t("theme.dark")],
+  ];
+}
 
 export function getTheme() {
   const t = localStorage.getItem(KEY);

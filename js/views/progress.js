@@ -7,6 +7,7 @@ import { masteryByTopic, masteryForSubject } from "../lib/mastery.js";
 import { estimatedGrade } from "../lib/grade.js";
 import { dueLabel } from "../lib/srs.js";
 import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
+import { t, plural } from "../lib/i18n.js";
 
 export function renderProgress() {
   const tm = masteryByTopic(store.attempts);
@@ -41,7 +42,7 @@ export function renderProgress() {
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
         el("span.gradepill", {
           class: `gradepill--${grade.tier}`,
-          title: `Uppskattad nivå ${grade.letter} baserat på dina svar — inte ett riktigt betyg`,
+          title: t("progress.gradeTooltip", { letter: grade.letter }),
         }, grade.letter),
       ]);
     });
@@ -50,37 +51,36 @@ export function renderProgress() {
   const dueItems = store.dueQuestions();
 
   const node = el("div.progress-dash", {}, [
-    el("h1", {}, "Your progress"),
+    el("h1", {}, t("progress.title")),
 
     el("section.panel", {}, [
       el("h3", { style: { marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px" } }, [
-        "Study streak",
-        el("span.streakbadge", {}, [icon(ICONS.flame, 13), `${streak} day${streak === 1 ? "" : "s"}`]),
+        t("progress.studyStreak"),
+        el("span.streakbadge", {}, [icon(ICONS.flame, 13), t("streak.days", { n: streak })]),
       ]),
       el("div.streak", { role: "img", "aria-label": `Studied on ${[...studied].filter((d) => recentDays(14).includes(d)).length} of the last 14 days` }, days),
       el("p.note", { style: { marginTop: "10px" } },
-        `${store.state.activity.daysStudied.length} day${store.state.activity.daysStudied.length === 1 ? "" : "s"} studied · ${attemptsCount} session${attemptsCount === 1 ? "" : "s"} completed`),
+        plural(store.state.activity.daysStudied.length, "progress.studiedDays", "progress.studiedDaysMany") +
+        " · " + plural(attemptsCount, "progress.sessionsOne", "progress.sessionsMany")),
     ]),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "8px" } }, "Mastery by subject"),
+      el("h3", { style: { marginBottom: "8px" } }, t("progress.masteryBySubject")),
       subjectMeters.length ? el("div", {}, [
-        el("p.note", { style: { marginBottom: "10px" } },
-          "Bokstaven är en uppskattad nivå (E–A) baserat på hur du presterat i dina övningar — inte ett riktigt betyg."),
+        el("p.note", { style: { marginBottom: "10px" } }, t("progress.gradeExplain")),
         ...subjectMeters,
       ])
-        : el("p.note", {}, "Finish a session to start building mastery scores. Weakest topics show first."),
+        : el("p.note", {}, t("progress.noMasteryYet")),
     ]),
 
     el("section.panel.panel--full", {}, [
       el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" } }, [
-        el("h3", {}, `Due for review${dueItems.length ? ` (${dueItems.length})` : ""}`),
-        dueItems.length ? el("a.btn.btn--sm", { href: "#/review" }, [icon(ICONS.spark, 16), "Review today"]) : null,
+        el("h3", {}, t("progress.dueForReview") + (dueItems.length ? ` (${dueItems.length})` : "")),
+        dueItems.length ? el("a.btn.btn--sm", { href: "#/review" }, [icon(ICONS.spark, 16), t("progress.reviewToday")]) : null,
       ].filter(Boolean)),
       dueItems.length
         ? el("div", {}, [
-            el("p.note", { style: { marginBottom: "10px" } },
-              "“Review today” practises just these questions, pulled from every set."),
+            el("p.note", { style: { marginBottom: "10px" } }, t("progress.reviewTodayExplain")),
             el("div.due-list", {}, dueItems.slice(0, 12).map(({ assignment, question, rec }) =>
               el("div.due-item", {}, [
                 el("span", { html: renderRich(question.prompt.length > 80 ? question.prompt.slice(0, 80) + "…" : question.prompt) }),
@@ -89,17 +89,17 @@ export function renderProgress() {
                   el("span.badge", {}, assignment.title),
                 ]),
               ]))),
-            dueItems.length > 12 ? el("p.note", { style: { marginTop: "10px" } }, `+ ${dueItems.length - 12} more`) : null,
+            dueItems.length > 12 ? el("p.note", { style: { marginTop: "10px" } }, t("progress.moreItems", { n: dueItems.length - 12 })) : null,
           ].filter(Boolean))
-        : el("p.note", {}, "Nothing due right now. Spaced repetition brings questions back just before you'd forget them."),
+        : el("p.note", {}, t("progress.nothingDue")),
     ]),
 
-    el("a.btn.btn--ghost", { href: "#/", style: { justifySelf: "start" } }, [icon(ICONS.back, 16), "Back to menu"]),
+    el("a.btn.btn--ghost", { href: "#/", style: { justifySelf: "start" } }, [icon(ICONS.back, 16), t("common.backToMenu")]),
   ]);
 
   requestAnimationFrame(() => {
     node.querySelectorAll(".meter__fill").forEach((f) => { f.style.width = `${f.dataset.w}%`; });
   });
 
-  return { title: "Progress", node };
+  return { title: t("progress.pageTitle"), node };
 }

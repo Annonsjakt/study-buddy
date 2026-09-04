@@ -4,6 +4,7 @@
 import { store } from "./store.js";
 import { generationSystem, gradingSystem } from "./prompts.js";
 import { PROXY_URL } from "./config.js";
+import { t } from "./lib/i18n.js";
 
 const API_URL = PROXY_URL;
 
@@ -13,20 +14,26 @@ const API_URL = PROXY_URL;
  * (once per set); grading a one-line answer is not (many times per session).
  */
 export const PRESETS = {
-  balanced: {
-    label: "Balanced — recommended",
-    hint: "Best model writes your questions; a lighter one marks answers. Good quality, much lower cost.",
-    generate: "claude-opus-5", tutor: "claude-sonnet-5", grade: "claude-haiku-4-5",
+  get balanced() {
+    return {
+      label: t("claude.presetBalanced"),
+      hint: t("claude.presetBalancedHint"),
+      generate: "claude-opus-5", tutor: "claude-sonnet-5", grade: "claude-haiku-4-5",
+    };
   },
-  best: {
-    label: "Best quality",
-    hint: "Claude Opus 5 for everything. The strongest tutoring, and the most expensive.",
-    generate: "claude-opus-5", tutor: "claude-opus-5", grade: "claude-opus-5",
+  get best() {
+    return {
+      label: t("claude.presetBest"),
+      hint: t("claude.presetBestHint"),
+      generate: "claude-opus-5", tutor: "claude-opus-5", grade: "claude-opus-5",
+    };
   },
-  cheapest: {
-    label: "Lowest cost",
-    hint: "Fast and cheap throughout. Fine for drilling facts; weaker at explaining hard ideas.",
-    generate: "claude-sonnet-5", tutor: "claude-haiku-4-5", grade: "claude-haiku-4-5",
+  get cheapest() {
+    return {
+      label: t("claude.presetCheapest"),
+      hint: t("claude.presetCheapestHint"),
+      generate: "claude-sonnet-5", tutor: "claude-haiku-4-5", grade: "claude-haiku-4-5",
+    };
   },
 };
 
@@ -49,14 +56,14 @@ async function callJSON(body) {
   try {
     res = await fetch(API_URL, { method: "POST", headers: headers(), body: JSON.stringify(body) });
   } catch (e) {
-    throw new ClaudeError("Network error — check your connection.");
+    throw new ClaudeError(t("claude.networkError"));
   }
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch {}
-    if (res.status === 500 && /ANTHROPIC_API_KEY/.test(detail)) throw new ClaudeError("The tutor server isn't configured with a Claude key. Contact whoever's running this instance.");
-    if (res.status === 429) throw new ClaudeError("Rate limited by the API — wait a moment and try again.");
-    throw new ClaudeError(`API error ${res.status}${detail ? `: ${detail}` : ""}`);
+    if (res.status === 500 && /ANTHROPIC_API_KEY/.test(detail)) throw new ClaudeError(t("claude.noKeyConfigured"));
+    if (res.status === 429) throw new ClaudeError(t("claude.rateLimited"));
+    throw new ClaudeError(t("claude.apiError", { status: res.status, detail: detail ? `: ${detail}` : "" }));
   }
   const data = await res.json();
   return data.content?.map((b) => b.text || "").join("") || "";
@@ -139,13 +146,13 @@ function normalizeDoc(doc) {
 
   return {
     title: doc.title || topicTitle(doc),
-    subject: doc.subject || "General",
+    subject: doc.subject || t("sets.generalSubject"),
     sourceSummary: doc.sourceSummary || "",
     topics: doc.topics || [...new Set(questions.map((q) => q.topic))],
     questions,
   };
 }
-function topicTitle(doc) { return (doc.topics && doc.topics[0]) ? cap(doc.topics[0]) : "New assignment"; }
+function topicTitle(doc) { return (doc.topics && doc.topics[0]) ? cap(doc.topics[0]) : t("claude.untitledSet"); }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ---------- free-text grading ----------
@@ -166,7 +173,7 @@ export async function gradeAnswer({ question, studentAnswer }) {
   const j = parseLooseJSON(raw);
   return {
     correct: !!j.correct,
-    feedback: j.feedback || (j.correct ? "Nice work!" : "Not quite — take another look."),
+    feedback: j.feedback || (j.correct ? t("claude.gradeNiceWork") : t("claude.gradeNotQuite")),
     missedPoints: Array.isArray(j.missedPoints) ? j.missedPoints : [],
   };
 }
@@ -190,8 +197,8 @@ export async function* tutorStream({ system, messages, signal }) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch {}
     throw new ClaudeError(res.status === 500 && /ANTHROPIC_API_KEY/.test(detail)
-      ? "The tutor server isn't configured with a Claude key. Contact whoever's running this instance."
-      : `Tutor unavailable (API ${res.status}${detail ? `: ${detail}` : ""}).`);
+      ? t("claude.noKeyConfigured")
+      : t("claude.tutorUnavailable", { status: res.status, detail: detail ? `: ${detail}` : "" }));
   }
 
   const reader = res.body.getReader();

@@ -274,6 +274,6 @@ store.init().then(() => {
     if (h === "" || h === "/" || h === "/progress") render();
   });
   store.addEventListener("syncConflict", () => {
-    toast("Synced from another device — some local changes here were replaced.");
+    toast(t("store.syncConflict"));
   });
 });

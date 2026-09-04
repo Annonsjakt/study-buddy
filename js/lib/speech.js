@@ -1,13 +1,15 @@
 // Read text aloud with the browser's built-in Web Speech API — no external
 // service, key, or network call needed.
 
+import { getLang } from "./i18n.js";
+
 export const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
 export function speak(text) {
   if (!speechSupported || !text) return;
   window.speechSynthesis.cancel(); // a new request always interrupts the last one
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = "sv-SE";
+  utter.lang = getLang() === "sv" ? "sv-SE" : "en-GB";
   utter.rate = 0.95;
   window.speechSynthesis.speak(utter);
 }

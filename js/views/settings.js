@@ -6,7 +6,7 @@ import { localDayKey } from "../lib/activity.js";
 import { PRESETS, DEFAULT_PRESET } from "../claude.js";
 import { THEMES, getTheme, setTheme } from "../lib/theme.js";
 import { getReadMode, setReadMode } from "../lib/readmode.js";
-import { LANGS, getLang, setLang, t } from "../lib/i18n.js";
+import { LANGS, getLang, setLang, t, plural } from "../lib/i18n.js";
 
 export function renderSettings() {
   const s = store.settings;
@@ -23,9 +23,9 @@ export function renderSettings() {
     clear(presetDetail);
     presetDetail.appendChild(el("table.preset-table", {}, [
       el("tbody", {}, [
-        presetRow("Writing a set", p.generate, "once per set"),
-        presetRow("Tutoring you", p.tutor, "every message"),
-        presetRow("Marking answers", p.grade, "every written answer"),
+        presetRow(t("settings.writingSet"), p.generate, t("settings.oncePerSet")),
+        presetRow(t("settings.tutoringYou"), p.tutor, t("settings.everyMessage")),
+        presetRow(t("settings.markingAnswers"), p.grade, t("settings.everyWrittenAnswer")),
       ]),
     ]));
   }
@@ -39,22 +39,22 @@ export function renderSettings() {
   presetSel.addEventListener("change", () => {
     store.setSettings({ preset: presetSel.value });
     paintPreset();
-    toast("Model preset updated");
+    toast(t("settings.presetUpdated"));
   });
   paintPreset();
 
   const verbSel = el("select", {}, [
-    opt("concise", "Concise — short hints"),
-    opt("normal", "Normal (default)"),
-    opt("detailed", "Detailed — fuller explanations"),
+    opt("concise", t("settings.concise")),
+    opt("normal", t("settings.normalDefault")),
+    opt("detailed", t("settings.detailed")),
   ]);
   verbSel.value = s.tutorVerbosity || "normal";
-  verbSel.addEventListener("change", () => { store.setSettings({ tutorVerbosity: verbSel.value }); toast("Tutor style updated"); });
+  verbSel.addEventListener("change", () => { store.setSettings({ tutorVerbosity: verbSel.value }); toast(t("settings.tutorStyleUpdated")); });
 
   const themeSel = el("select", { "aria-label": "Theme" },
-    THEMES.map(([v, l]) => opt(v, l)));
+    THEMES().map(([v, l]) => opt(v, l)));
   themeSel.value = getTheme();
-  themeSel.addEventListener("change", () => { setTheme(themeSel.value); toast("Theme updated"); });
+  themeSel.addEventListener("change", () => { setTheme(themeSel.value); toast(t("settings.themeUpdated")); });
 
   const langSel = el("select", { "aria-label": t("settings.language") },
     LANGS.map(([v, label]) => opt(v, label)));
@@ -71,16 +71,16 @@ export function renderSettings() {
   readModeCheck.checked = getReadMode();
   readModeCheck.addEventListener("change", () => {
     setReadMode(readModeCheck.checked);
-    toast(readModeCheck.checked ? "Dyslexivänligt läge på" : "Dyslexivänligt läge av");
+    toast(readModeCheck.checked ? t("settings.dyslexiaOn") : t("settings.dyslexiaOff"));
   });
 
   const node = el("div.settings", {}, [
-    el("h1", {}, "Settings"),
+    el("h1", {}, t("settings.pageHeading")),
 
     el("section.panel", {}, [
-      el("h3", {}, "Appearance"),
+      el("h3", {}, t("settings.appearance")),
       el("label.field", { style: { marginTop: "12px" } }, [
-        el("span", {}, "Theme"), themeSel,
+        el("span", {}, t("settings.theme")), themeSel,
       ]),
       el("label.field", { style: { marginBottom: "0" } }, [
         el("span", {}, t("settings.language")), langSel,
@@ -88,21 +88,19 @@ export function renderSettings() {
     ]),
 
     el("section.panel", {}, [
-      el("h3", {}, "Accessibility"),
+      el("h3", {}, t("settings.accessibility")),
       el("label", { style: { display: "flex", alignItems: "flex-start", gap: "10px", marginTop: "12px" } }, [
         readModeCheck,
         el("span", {}, [
-          el("strong", {}, "Dyslexivänligt läge"),
-          el("p.note", { style: { margin: "2px 0 0" } },
-            "Byter till Atkinson Hyperlegible — ett typsnitt gjort för lässvårigheter — med större rad-, bokstavs- och ordavstånd."),
+          el("strong", {}, t("settings.dyslexiaMode")),
+          el("p.note", { style: { margin: "2px 0 0" } }, t("settings.dyslexiaExplain")),
         ]),
       ]),
     ]),
 
     el("section.panel", {}, [
-      el("h3", {}, "Tutor server"),
-      el("p.note", { style: { margin: "6px 0 12px" } },
-        "Assignment generation and live tutoring are handled by a small backend that holds the Claude key — nothing to configure here. Without it reachable, StudyBuddy runs in demo mode on the sample content."),
+      el("h3", {}, t("settings.tutorServer")),
+      el("p.note", { style: { margin: "6px 0 12px" } }, t("settings.tutorServerExplain")),
       el("p.note", { style: { display: "flex", alignItems: "center", gap: "8px" } }, [
         el("span", {
           style: {
@@ -110,46 +108,45 @@ export function renderSettings() {
             background: store.hasKey() ? "var(--c-leaf)" : "var(--retry-ink)",
           },
         }),
-        !store.proxyUp ? "Not reachable — running in demo mode"
-          : !store.proxyKeyConfigured ? "Connected, but no Claude key configured — running in demo mode"
-          : "Connected — live mode is on",
+        !store.proxyUp ? t("settings.notReachable")
+          : !store.proxyKeyConfigured ? t("settings.connectedNoKey")
+          : t("settings.connectedLive"),
       ]),
     ]),
 
     accountSection(),
 
     el("section.panel", {}, [
-      el("h3", {}, "Model & tutor"),
-      el("p.note", { style: { margin: "6px 0 12px" } },
-        "StudyBuddy uses different Claude models for different jobs, so you're not paying top rates to mark a one-line answer."),
-      el("label.field", { style: { marginBottom: "6px" } }, [el("span", {}, "Quality & cost"), presetSel]),
+      el("h3", {}, t("settings.modelTutor")),
+      el("p.note", { style: { margin: "6px 0 12px" } }, t("settings.modelTutorExplain")),
+      el("label.field", { style: { marginBottom: "6px" } }, [el("span", {}, t("settings.qualityCost")), presetSel]),
       el("div", { id: "preset-hint" }, [presetHint]),
       presetDetail,
-      el("label.field", { style: { marginTop: "16px" } }, [el("span", {}, "Tutor reply length"), verbSel]),
+      el("label.field", { style: { marginTop: "16px" } }, [el("span", {}, t("settings.tutorReplyLength")), verbSel]),
     ]),
 
     demoSection(),
 
     el("section.panel", {}, [
-      el("h3", {}, "Your data"),
+      el("h3", {}, t("settings.yourData")),
       el("p.note", { style: { margin: "6px 0 12px" } }, store.authed
-        ? "Everything (assignments, attempts, progress) lives in this browser and syncs to your account."
-        : "Everything (assignments, attempts, progress) lives in this browser."),
+        ? t("settings.dataLocalSync")
+        : t("settings.dataLocalOnly")),
       el("div", { style: { display: "flex", gap: "10px", flexWrap: "wrap" } }, [
-        el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: exportData }, "Export JSON"),
-        el("button.btn.btn--ghost.btn--sm", { type: "button", style: { color: "var(--retry-ink)" }, onclick: wipe }, "Wipe all data"),
+        el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: exportData }, t("settings.exportJson")),
+        el("button.btn.btn--ghost.btn--sm", { type: "button", style: { color: "var(--retry-ink)" }, onclick: wipe }, t("settings.wipeAll")),
       ]),
     ]),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "10px" } }, "Roadmap"),
+      el("h3", { style: { marginBottom: "10px" } }, t("settings.roadmap")),
       el("ul.roadmap", {}, [
-        el("li", {}, "Voice chat — talk through problems out loud"),
-        el("li", {}, "Share assignment sets with a friend"),
+        el("li", {}, t("settings.roadmapVoice")),
+        el("li", {}, t("settings.roadmapShare")),
       ]),
     ]),
 
-    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), "Back to menu"]),
+    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("common.backToMenu")]),
   ]);
 
   function demoSection() {
@@ -159,10 +156,10 @@ export function renderSettings() {
     function paint() {
       const { loaded, total } = store.demoStatus;
       status.textContent = loaded === 0
-        ? "Two ready-made sets (Photosynthesis Basics, Ancient Rome Quiz) you can try without an API key — the tutor works in demo mode too."
+        ? t("settings.demoIntro")
         : loaded < total
-          ? `${loaded} of ${total} demo sets are in your library. You can add the missing one back, or clear them out.`
-          : "Both demo sets are in your library. They behave like any other set — study, edit, or delete them.";
+          ? t("settings.demoPartial", { loaded, total })
+          : t("settings.demoBothIn");
 
       clear(actions);
       if (loaded < total) {
@@ -172,30 +169,30 @@ export function renderSettings() {
             e.currentTarget.disabled = true;
             try {
               const n = await store.loadDemoContent();
-              toast(n ? `Added ${n} demo set${n === 1 ? "" : "s"}` : "Already in your library");
+              toast(n ? plural(n, "settings.demoAddedOne", "settings.demoAddedMany") : t("settings.demoAlreadyIn"));
             } catch {
-              toast("Couldn't load the demo sets");
+              toast(t("settings.demoLoadFailed"));
             }
             paint();
           },
-        }, [icon(ICONS.play, 16), loaded ? "Add the missing one" : "Load demo sets"]));
+        }, [icon(ICONS.play, 16), loaded ? t("settings.addMissingOne") : t("settings.loadDemoSets")]));
       }
       if (loaded > 0) {
         actions.appendChild(el("button.btn.btn--ghost.btn--sm", {
           type: "button", style: { color: "var(--retry-ink)" },
           onclick: () => {
-            if (!confirm("Remove the demo sets from your library?\n\nAny attempts you made on them stay in your history.")) return;
+            if (!confirm(t("settings.removeDemoConfirm"))) return;
             store.removeDemoContent();
-            toast("Demo sets removed");
+            toast(t("settings.demoRemoved"));
             paint();
           },
-        }, "Remove demo sets"));
+        }, t("settings.removeDemoSets")));
       }
     }
     paint();
 
     return el("section.panel", {}, [
-      el("h3", {}, "Demo content"),
+      el("h3", {}, t("settings.demoContent")),
       status,
       actions,
     ]);
@@ -207,8 +204,8 @@ export function renderSettings() {
 
     function paint() {
       status.textContent = store.authed
-        ? `Signed in as ${store.authEmail}. Your library syncs to this account.`
-        : "Not signed in — StudyBuddy works fully locally. Sign in to sync your library across devices.";
+        ? t("settings.signedInAs", { email: store.authEmail })
+        : t("settings.notSignedIn");
 
       clear(actions);
       if (store.authed) {
@@ -217,21 +214,21 @@ export function renderSettings() {
           onclick: async (e) => {
             e.currentTarget.disabled = true;
             await store.logout();
-            toast("Signed out — local mode");
+            toast(t("account.signOutDone"));
             paint();
           },
-        }, "Sign out"));
+        }, t("account.signOut")));
       } else {
-        actions.appendChild(el("a.btn.btn--sm", { href: "#/login" }, "Sign in / create account"));
+        actions.appendChild(el("a.btn.btn--sm", { href: "#/login" }, t("account.signIn")));
       }
       if (store.authed) {
-        actions.appendChild(el("a.btn.btn--ghost.btn--sm", { href: "#/parent" }, "Parent / teacher linking"));
+        actions.appendChild(el("a.btn.btn--ghost.btn--sm", { href: "#/parent" }, t("settings.parentLinking")));
       }
     }
     paint();
 
     return el("section.panel", {}, [
-      el("h3", {}, "Account"),
+      el("h3", {}, t("settings.account")),
       status,
       actions,
     ]);
@@ -241,17 +238,17 @@ export function renderSettings() {
     const blob = new Blob([store.exportJSON()], { type: "application/json" });
     const a = el("a", { href: URL.createObjectURL(blob), download: `studybuddy-backup-${localDayKey()}.json` });
     document.body.appendChild(a); a.click(); a.remove();
-    toast("Backup downloaded");
+    toast(t("settings.backupDownloaded"));
   }
 
   function wipe() {
-    if (!confirm("Delete all sets, attempts, and progress?\n\nThis can't be undone. Export a backup first if you want to keep it.")) return;
+    if (!confirm(t("settings.deleteConfirm"))) return;
     store.wipe();
-    toast("Data wiped");
+    toast(t("settings.dataWiped"));
     location.hash = "#/";
   }
 
-  return { title: "Settings", node };
+  return { title: t("settings.pageHeading"), node };
 }
 
 function opt(value, label) { return el("option", { value }, label); }

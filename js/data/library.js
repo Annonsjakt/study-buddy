@@ -4,6 +4,7 @@
 // utan att först skaffa fram eget material.
 
 import { store } from "../store.js";
+import { t } from "../lib/i18n.js";
 
 const INDEX_URL = "data/library/index.json";
 
@@ -12,7 +13,7 @@ let cachedIndex = null;
 export async function loadLibraryIndex() {
   if (cachedIndex) return cachedIndex;
   const res = await fetch(INDEX_URL);
-  if (!res.ok) throw new Error("Kunde inte ladda övningsbiblioteket.");
+  if (!res.ok) throw new Error(t("library.indexLoadFailed"));
   cachedIndex = await res.json();
   return cachedIndex;
 }
@@ -29,7 +30,7 @@ export function isImported(setId) {
 export async function importSet(entry) {
   if (isImported(entry.id)) return null;
   const res = await fetch(entry.file);
-  if (!res.ok) throw new Error(`Kunde inte ladda ”${entry.title}”.`);
+  if (!res.ok) throw new Error(t("library.setLoadFailed", { title: entry.title }));
   const doc = await res.json();
   return store.addAssignmentDoc(doc);
 }

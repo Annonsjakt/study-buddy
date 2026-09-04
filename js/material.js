@@ -4,6 +4,8 @@
 //   - image file   -> { image: { mediaType, data } }  (sent to Claude vision)
 //   - topic string -> { topic }
 
+import { t } from "./lib/i18n.js";
+
 const MAX_CHARS = 24000;
 
 export function fitText(s) {
@@ -13,7 +15,7 @@ export function fitText(s) {
 
 async function extractPdfTextFromBuffer(buf) {
   const lib = window.pdfjsLib;
-  if (!lib) throw new Error("PDF reader failed to load. Refresh and try again.");
+  if (!lib) throw new Error(t("material.pdfLoadFailed"));
   lib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
 
   const pdf = await lib.getDocument({ data: buf }).promise;
@@ -27,7 +29,7 @@ async function extractPdfTextFromBuffer(buf) {
   }
   const text = fitText(pages.join("\n\n"));
   if (text.replace(/\s/g, "").length < 20) {
-    throw new Error("Couldn't find selectable text in that PDF. If it's a scan, upload it as a photo instead.");
+    throw new Error(t("material.noSelectableText"));
   }
   return text;
 }
@@ -40,11 +42,11 @@ export async function extractPdfText(file) {
  *  downloads) and concatenates it — audio files (listening comprehension)
  *  are counted but skipped; there's no transcription here. */
 export async function extractZipText(file) {
-  if (!window.JSZip) throw new Error("ZIP reader failed to load. Refresh and try again.");
+  if (!window.JSZip) throw new Error(t("material.zipLoadFailed"));
   const zip = await window.JSZip.loadAsync(file);
   const entries = Object.values(zip.files).filter((f) => !f.dir);
   const pdfEntries = entries.filter((f) => /\.pdf$/i.test(f.name)).slice(0, 20); // cap runaway zips
-  if (!pdfEntries.length) throw new Error("Hittade ingen PDF i zip-filen.");
+  if (!pdfEntries.length) throw new Error(t("material.noPdfInZip"));
 
   const parts = [];
   for (const entry of pdfEntries) {
@@ -56,7 +58,7 @@ export async function extractZipText(file) {
     }
     if (parts.join("\n\n").length > MAX_CHARS) break;
   }
-  if (!parts.length) throw new Error("Kunde inte läsa text ur PDF-filerna i zip-filen (kan vara skannade sidor).");
+  if (!parts.length) throw new Error(t("material.noReadablePdf"));
 
   const skippedAudio = entries.filter((f) => /\.mp3$/i.test(f.name)).length;
   return {
@@ -71,11 +73,11 @@ export function readImageFile(file) {
   return new Promise((resolve, reject) => {
     const okTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"];
     if (!okTypes.includes(file.type)) {
-      reject(new Error("Please use a PNG, JPG, WEBP, or GIF image."));
+      reject(new Error(t("material.badImageType")));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      reject(new Error("That image is over 5 MB — try a smaller photo."));
+      reject(new Error(t("material.imageTooBig")));
       return;
     }
     const fr = new FileReader();
@@ -84,7 +86,7 @@ export function readImageFile(file) {
       const comma = dataUrl.indexOf(",");
       resolve({ mediaType: file.type, data: dataUrl.slice(comma + 1), preview: dataUrl });
     };
-    fr.onerror = () => reject(new Error("Could not read that file."));
+    fr.onerror = () => reject(new Error(t("material.couldNotRead")));
     fr.readAsDataURL(file);
   });
 }
