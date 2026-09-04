@@ -85,7 +85,7 @@ h1:focus-visible, h2:focus-visible {
      top-right above the content column. */
   .topbar { background: transparent; border-bottom: none; backdrop-filter: none; }
   .topbar .brand, .topbar .streakbadge, .topbar__nav-icons { display: none; }
-  .topbar__inner { justify-content: flex-end; padding-top: var(--s-5); }
+  .topbar__inner { max-width: none; justify-content: flex-end; padding: var(--s-5) var(--s-6) 0; }
 }
 .sidebar__brand {
   display: flex; align-items: center; gap: var(--s-2);
