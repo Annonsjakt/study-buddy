@@ -385,8 +385,8 @@ function dashRow(topicMastery) {
   const streakCard = el("a.dash__card", { href: "#/progress" }, [
     el("span.dash__icon", {}, icon(ICONS.flame, 20)),
     el("div", {}, [
-      el("div.dash__value", {}, `${streak} day${streak === 1 ? "" : "s"}`),
-      el("div.dash__label", {}, streak > 0 ? "Study streak" : "Study today to start a streak"),
+      el("div.dash__value", {}, String(streak)),
+      el("div.dash__label", {}, streak > 0 ? `day${streak === 1 ? "" : "s"} streak` : "Study today to start a streak"),
     ]),
   ]);
 
