@@ -74,7 +74,7 @@ function shell(contentNode) {
         href: item.href,
         "aria-current": isActive(item.match) ? "page" : null,
       }, [icon(item.icon, 18), item.label]))),
-    el("div.sidebar__streak" + (streak > 0 ? ".is-active" : ""), {
+    el("div.sidebar__streak", {
       "aria-label": `${streak} day study streak`,
     }, [
       el("span.sidebar__streak-icon", {}, icon(ICONS.flame, 15)),

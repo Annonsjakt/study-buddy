@@ -107,14 +107,10 @@ h1:focus-visible, h2:focus-visible {
 }
 .sidebar__streak-icon {
   width: 26px; height: 26px; flex: none; border-radius: var(--r-full);
-  display: grid; place-items: center; color: var(--ink-faint);
-  transition: background var(--dur-fast), color var(--dur-fast), box-shadow var(--dur-fast);
+  display: grid; place-items: center; color: var(--flame);
+  background: var(--flame-tint); box-shadow: 0 0 12px var(--flame-glow);
 }
-.sidebar__streak.is-active .sidebar__streak-icon {
-  background: var(--flame-tint); color: var(--flame);
-  box-shadow: 0 0 12px var(--flame-glow);
-}
-.sidebar__streak.is-active .sidebar__streak-icon svg { filter: drop-shadow(0 0 3px var(--flame-glow)); }
+.sidebar__streak-icon svg { filter: drop-shadow(0 0 3px var(--flame-glow)); }
 
 .topbar {
   position: sticky; top: 0; z-index: 20;
