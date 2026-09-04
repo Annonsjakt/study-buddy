@@ -114,6 +114,18 @@ h1:focus-visible, h2:focus-visible {
    centering the <svg> box alone reads as off-center — nudge the ink down. */
 .sidebar__streak-icon svg { filter: drop-shadow(0 0 3px var(--flame-glow)); transform: translateY(12.5%); }
 
+.sidebar__theme {
+  display: flex; gap: 2px; margin-top: var(--s-3); padding: 3px;
+  border-radius: var(--r-full); background: var(--surface-sunk);
+}
+.sidebar__theme-btn {
+  flex: 1; display: grid; place-items: center; height: 30px; font: inherit;
+  border: none; border-radius: var(--r-full); background: transparent; color: var(--ink-faint);
+  cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
+}
+.sidebar__theme-btn:hover { color: var(--ink); }
+.sidebar__theme-btn[aria-pressed="true"] { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow-1); }
+
 .topbar {
   position: sticky; top: 0; z-index: 20;
   background: color-mix(in srgb, var(--canvas) 88%, transparent);

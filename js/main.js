@@ -1,8 +1,9 @@
 // Router + persistent app shell.
 
 import { store } from "./store.js";
-import { el, mount, icon, ICONS, toast } from "./lib/dom.js";
+import { el, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
 import { announce, focusHeading } from "./lib/a11y.js";
+import { getTheme, setTheme } from "./lib/theme.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
 import { renderEdit } from "./views/edit.js";
@@ -80,6 +81,7 @@ function shell(contentNode) {
       el("span.sidebar__streak-icon", {}, icon(ICONS.flame, 18)),
       streak > 0 ? `${streak}-dagars streak` : "Ingen streak än",
     ]),
+    themePicker(),
   ]);
 
   return el("div.shell", {}, [
@@ -107,6 +109,34 @@ function shell(contentNode) {
       el("main.content", { id: "main" }, [contentNode]),
     ]),
   ]);
+}
+
+const THEME_OPTIONS = [
+  ["light", ICONS.sun, "Light"],
+  ["system", ICONS.monitor, "Match my device"],
+  ["dark", ICONS.moon, "Dark"],
+];
+
+/** Segmented light/system/dark switcher for the sidebar. Self-painting so a
+ *  click doesn't have to re-render the whole shell just to update itself. */
+function themePicker() {
+  const wrap = el("div.sidebar__theme", { role: "group", "aria-label": "Theme" });
+
+  function paint() {
+    clear(wrap);
+    const current = getTheme();
+    for (const [value, path, label] of THEME_OPTIONS) {
+      wrap.appendChild(el("button.sidebar__theme-btn", {
+        type: "button",
+        "aria-pressed": String(value === current),
+        "aria-label": label, title: label,
+        onclick: () => { setTheme(value); paint(); },
+      }, icon(path, 15)));
+    }
+  }
+
+  paint();
+  return wrap;
 }
 
 async function render() {
