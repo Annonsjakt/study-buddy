@@ -80,9 +80,12 @@ h1:focus-visible, h2:focus-visible {
     padding: var(--s-5) var(--s-3);
     background: var(--surface); border-right: 1px solid var(--line);
   }
-  /* The sidebar now carries brand, nav and streak — the topbar would just
-     repeat all three. */
-  .topbar { display: none; }
+  /* The sidebar now carries brand, nav and streak — no need to repeat them
+     in the topbar too, but its notification/account actions still float
+     top-right above the content column. */
+  .topbar { background: transparent; border-bottom: none; backdrop-filter: none; }
+  .topbar .brand, .topbar .streakbadge, .topbar__nav-icons { display: none; }
+  .topbar__inner { justify-content: flex-end; padding-top: var(--s-5); }
 }
 .sidebar__brand {
   display: flex; align-items: center; gap: var(--s-2);
@@ -135,7 +138,7 @@ h1:focus-visible, h2:focus-visible {
 .topbar__inner {
   max-width: var(--maxw); margin: 0 auto;
   padding: var(--s-3) var(--s-4);
-  display: flex; align-items: center; gap: var(--s-4);
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--s-3) var(--s-4);
 }
 .brand {
   display: flex; align-items: center; gap: var(--s-2);
@@ -144,6 +147,21 @@ h1:focus-visible, h2:focus-visible {
 }
 .brand img { width: 30px; height: 30px; }
 .topbar__spacer { flex: 1; }
+
+.topbar__actions { display: flex; align-items: center; gap: var(--s-2); }
+.topbar__bell { position: relative; }
+.topbar__dot {
+  position: absolute; top: 6px; right: 6px; width: 9px; height: 9px;
+  border-radius: var(--r-full); background: var(--retry); border: 2px solid var(--surface);
+}
+
+.popover {
+  position: absolute; z-index: 60;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--r-md); box-shadow: var(--shadow-2);
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.popover .note { margin: 0; }
 
 .iconbtn {
   display: inline-flex; align-items: center; justify-content: center;

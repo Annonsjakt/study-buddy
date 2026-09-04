@@ -4,6 +4,7 @@ import { store } from "./store.js";
 import { el, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
 import { announce, focusHeading } from "./lib/a11y.js";
 import { getTheme, setTheme } from "./lib/theme.js";
+import { openPopover, closePopover } from "./lib/popover.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
 import { renderEdit } from "./views/edit.js";
@@ -104,6 +105,7 @@ function shell(contentNode) {
             store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": "Parent / teacher", title: "Parent / teacher" }, [icon(ICONS.users, 18)]),
             el("a.iconbtn", { href: "#/settings", "aria-label": "Settings", title: "Settings" }, [icon(ICONS.gear, 18)]),
           ].filter(Boolean)),
+          topbarActions(),
         ]),
       ]),
       el("main.content", { id: "main" }, [contentNode]),
@@ -139,7 +141,63 @@ function themePicker() {
   return wrap;
 }
 
+/** Notification bell + account button, top-right in every topbar (mobile's
+ *  full row, and desktop's slim floating pair once the sidebar takes over
+ *  brand/nav/streak). Notifications are real signals already in the store —
+ *  no fake badge count. */
+function topbarActions() {
+  const due = store.dueQuestions().length;
+  const examDate = store.settings.examDate;
+  let examDays = null;
+  if (examDate) {
+    const target = new Date(examDate + "T00:00:00");
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    examDays = Math.round((target - today) / 86400000);
+  }
+  const examSoon = examDays != null && examDays >= 0 && examDays <= 7;
+  const hasNotif = due > 0 || examSoon;
+
+  const bellBtn = el("button.iconbtn.topbar__bell", {
+    type: "button", "aria-label": "Notiser", "aria-haspopup": "menu", title: "Notiser",
+    onclick: (e) => {
+      e.stopPropagation();
+      const items = [];
+      if (due > 0) items.push(popoverLink("#/review", ICONS.spark, `${due} fråg${due === 1 ? "a" : "or"} väntar på repetition`));
+      if (examSoon) items.push(popoverLink("#/", ICONS.graduation,
+        examDays === 0 ? "Provet är idag" : examDays === 1 ? "Provet är imorgon" : `Provet är om ${examDays} dagar`));
+      if (!items.length) items.push(el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, "Inga nya notiser."));
+      openPopover(e.currentTarget, items, { align: "right" });
+    },
+  }, [icon(ICONS.bell, 18), hasNotif ? el("span.topbar__dot") : null].filter(Boolean));
+
+  const profileBtn = el("button.iconbtn.topbar__profile", {
+    type: "button", "aria-label": "Konto", "aria-haspopup": "menu", title: "Konto",
+    onclick: (e) => {
+      e.stopPropagation();
+      const items = store.authed ? [
+        el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, `Inloggad som ${store.authEmail}`),
+        popoverLink("#/settings", ICONS.gear, "Inställningar"),
+        el("button.cardmenu__item.cardmenu__item--danger", {
+          type: "button",
+          onclick: async () => { closePopover(); await store.logout(); toast("Signed out — local mode"); },
+        }, [icon(ICONS.logout, 15), "Logga ut"]),
+      ] : [
+        popoverLink("#/login", ICONS.user, "Logga in / skapa konto"),
+        popoverLink("#/settings", ICONS.gear, "Inställningar"),
+      ];
+      openPopover(e.currentTarget, items, { align: "right" });
+    },
+  }, [icon(ICONS.user, 18)]);
+
+  return el("div.topbar__actions", {}, [bellBtn, profileBtn]);
+}
+
+function popoverLink(href, path, label) {
+  return el("a.cardmenu__item", { href, onclick: closePopover }, [icon(path, 15), label]);
+}
+
 async function render() {
+  closePopover();
   if (typeof currentCleanup === "function") { try { currentCleanup(); } catch {} }
   currentCleanup = null;
 
