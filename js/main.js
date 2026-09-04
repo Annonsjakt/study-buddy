@@ -77,7 +77,7 @@ function shell(contentNode) {
     el("div.sidebar__streak", {
       "aria-label": `${streak} day study streak`,
     }, [
-      el("span.sidebar__streak-icon", {}, icon(ICONS.flame, 15)),
+      el("span.sidebar__streak-icon", {}, icon(ICONS.flame, 18)),
       streak > 0 ? `${streak}-dagars streak` : "Ingen streak än",
     ]),
   ]);

@@ -106,11 +106,13 @@ h1:focus-visible, h2:focus-visible {
   background: var(--surface-sunk); color: var(--ink); font-size: var(--fs-sm); font-weight: 700;
 }
 .sidebar__streak-icon {
-  width: 26px; height: 26px; flex: none; border-radius: var(--r-full);
+  width: 32px; height: 32px; flex: none; border-radius: var(--r-full);
   display: grid; place-items: center; color: var(--flame);
   background: var(--flame-tint); box-shadow: 0 0 12px var(--flame-glow);
 }
-.sidebar__streak-icon svg { filter: drop-shadow(0 0 3px var(--flame-glow)); }
+/* The flame glyph's ink sits higher than its viewBox's geometric centre, so
+   centering the <svg> box alone reads as off-center — nudge the ink down. */
+.sidebar__streak-icon svg { filter: drop-shadow(0 0 3px var(--flame-glow)); transform: translateY(12.5%); }
 
 .topbar {
   position: sticky; top: 0; z-index: 20;
