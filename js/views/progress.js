@@ -4,6 +4,7 @@ import { store } from "../store.js";
 import { el, icon, ICONS } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
 import { masteryByTopic, masteryForSubject } from "../lib/mastery.js";
+import { estimatedGrade } from "../lib/grade.js";
 import { dueLabel } from "../lib/srs.js";
 import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
 
@@ -31,12 +32,17 @@ export function renderProgress() {
     .map(({ s, m }) => {
       const color = store.subjectColor(s.id);
       const pct = Math.round(m * 100);
+      const grade = estimatedGrade(m);
       return el("div.meter", {}, [
         el("span", {}, s.name),
         el("div.meter__track", {
           role: "img", "aria-label": `${s.name}: ${pct}% mastery`,
         }, [el("div.meter__fill", { style: { width: "0%", "--subject": color.solid }, dataset: { w: pct } })]),
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
+        el("span.gradepill", {
+          class: `gradepill--${grade.tier}`,
+          title: `Uppskattad nivå ${grade.letter} baserat på dina svar — inte ett riktigt betyg`,
+        }, grade.letter),
       ]);
     });
 
@@ -58,7 +64,11 @@ export function renderProgress() {
 
     el("section.panel", {}, [
       el("h3", { style: { marginBottom: "8px" } }, "Mastery by subject"),
-      subjectMeters.length ? el("div", {}, subjectMeters)
+      subjectMeters.length ? el("div", {}, [
+        el("p.note", { style: { marginBottom: "10px" } },
+          "Bokstaven är en uppskattad nivå (E–A) baserat på hur du presterat i dina övningar — inte ett riktigt betyg."),
+        ...subjectMeters,
+      ])
         : el("p.note", {}, "Finish a session to start building mastery scores. Weakest topics show first."),
     ]),
 
