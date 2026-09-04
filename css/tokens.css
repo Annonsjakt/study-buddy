@@ -31,6 +31,11 @@
   --info:          #2E86C1;
   --info-tint:     #E4F1FA;
 
+  /* --- streak flame: warmer & more saturated than --retry, meant to glow --- */
+  --flame:         #ED6A1F;
+  --flame-tint:    #FDECDC;
+  --flame-glow:    rgba(237, 106, 31, .45);
+
   /* --- six subject colors ---
      solid = fills, bars, borders (graphical, 3:1 is enough)
      ink   = anything with text on or of it (>= 4.5:1 against white AND its tint)
@@ -121,6 +126,10 @@
   --info:          #57ABDD;
   --info-tint:     #17303F;
 
+  --flame:         #FF9A4D;
+  --flame-tint:    #3B2412;
+  --flame-glow:    rgba(255, 154, 77, .55);
+
   --c-grape:       #8478D9;  --c-grape-ink:     #7368C9;  --c-grape-tint:     #262340;
   --c-ocean:       #45BCD0;  --c-ocean-ink:     #2A93A5;  --c-ocean-tint:     #14343A;
   --c-leaf:        #6BC176;  --c-leaf-ink:      #47954F;  --c-leaf-tint:      #1B3520;
@@ -166,6 +175,10 @@
     --retry-tint:    #3B2A17;
     --info:          #57ABDD;
     --info-tint:     #17303F;
+
+    --flame:         #FF9A4D;
+    --flame-tint:    #3B2412;
+    --flame-glow:    rgba(255, 154, 77, .55);
 
     --c-grape:       #8478D9;  --c-grape-ink:     #7368C9;  --c-grape-tint:     #262340;
     --c-ocean:       #45BCD0;  --c-ocean-ink:     #2A93A5;  --c-ocean-tint:     #14343A;

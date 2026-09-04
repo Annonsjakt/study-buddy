@@ -74,9 +74,12 @@ function shell(contentNode) {
         href: item.href,
         "aria-current": isActive(item.match) ? "page" : null,
       }, [icon(item.icon, 18), item.label]))),
-    el("div.sidebar__streak", {
+    el("div.sidebar__streak" + (streak > 0 ? ".is-active" : ""), {
       "aria-label": `${streak} day study streak`,
-    }, [icon(ICONS.flame, 16), streak > 0 ? `${streak}-dagars streak` : "Ingen streak än"]),
+    }, [
+      el("span.sidebar__streak-icon", {}, icon(ICONS.flame, 15)),
+      streak > 0 ? `${streak}-dagars streak` : "Ingen streak än",
+    ]),
   ]);
 
   return el("div.shell", {}, [
