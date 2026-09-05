@@ -272,6 +272,11 @@ export const STRINGS = {
     "results.tookSecs": "Took {n}s",
     "results.tookMin": "Took {n} min",
     "results.tookMin30": "Took {n} min 30s",
+    "results.gradeEyebrow": "Estimated grade",
+    "results.gradeFirstTime": "Your first result on this one — nice benchmark to beat next time.",
+    "results.gradeUpFrom": "Up from {letter} — your best on this yet.",
+    "results.gradeMatchesBest": "Matches your best on this so far.",
+    "results.gradeBestSoFar": "Your best on this is still {letter} — worth another go.",
 
     // ---- spaced repetition due labels ----
     "srs.dueNow": "due now",
@@ -863,6 +868,11 @@ export const STRINGS = {
     "results.tookSecs": "Tog {n}s",
     "results.tookMin": "Tog {n} min",
     "results.tookMin30": "Tog {n} min 30s",
+    "results.gradeEyebrow": "Uppskattat betyg",
+    "results.gradeFirstTime": "Ditt första resultat på det här — bra riktmärke att slå nästa gång.",
+    "results.gradeUpFrom": "Upp från {letter} — ditt bästa på det här hittills.",
+    "results.gradeMatchesBest": "Samma som ditt bästa på det här hittills.",
+    "results.gradeBestSoFar": "Ditt bästa på det här är fortfarande {letter} — värt ett försök till.",
 
     // ---- spaced repetition due labels ----
     "srs.dueNow": "nu",

@@ -5,6 +5,7 @@ import { el, icon, ICONS } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
 import { deltaFromAttempt } from "../lib/mastery.js";
 import { celebrate, clearConfetti } from "../lib/confetti-helper.js";
+import { estimatedGrade, gradeRank } from "../lib/grade.js";
 import { t, plural } from "../lib/i18n.js";
 
 export function renderResults(attemptId) {
@@ -48,6 +49,7 @@ export function renderResults(attemptId) {
     el("h1", {}, great ? t("results.great") : t("results.niceEffort")),
     el("p.note", {}, heading + (attempt.examMode ? t("results.examModeSuffix") : attempt.wasTest ? t("results.testSuffix") : "")),
     ringWrap,
+    gradeReveal(attempt),
     el("p.note", { style: { marginTop: "-8px" } }, [
       icon(ICONS.clock, 14),
       " ",
@@ -92,6 +94,41 @@ export function renderResults(attemptId) {
   });
 
   return { title: t("results.pageTitle"), node, cleanup: clearConfetti };
+}
+
+/** For a real exam-conditions run (a "Prov"-type set, or any exam-mode
+ *  session — never a review, which isn't "taking an exam" on one set), a
+ *  prominent estimated-grade reveal: the letter this specific result maps
+ *  to, plus how it stacks up against your own best result on this same
+ *  set so far. Nothing to reveal for an ordinary practice run — the
+ *  per-topic deltas below already cover that case well. */
+function gradeReveal(attempt) {
+  if (!attempt.wasTest || attempt.isReview) return null;
+
+  const grade = estimatedGrade(attempt.scorePct / 100);
+  const rank = gradeRank(grade.letter);
+
+  const priorBestPct = store.attempts
+    .filter((a) => a.id !== attempt.id && a.assignmentId === attempt.assignmentId && a.wasTest && a.finishedAt < attempt.finishedAt)
+    .reduce((best, a) => Math.max(best, a.scorePct), -1);
+
+  let compare, compareClass = "";
+  if (priorBestPct < 0) {
+    compare = t("results.gradeFirstTime");
+  } else {
+    const priorGrade = estimatedGrade(priorBestPct / 100);
+    const priorRank = gradeRank(priorGrade.letter);
+    if (rank > priorRank) { compare = t("results.gradeUpFrom", { letter: priorGrade.letter }); compareClass = "up"; }
+    else if (rank === priorRank) compare = t("results.gradeMatchesBest");
+    else { compare = t("results.gradeBestSoFar", { letter: priorGrade.letter }); compareClass = "down"; }
+  }
+
+  return el("div.gradereveal", { class: `gradereveal--${grade.tier}` }, [
+    el("span.gradereveal__eyebrow", {}, t("results.gradeEyebrow")),
+    el("div.gradereveal__letter", {}, grade.letter),
+    el("p.gradereveal__compare", { class: compareClass || null }, compare),
+    el("p.gradereveal__caption", {}, t("progress.gradeTooltip", { letter: grade.letter })),
+  ]);
 }
 
 function countLabel(attempt) {

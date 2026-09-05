@@ -592,6 +592,32 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .delta__n { font-size: var(--fs-sm); font-weight: 700; }
 .delta__n.up { color: var(--ok); } .delta__n.down { color: var(--retry-ink); }
 
+/* The exam-result reveal: deliberately timed to pop in a beat after the
+   score ring finishes drawing (900ms), so the grade lands as its own
+   moment rather than arriving in the same breath as everything else. */
+.gradereveal {
+  display: inline-block; margin: var(--s-2) auto var(--s-5); padding: var(--s-5) var(--s-6);
+  min-width: 220px; border-radius: var(--r-lg); border: 1px solid var(--line);
+  background: var(--surface-sunk);
+  animation: pop-in var(--dur-slow) var(--ease-spring) 650ms both;
+}
+.gradereveal--low { background: var(--retry-tint); border-color: var(--retry); }
+.gradereveal--high { background: var(--ok-tint); border-color: var(--ok); }
+.gradereveal__eyebrow {
+  display: block; font-size: 12px; font-weight: 700; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.gradereveal__letter {
+  font-family: var(--font-display); font-weight: 700; font-size: 4rem; line-height: 1.2;
+  color: var(--ink);
+}
+.gradereveal--low .gradereveal__letter { color: var(--retry-ink); }
+.gradereveal--high .gradereveal__letter { color: var(--ok-ink); }
+.gradereveal__compare { font-weight: 600; margin-top: var(--s-1); }
+.gradereveal__compare.up { color: var(--ok-ink); }
+.gradereveal__compare.down { color: var(--ink-soft); }
+.gradereveal__caption { font-size: var(--fs-sm); color: var(--ink-faint); margin-top: 2px; }
+
 /* ---------- progress dashboard ---------- */
 .progress-dash { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-5); }
 .progress-dash > h1,

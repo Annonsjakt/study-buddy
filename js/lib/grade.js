@@ -17,3 +17,11 @@ export function estimatedGrade(mastery) {
   }
   return { letter: "A", tier: "high" };
 }
+
+const LETTERS = [...SCALE.map(([, letter]) => letter), "A"];
+
+/** F=0 … A=5, so two grades can be compared with a plain "<" — used to tell
+ *  a student their result improved rather than just changed. */
+export function gradeRank(letter) {
+  return LETTERS.indexOf(letter);
+}
