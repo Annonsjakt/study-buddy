@@ -84,6 +84,7 @@ function seedState() {
     srs: {},
     sessions: {},                    // in-progress sessions, keyed by session key
     activity: { daysStudied: [] },   // streak is derived, never stored
+    readNotifications: {},           // { [notificationId]: signature } — see topbarActions() in main.js
   };
 }
 
@@ -133,6 +134,7 @@ function migrate(state) {
   s.sessions = s.sessions || {};
   s.attempts = s.attempts || [];
   s.assignments = s.assignments || [];
+  s.readNotifications = s.readNotifications || {};
   return s;
 }
 
@@ -308,6 +310,29 @@ class Store extends EventTarget {
       const question = assignment.questions.find((q) => q.id === d.question.id) || d.question;
       return { ...d, assignment, question };
     });
+  }
+
+  // ---------- notifications ----------
+  // Topbar notifications (due-for-review, upcoming exam) are computed live
+  // from other state rather than stored as discrete events, so "read" is
+  // tracked against a snapshot of the fact that made the notification fire
+  // (the due count, or the exam date+day-count) rather than a fixed id alone.
+  // If that fact changes — more questions pile up, the exam gets a day
+  // closer — the notification reads as unread again; if it's unchanged, it
+  // stays read across reloads.
+  isNotificationRead(id, signature) {
+    return this.state.readNotifications[id] === signature;
+  }
+
+  // save(), not update() — this must persist without emitting "change".
+  // The notification panel repaints itself directly after calling this, and
+  // a "change" event triggers a full app re-render on the home/progress
+  // routes (see main.js's store.addEventListener("change", ...)), which
+  // starts by closing every open popover — so marking something read while
+  // the panel is open would immediately close the panel out from under it.
+  markNotificationRead(id, signature) {
+    this.state.readNotifications[id] = signature;
+    this.save();
   }
 
   // Accepts a "doc" (sample file or model output): {type,subject,title,questions,...}

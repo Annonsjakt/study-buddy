@@ -1,7 +1,7 @@
 // Router + persistent app shell.
 
 import { store } from "./store.js";
-import { el, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
+import { el, append, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
 import { announce, focusHeading } from "./lib/a11y.js";
 import { getTheme, setTheme } from "./lib/theme.js";
 import { openPopover, closePopover } from "./lib/popover.js";
@@ -159,34 +159,75 @@ function langPicker() {
       })));
 }
 
+const DAY_MS = 86400000;
+
+/** The two live notification types, each with a stable id and a "signature"
+ *  snapshotting the fact that made it fire (a due count, or an exam
+ *  date+day-count). store.isNotificationRead() compares against that
+ *  signature rather than just the id, so a notification you dismissed reads
+ *  as unread again once the underlying fact actually changes (more
+ *  questions piling up, the exam getting a day closer) instead of staying
+ *  silently dismissed forever. */
+function buildNotifications() {
+  const now = Date.now();
+  const list = [];
+
+  const due = store.dueQuestions();
+  if (due.length) {
+    const oldestDueAt = Math.min(...due.map((d) => d.rec?.dueAt ?? now));
+    const daysSince = Math.max(0, Math.floor((now - oldestDueAt) / DAY_MS));
+    const signature = String(due.length);
+    list.push({
+      id: "due-review",
+      icon: ICONS.spark,
+      title: plural(due.length, "notif.dueReviewOne", "notif.dueReviewMany"),
+      body: t("notif.dueReviewBody"),
+      meta: daysSince <= 0 ? t("notif.dueSinceToday") : plural(daysSince, "notif.dueSinceDayOne", "notif.dueSinceDayMany"),
+      href: "#/review",
+      linkLabel: t("notif.reviewNow"),
+      read: store.isNotificationRead("due-review", signature),
+      signature,
+    });
+  }
+
+  const examDate = store.settings.examDate;
+  if (examDate) {
+    const target = new Date(examDate + "T00:00:00");
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const examDays = Math.round((target - today) / DAY_MS);
+    if (examDays >= 0 && examDays <= 7) {
+      const signature = `${examDate}|${examDays}`;
+      list.push({
+        id: "exam-reminder",
+        icon: ICONS.graduation,
+        title: examDays === 0 ? t("notif.examToday") : examDays === 1 ? t("notif.examTomorrow") : t("notif.examInDays", { n: examDays }),
+        body: store.settings.examLabel || t("notif.examBody"),
+        meta: target.toLocaleDateString(getLang() === "en" ? "en-GB" : "sv-SE", { day: "numeric", month: "short", year: "numeric" }),
+        href: "#/",
+        linkLabel: t("notif.viewExam"),
+        read: store.isNotificationRead("exam-reminder", signature),
+        signature,
+      });
+    }
+  }
+
+  return list;
+}
+
 /** Notification bell + account button, top-right in every topbar (mobile's
  *  full row, and desktop's slim floating pair once the sidebar takes over
  *  brand/nav/streak). Notifications are real signals already in the store —
  *  no fake badge count. */
 function topbarActions() {
-  const due = store.dueQuestions().length;
-  const examDate = store.settings.examDate;
-  let examDays = null;
-  if (examDate) {
-    const target = new Date(examDate + "T00:00:00");
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    examDays = Math.round((target - today) / 86400000);
-  }
-  const examSoon = examDays != null && examDays >= 0 && examDays <= 7;
-  const hasNotif = due > 0 || examSoon;
+  const hasUnread = buildNotifications().some((n) => !n.read);
 
   const bellBtn = el("button.iconbtn.topbar__bell", {
-    type: "button", "aria-label": t("topbar.notifications"), "aria-haspopup": "menu", title: t("topbar.notifications"),
+    type: "button", "aria-label": t("topbar.notifications"), "aria-haspopup": "dialog", title: t("topbar.notifications"),
     onclick: (e) => {
       e.stopPropagation();
-      const items = [];
-      if (due > 0) items.push(popoverLink("#/review", ICONS.spark, plural(due, "notif.dueReviewOne", "notif.dueReviewMany")));
-      if (examSoon) items.push(popoverLink("#/", ICONS.graduation,
-        examDays === 0 ? t("notif.examToday") : examDays === 1 ? t("notif.examTomorrow") : t("notif.examInDays", { n: examDays })));
-      if (!items.length) items.push(el("p.note", { style: { padding: "var(--s-2) var(--s-3)" } }, t("notif.none")));
-      openPopover(e.currentTarget, items, { align: "right" });
+      openNotificationPanel(e.currentTarget);
     },
-  }, [icon(ICONS.bell, 18), hasNotif ? el("span.topbar__dot") : null].filter(Boolean));
+  }, [icon(ICONS.bell, 18), hasUnread ? el("span.topbar__dot") : null].filter(Boolean));
 
   const profileBtn = el("button.iconbtn.topbar__profile", {
     type: "button", "aria-label": t("topbar.account"), "aria-haspopup": "menu", title: t("topbar.account"),
@@ -208,6 +249,88 @@ function topbarActions() {
   }, [icon(ICONS.user, 18)]);
 
   return el("div.topbar__actions", {}, [bellBtn, profileBtn]);
+}
+
+// Kept module-level so the last tab picked (Unread vs. Read) survives
+// closing and reopening the panel within the same visit.
+let notifTab = "unread";
+
+function openNotificationPanel(anchor) {
+  // stopPropagation matters here: paint() below replaces this button's own
+  // subtree synchronously (repainting the badge count), so by the time this
+  // click bubbled up to the popover's outside-click listener the original
+  // target would already be detached — which reads as "clicked outside" and
+  // closes the whole panel out from under itself.
+  const tabUnreadBtn = el("button.notiftab", { type: "button", role: "tab", onclick: (e) => { e.stopPropagation(); notifTab = "unread"; paint(); } });
+  const tabReadBtn = el("button.notiftab", { type: "button", role: "tab", onclick: (e) => { e.stopPropagation(); notifTab = "read"; paint(); } });
+  const bodyEl = el("div.notifpanel__body");
+
+  // The bell button itself stays in the topbar behind this panel, so its
+  // unread dot needs updating in place — the next full render would pick it
+  // up too, but that only happens on navigation, and marking something read
+  // shouldn't require one.
+  function refreshBellDot() {
+    const stillUnread = buildNotifications().some((n) => !n.read);
+    const dot = anchor.querySelector(".topbar__dot");
+    if (stillUnread && !dot) anchor.appendChild(el("span.topbar__dot"));
+    else if (!stillUnread && dot) dot.remove();
+  }
+
+  function card(n) {
+    return el("div.notifcard" + (n.read ? "" : ".notifcard--unread"), {}, [
+      el("div.notifcard__icon", {}, [icon(n.icon, 18)]),
+      el("div.notifcard__main", {}, [
+        el("p.notifcard__title", {}, n.title),
+        el("p.notifcard__text", {}, n.body),
+        el("div.notifcard__footer", {}, [
+          el("a.notifcard__link", { href: n.href, onclick: closePopover }, n.linkLabel),
+          el("span.notifcard__meta", {}, n.meta),
+        ]),
+      ]),
+      !n.read ? el("button.notifcard__mark", {
+        type: "button", "aria-label": t("notif.markRead"), title: t("notif.markRead"),
+        onclick: (e) => { e.stopPropagation(); store.markNotificationRead(n.id, n.signature); paint(); },
+      }, [icon(ICONS.check, 14)]) : null,
+    ].filter(Boolean));
+  }
+
+  function paint() {
+    const all = buildNotifications();
+    const unread = all.filter((n) => !n.read);
+    const read = all.filter((n) => n.read);
+
+    clear(tabUnreadBtn);
+    append(tabUnreadBtn, unread.length
+      ? [t("notif.tabUnread"), el("span.notiftab__count", {}, String(unread.length))]
+      : t("notif.tabUnread"));
+    tabUnreadBtn.setAttribute("aria-selected", String(notifTab === "unread"));
+
+    clear(tabReadBtn);
+    append(tabReadBtn, t("notif.tabRead"));
+    tabReadBtn.setAttribute("aria-selected", String(notifTab === "read"));
+
+    const list = notifTab === "unread" ? unread : read;
+    clear(bodyEl);
+    if (!list.length) {
+      bodyEl.appendChild(el("p.note", { style: { padding: "var(--s-5) var(--s-3)", textAlign: "center" } },
+        notifTab === "unread" ? t("notif.none") : t("notif.noneRead")));
+    } else {
+      for (const n of list) bodyEl.appendChild(card(n));
+    }
+
+    refreshBellDot();
+  }
+
+  openPopover(anchor, [
+    el("div.notifpanel__head", {}, [
+      el("h3", {}, t("notif.panelTitle")),
+      el("button.iconbtn", { type: "button", "aria-label": t("session.close"), onclick: closePopover }, [icon(ICONS.close, 16)]),
+    ]),
+    el("div.notiftabs", { role: "tablist" }, [tabUnreadBtn, tabReadBtn]),
+    bodyEl,
+  ], { align: "right", width: 360, role: "dialog", label: t("notif.panelTitle") });
+
+  paint();
 }
 
 function popoverLink(href, path, label) {

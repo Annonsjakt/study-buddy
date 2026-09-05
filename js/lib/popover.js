@@ -9,14 +9,24 @@ import { el } from "./dom.js";
 
 function escClose(e) { if (e.key === "Escape") closePopover(); }
 
+// A click INSIDE the popover must not close it — otherwise a popover with
+// its own interactive content (tabs, buttons that repaint in place, not just
+// plain nav links) would destroy itself the instant anything inside it was
+// clicked, since the click still bubbles to this document-level listener.
+function outsideClick(e) {
+  const open = document.querySelector(".popover");
+  if (open && !open.contains(e.target)) closePopover();
+}
+
 export function closePopover() {
   document.querySelectorAll(".popover").forEach((m) => m.remove());
+  document.removeEventListener("click", outsideClick);
   document.removeEventListener("keydown", escClose);
 }
 
-export function openPopover(anchor, children, { align = "left", width = 260 } = {}) {
+export function openPopover(anchor, children, { align = "left", width = 260, role = "menu", label } = {}) {
   closePopover();
-  const menu = el("div.popover", { role: "menu" }, children);
+  const menu = el("div.popover", { role, "aria-label": label }, children);
   const r = anchor.getBoundingClientRect();
   const left = align === "right" ? r.right + window.scrollX - width : r.left + window.scrollX;
   menu.style.top = `${r.bottom + window.scrollY + 6}px`;
@@ -25,7 +35,7 @@ export function openPopover(anchor, children, { align = "left", width = 260 } = 
   document.body.appendChild(menu);
 
   setTimeout(() => {
-    document.addEventListener("click", closePopover, { once: true });
+    document.addEventListener("click", outsideClick);
     document.addEventListener("keydown", escClose);
   }, 0);
   return menu;
