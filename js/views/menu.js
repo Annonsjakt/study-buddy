@@ -378,7 +378,7 @@ function dashRow(topicMastery) {
     el("div", {}, [
       el("div.dash__label", {}, overall == null ? t("dash.noResults") : t("dash.overallMastery")),
       el("div.dash__value", {}, overall == null ? t("dash.startStudying") : `${Math.round(overall * 100)}%`),
-      el("p.note", { style: { marginTop: "4px" } }, overall == null
+      el("p.note.dash__hero-note", {}, overall == null
         ? t("dash.heroHintEmpty")
         : t("dash.heroHint", {
             topics: plural(vals.length, "dash.topic", "dash.topics"),
@@ -387,6 +387,11 @@ function dashRow(topicMastery) {
     ]),
   ]);
 
+  // Value-then-caption here, unlike the hero's label-then-value above — these
+  // labels are full sentences ("Due now — tap to review"), not a short
+  // eyebrow, so they read as a caption under the number rather than a
+  // heading above it (and stay short-and-uppercase-free, since an all-caps
+  // sentence reads as shouting).
   const streakCard = el("a.dash__card", { href: "#/progress" }, [
     el("span.dash__icon", {}, icon(ICONS.flame, 20)),
     el("div", {}, [

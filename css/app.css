@@ -262,6 +262,7 @@ h1:focus-visible, h2:focus-visible {
   .dash { grid-template-columns: 1fr 1fr; gap: var(--s-3); }
   .dash__card--hero { grid-column: 1 / -1; }
   .dash__card { padding: var(--s-4); gap: var(--s-3); }
+  .dash__card--hero .dash__value { font-size: 1.75rem; }
   .dash__card:not(.dash__card--hero) .dash__value { font-size: var(--fs-lg); }
   .dash__card:not(.dash__card--hero) .dash__icon { width: 36px; height: 36px; }
 }
@@ -272,12 +273,28 @@ h1:focus-visible, h2:focus-visible {
   text-decoration: none; color: inherit;
   min-width: 0;            /* let it shrink inside the grid instead of overflowing */
 }
-.dash__card > div { min-width: 0; }   /* same, for the text column next to the icon */
+/* The label/value(/note) column next to the icon: a deliberate, even rhythm
+   instead of the default zero-gap block stacking, which read as cramped —
+   the note gets its own larger gap on top of this via a top border. */
+.dash__card > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .dash__card--hero { background: linear-gradient(135deg, var(--brand-tint), var(--surface) 70%); border-color: var(--brand); }
 a.dash__card { transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast); }
 a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .dash__label { font-size: var(--fs-sm); color: var(--ink-soft); }
-.dash__value { font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl); line-height: 1.15; white-space: nowrap; }
+/* The hero's label is a short caption ABOVE the value ("Overall mastery"),
+   so it reads well as a small-caps eyebrow — the stat cards' labels are full
+   sentences BELOW the value ("Due now — tap to review") and would look like
+   shouting in the same treatment, so they keep the plain style above. */
+.dash__card--hero .dash__label {
+  font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.dash__value {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl);
+  line-height: 1.15; letter-spacing: -.01em; white-space: nowrap;
+}
+.dash__card--hero .dash__value { font-size: 2.25rem; }
+.dash__hero-note { margin-top: 5px; padding-top: 10px; border-top: 1px solid var(--line); }
 .dash__icon {
   width: 44px; height: 44px; flex: none; border-radius: var(--r-full);
   display: grid; place-items: center; background: var(--surface-sunk); color: var(--ink-soft);
