@@ -4,13 +4,19 @@
 
 import { store } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
-import { loadLibraryIndex, isImported, importSet } from "../data/library.js";
-import { t, plural } from "../lib/i18n.js";
+import { loadLibraryIndex, loadLibraryTranslations, isImported, importSet } from "../data/library.js";
+import { t, plural, getLang } from "../lib/i18n.js";
 
-// The library's actual course content (subject names, descriptions,
-// question sets) stays Swedish — it's Swedish-curriculum material, not UI
-// chrome. But these four level labels double as navigation categories, so
-// they get a translation for the handful of ids we ship.
+// The library's actual course content (subject names, descriptions, question
+// sets) is Swedish-curriculum material. In English mode it's shown through
+// an overlay (data/library/index.en.json for names/descriptions/titles —
+// covering all of them — and data/library-en/*.json for the full question
+// content, filled in file by file) rather than through this app's usual
+// per-string i18n, since it's bulk content, not UI chrome. Falls back to the
+// Swedish original wherever a given id hasn't been translated yet.
+//
+// These four level labels double as navigation categories rather than
+// content, so they get a normal i18n translation for the handful of ids we ship.
 const LEVEL_KEYS = { ak7: "library.levelAk7", ak8: "library.levelAk8", ak9: "library.levelAk9", gymnasiet: "library.levelGymnasiet" };
 function levelLabel(lvl) {
   const key = lvl && LEVEL_KEYS[lvl.id];
@@ -18,9 +24,10 @@ function levelLabel(lvl) {
 }
 
 export async function renderLibrary() {
-  let index;
+  let index, tr;
   try {
     index = await loadLibraryIndex();
+    tr = getLang() === "en" ? await loadLibraryTranslations() : { subjects: {}, sets: {} };
   } catch (e) {
     return {
       title: t("library.pageTitle"),
@@ -31,6 +38,11 @@ export async function renderLibrary() {
       ]),
     };
   }
+
+  const subjName = (subject) => tr.subjects[subject?.id]?.name || subject?.name;
+  const subjDesc = (subject) => tr.subjects[subject?.id]?.description || subject?.description;
+  const setTitle = (entry) => tr.sets[entry?.id]?.title || entry?.title;
+  const setSummary = (entry) => tr.sets[entry?.id]?.summary || entry?.summary;
 
   const root = el("div");
   const state = { level: null, subject: null, query: "" };
@@ -86,7 +98,7 @@ export async function renderLibrary() {
     const matches = index.sets.filter((s) => {
       const subject = index.subjects.find((sub) => sub.id === s.subject);
       const level = index.levels.find((l) => l.id === subject?.level);
-      const haystack = [s.title, s.summary, subject?.name, levelLabel(level)].filter(Boolean).join(" ").toLowerCase();
+      const haystack = [setTitle(s), setSummary(s), subjName(subject), levelLabel(level)].filter(Boolean).join(" ").toLowerCase();
       return haystack.includes(q);
     });
 
@@ -106,7 +118,7 @@ export async function renderLibrary() {
       const subject = index.subjects.find((s) => s.id === subjId);
       const level = index.levels.find((l) => l.id === subject?.level);
       return el("section.panel", { style: { marginBottom: "20px" } }, [
-        el("p.note", { style: { marginBottom: "8px" } }, [levelLabel(level), subject?.name].filter(Boolean).join(" · ")),
+        el("p.note", { style: { marginBottom: "8px" } }, [levelLabel(level), subjName(subject)].filter(Boolean).join(" · ")),
         el("div.libgrid", {}, sets.map(setCard)),
       ]);
     });
@@ -137,8 +149,8 @@ export async function renderLibrary() {
       el("p", { style: { marginBottom: "16px" } }, t("library.subjectIntro", { level: levelLabel(level) })),
       el("div.source-grid", {}, subjects.map((subject) =>
         el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
-          icon(ICONS.book, 26), subject.name,
-          el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subject.description),
+          icon(ICONS.book, 26), subjName(subject),
+          el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subjDesc(subject)),
         ]))),
     ]);
   }
@@ -166,8 +178,8 @@ export async function renderLibrary() {
       el("section.panel", { style: { marginBottom: "24px" } }, [
         el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
           el("div", {}, [
-            el("h3", {}, subject.name),
-            el("p.note", { style: { marginTop: "4px" } }, subject.description),
+            el("h3", {}, subjName(subject)),
+            el("p.note", { style: { marginTop: "4px" } }, subjDesc(subject)),
           ]),
           missing.length ? addAllBtn : el("span.note", {}, t("library.allAdded")),
         ]),
@@ -187,7 +199,7 @@ export async function renderLibrary() {
             e.currentTarget.disabled = true;
             try {
               await importSet(entry);
-              toast(t("library.added", { title: entry.title }));
+              toast(t("library.added", { title: setTitle(entry) }));
               paint();
             } catch (err) {
               toast(err.message || t("library.addFailed"));
@@ -208,8 +220,8 @@ export async function renderLibrary() {
 
     return el("div.libcard", {}, [
       el("div", {}, [
-        el("div.libcard__title", {}, entry.title),
-        el("p.note", { style: { margin: "4px 0 0" } }, entry.summary),
+        el("div.libcard__title", {}, setTitle(entry)),
+        el("p.note", { style: { margin: "4px 0 0" } }, setSummary(entry)),
       ]),
       el("div.libcard__foot", {}, [
         el("span.note", {}, plural(entry.count, "library.questionsOne", "library.questionsMany")),
