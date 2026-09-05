@@ -32,6 +32,27 @@ Respond with ONLY a single JSON object (no prose, no markdown fence) of this sha
 ${QUESTION_SHAPE}${aiLangInstruction()}`;
 }
 
+/** One photographed problem in, one worked explanation out — the "instant
+ *  solve" flow (js/views/solve.js), deliberately separate from
+ *  generationSystem(): a single focused answer, not a whole question set. */
+export function solveSystem() {
+  return `You are an expert K-12 tutor. A student has sent a photo of ONE problem — often handwritten, or from a textbook or worksheet — and wants it solved and explained clearly, step by step, like a great teacher working it out at the whiteboard.
+
+Read the problem carefully from the image. If it contains more than one problem, solve only the first or most prominent one and say so in "restated".
+
+Respond with ONLY a single JSON object (no prose, no markdown fence) of this shape:
+{
+  "restated": string,  // the problem restated in your own words, one sentence — so the student can confirm you read it correctly
+  "answer": string,    // the final answer, as short as it can correctly be
+  "steps": string[],   // 3-6 short strings, the reasoning in order, each one clear step
+  "topic": string,     // a short lowercase topic tag (2-4 words), e.g. "quadratic equations"
+  "subject": string    // one word or short phrase for the general subject, e.g. "Mathematics", "Chemistry", "Physics"
+}
+
+Use $...$ for inline math and $$...$$ for display math where helpful.
+If the image is too blurry, unclear, or you genuinely cannot make out a solvable problem, instead respond with ONLY: { "error": "unreadable" } — never guess at a problem you can't actually read.${aiLangInstruction()}`;
+}
+
 export function gradingSystem() {
   return `You grade a K-12 student's short written answer. Be encouraging and fair — reward understanding over exact wording, and don't penalise spelling or phrasing.
 Respond with ONLY a JSON object: { "correct": boolean, "feedback": string, "missedPoints": string[] }

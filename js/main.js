@@ -8,6 +8,7 @@ import { openPopover, closePopover } from "./lib/popover.js";
 import { t, plural, LANGS, getLang, setLang, applyLang } from "./lib/i18n.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
+import { renderSolve } from "./views/solve.js";
 import { renderEdit } from "./views/edit.js";
 import { renderSession, renderReview, renderPractice, renderNationalMix } from "./views/session.js";
 import { renderResults } from "./views/results.js";
@@ -22,6 +23,7 @@ const app = document.getElementById("app");
 const routes = [
   { rx: /^\/?$/, view: () => renderMenu() },
   { rx: /^\/create$/, view: (m, qs) => renderCreate(qs) },
+  { rx: /^\/solve$/, view: () => renderSolve() },
   { rx: /^\/edit\/(.+)$/, view: (m) => renderEdit(m[1]) },
   { rx: /^\/review$/, view: () => renderReview() },
   { rx: /^\/practice\/(.+)$/, view: (m) => renderPractice(m[1]) },
@@ -53,6 +55,7 @@ function parseHash() {
 function navItems() {
   const items = [
     { href: "#/", match: "/", icon: ICONS.home, label: t("nav.home") },
+    { href: "#/solve", match: "/solve", icon: ICONS.camera, label: t("nav.solve") },
     { href: "#/bibliotek", match: "/bibliotek", icon: ICONS.book, label: t("nav.library") },
     { href: "#/create", match: "/create", icon: ICONS.plus, label: t("nav.create") },
     { href: "#/progress", match: "/progress", icon: ICONS.chart, label: t("nav.progress") },

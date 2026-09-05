@@ -2,7 +2,7 @@
 // the actual Claude API key. The browser never sees it.
 
 import { store } from "./store.js";
-import { generationSystem, gradingSystem } from "./prompts.js";
+import { generationSystem, gradingSystem, solveSystem } from "./prompts.js";
 import { PROXY_URL } from "./config.js";
 import { t } from "./lib/i18n.js";
 
@@ -18,21 +18,21 @@ export const PRESETS = {
     return {
       label: t("claude.presetBalanced"),
       hint: t("claude.presetBalancedHint"),
-      generate: "claude-opus-5", tutor: "claude-sonnet-5", grade: "claude-haiku-4-5",
+      generate: "claude-opus-5", tutor: "claude-sonnet-5", grade: "claude-haiku-4-5", solve: "claude-opus-5",
     };
   },
   get best() {
     return {
       label: t("claude.presetBest"),
       hint: t("claude.presetBestHint"),
-      generate: "claude-opus-5", tutor: "claude-opus-5", grade: "claude-opus-5",
+      generate: "claude-opus-5", tutor: "claude-opus-5", grade: "claude-opus-5", solve: "claude-opus-5",
     };
   },
   get cheapest() {
     return {
       label: t("claude.presetCheapest"),
       hint: t("claude.presetCheapestHint"),
-      generate: "claude-sonnet-5", tutor: "claude-haiku-4-5", grade: "claude-haiku-4-5",
+      generate: "claude-sonnet-5", tutor: "claude-haiku-4-5", grade: "claude-haiku-4-5", solve: "claude-sonnet-5",
     };
   },
 };
@@ -154,6 +154,50 @@ function normalizeDoc(doc) {
 }
 function topicTitle(doc) { return (doc.topics && doc.topics[0]) ? cap(doc.topics[0]) : t("claude.untitledSet"); }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ---------- instant photo solve ----------
+
+/** One photographed problem -> one worked explanation. Kept separate from
+ *  generateAssignment(): a single focused answer people expect back in
+ *  seconds, not a whole question set. */
+export async function solveProblem({ image, note = "" }) {
+  const userContent = [
+    { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } },
+    { type: "text", text: (note.trim() ? `Extra context from the student: ${note.trim()}\n\n` : "") + "Return the JSON only." },
+  ];
+  const body = {
+    model: modelFor("solve"),
+    max_tokens: 1500,
+    system: solveSystem(),
+    messages: [{ role: "user", content: userContent }],
+  };
+
+  let raw = await callJSON(body);
+  let parsed;
+  try {
+    parsed = parseLooseJSON(raw);
+  } catch {
+    const repair = await callJSON({
+      ...body,
+      messages: [
+        { role: "user", content: userContent },
+        { role: "assistant", content: [{ type: "text", text: raw.slice(0, 2000) }] },
+        { role: "user", content: [{ type: "text", text: "That wasn't valid JSON. Reply again with ONLY the JSON object." }] },
+      ],
+    });
+    parsed = parseLooseJSON(repair);
+  }
+
+  if (parsed?.error === "unreadable") throw new ClaudeError(t("solve.unreadable"));
+
+  return {
+    restated: typeof parsed.restated === "string" ? parsed.restated : "",
+    answer: typeof parsed.answer === "string" ? parsed.answer : "",
+    steps: Array.isArray(parsed.steps) ? parsed.steps.filter((s) => typeof s === "string" && s.trim()) : [],
+    topic: typeof parsed.topic === "string" && parsed.topic.trim() ? parsed.topic.trim().toLowerCase() : "general",
+    subject: typeof parsed.subject === "string" && parsed.subject.trim() ? parsed.subject.trim() : t("sets.generalSubject"),
+  };
+}
 
 // ---------- free-text grading ----------
 

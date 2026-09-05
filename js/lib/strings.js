@@ -14,6 +14,7 @@ export const STRINGS = {
     "nav.progress": "Progress",
     "nav.parent": "Parent / teacher",
     "nav.settings": "Settings",
+    "nav.solve": "Solve",
     "nav.mainMenu": "Main menu",
 
     "streak.days": "{n}-day streak",
@@ -63,6 +64,7 @@ export const STRINGS = {
     "menu.hintLive": "Pick something to study, or make a new set.",
     "menu.hintDemo": "Running in demo mode — see Settings for how to turn on live mode.",
     "menu.newSet": "New set",
+    "menu.solveButton": "Solve a problem",
     "menu.pageTitle": "Menu",
 
     "dash.noResults": "No results yet",
@@ -377,6 +379,25 @@ export const STRINGS = {
     "create.saved": "Saved!",
     "create.subjectLocked": "Locked to national-test subject",
 
+    // ---- instant solve ----
+    "solve.pageTitle": "Solve a problem",
+    "solve.title": "Solve a problem",
+    "solve.intro": "Snap a photo of a single problem — from a worksheet, a textbook, or your own notes — and get a clear, step-by-step explanation in seconds.",
+    "solve.uploadLabel": "Photo of the problem",
+    "solve.uploadCta": "Choose or take a photo",
+    "solve.uploadHint": "A clear, well-lit photo works best — PNG or JPG, up to 5 MB.",
+    "solve.retake": "Choose a different photo",
+    "solve.noteLabel": "Anything I should know? (optional)",
+    "solve.notePlaceholder": "e.g. “we're only allowed to use the quadratic formula”",
+    "solve.solveButton": "Solve it",
+    "solve.loading": "Reading the problem and working it out…",
+    "solve.restatedLabel": "I read this as:",
+    "solve.answerLabel": "Answer",
+    "solve.stepsLabel": "How to solve it",
+    "solve.another": "Solve another",
+    "solve.practiceMore": "Create practice questions on {subject}",
+    "solve.unreadable": "I couldn't quite make out a problem in that photo — try a clearer shot, closer up and well lit.",
+
     // ---- edit set ----
     "edit.title": "Edit set",
     "edit.pageTitle": "Edit — {title}",
@@ -610,6 +631,7 @@ export const STRINGS = {
     "nav.progress": "Framsteg",
     "nav.parent": "Förälder/lärare",
     "nav.settings": "Inställningar",
+    "nav.solve": "Lös",
     "nav.mainMenu": "Huvudmeny",
 
     "streak.days": "{n}-dagars streak",
@@ -659,6 +681,7 @@ export const STRINGS = {
     "menu.hintLive": "Välj något att plugga på, eller skapa ett nytt set.",
     "menu.hintDemo": "Körs i demoläge — se Inställningar för hur du slår på live-läge.",
     "menu.newSet": "Nytt set",
+    "menu.solveButton": "Lös en uppgift",
     "menu.pageTitle": "Meny",
 
     "dash.noResults": "Inga resultat än",
@@ -972,6 +995,25 @@ export const STRINGS = {
     "create.needName": "Ge setet ett namn.",
     "create.saved": "Sparat!",
     "create.subjectLocked": "Låst till nationellt prov-ämne",
+
+    // ---- instant solve ----
+    "solve.pageTitle": "Lös en uppgift",
+    "solve.title": "Lös en uppgift",
+    "solve.intro": "Ta en bild på en enskild uppgift — från ett arbetsblad, en lärobok eller dina egna anteckningar — och få en tydlig genomgång steg för steg på några sekunder.",
+    "solve.uploadLabel": "Bild på uppgiften",
+    "solve.uploadCta": "Välj eller ta en bild",
+    "solve.uploadHint": "En tydlig, välbelyst bild fungerar bäst — PNG eller JPG, upp till 5 MB.",
+    "solve.retake": "Välj en annan bild",
+    "solve.noteLabel": "Något jag borde veta? (valfritt)",
+    "solve.notePlaceholder": "t.ex. ”vi får bara använda konjugatregeln”",
+    "solve.solveButton": "Lös den",
+    "solve.loading": "Läser uppgiften och arbetar igenom den…",
+    "solve.restatedLabel": "Jag läste det som:",
+    "solve.answerLabel": "Svar",
+    "solve.stepsLabel": "Så här löser du den",
+    "solve.another": "Lös en till",
+    "solve.practiceMore": "Skapa övningsfrågor i {subject}",
+    "solve.unreadable": "Jag kunde inte riktigt läsa av någon uppgift i den bilden — prova en tydligare bild, tagen lite närmre och i bättre ljus.",
 
     // ---- edit set ----
     "edit.title": "Redigera set",
