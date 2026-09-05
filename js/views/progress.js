@@ -8,8 +8,12 @@ import { estimatedGrade } from "../lib/grade.js";
 import { dueLabel } from "../lib/srs.js";
 import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
 import { t, plural } from "../lib/i18n.js";
+import { preloadQuestionTranslations } from "../lib/library-content.js";
 
-export function renderProgress() {
+export async function renderProgress() {
+  // So a set imported back when the app was in Swedish shows its translated
+  // title in the per-assignment badges below, not just Swedish leftovers.
+  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
   const tm = masteryByTopic(store.attempts);
   const attemptsCount = store.attempts.length;
   const streak = store.streak;

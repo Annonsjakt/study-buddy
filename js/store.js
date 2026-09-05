@@ -5,7 +5,35 @@ import { uid } from "./lib/dom.js";
 import { localDayKey, currentStreak } from "./lib/activity.js";
 import { findQuestion as findQuestionPure, dueQuestions as dueQuestionsPure } from "./lib/library.js";
 import { PROXY_HEALTH_URL, AUTH_SIGNUP_URL, AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL, STATE_URL } from "./config.js";
-import { t } from "./lib/i18n.js";
+import { t, getLang } from "./lib/i18n.js";
+import { getCachedQuestionTranslation } from "./lib/library-content.js";
+
+// An already-imported library set has its (Swedish) content copied straight
+// into the student's own assignments array, so switching the app to English
+// doesn't retranslate it on its own — these two helpers overlay whatever
+// translation js/lib/library-content.js has cached (see
+// preloadQuestionTranslations()) on top of the stored assignment/question at
+// read time, leaving the persisted Swedish original untouched. A set that
+// isn't from the library, or has no cached translation yet, passes through
+// unchanged.
+function translatedAssignment(a) {
+  if (getLang() !== "en") return a;
+  const doc = getCachedQuestionTranslation(a.id);
+  if (!doc) return a;
+  const byId = new Map((doc.questions || []).map((q) => [q.id, q]));
+  return {
+    ...a,
+    title: doc.title || a.title,
+    sourceSummary: doc.sourceSummary || a.sourceSummary,
+    questions: a.questions.map((q) => {
+      const tq = byId.get(q.id);
+      if (!tq) return q;
+      const out = { ...q, prompt: tq.prompt, opener: tq.opener, choices: tq.choices, explanation: tq.explanation, steps: tq.steps, topic: tq.topic };
+      if (typeof tq.answer === "string") out.answer = tq.answer;
+      return out;
+    }),
+  };
+}
 
 const KEY = "studybuddy.v1";
 const SCHEMA_VERSION = 5;
@@ -248,16 +276,39 @@ class Store extends EventTarget {
   }
 
   // ---------- assignments ----------
-  get assignments() { return this.state.assignments; }
+  get assignments() { return this.state.assignments.map(translatedAssignment); }
 
-  getAssignment(id) { return this.state.assignments.find((a) => a.id === id); }
+  getAssignment(id) {
+    const a = this.state.assignments.find((a) => a.id === id);
+    return a ? translatedAssignment(a) : a;
+  }
+
+  /** The stored assignment exactly as saved, with no English overlay —
+   *  for callers that go on to persist what they read (editing, duplicating).
+   *  Reading the translated view there would bake the display language into
+   *  the saved record and silently lose the Swedish original. */
+  getRawAssignment(id) {
+    return this.state.assignments.find((a) => a.id === id);
+  }
 
   /** Find a question anywhere in the library. Lets results and review
    *  sessions work without knowing which set a question came from. */
-  findQuestion(questionId) { return findQuestionPure(this.state.assignments, questionId); }
+  findQuestion(questionId) {
+    const found = findQuestionPure(this.state.assignments, questionId);
+    if (!found) return found;
+    const assignment = translatedAssignment(found.assignment);
+    const question = assignment.questions.find((q) => q.id === found.question.id) || found.question;
+    return { assignment, question };
+  }
 
   /** Every question whose spaced-repetition record says it's due, across all sets. */
-  dueQuestions(now = Date.now()) { return dueQuestionsPure(this.state.assignments, this.state.srs, now); }
+  dueQuestions(now = Date.now()) {
+    return dueQuestionsPure(this.state.assignments, this.state.srs, now).map((d) => {
+      const assignment = translatedAssignment(d.assignment);
+      const question = assignment.questions.find((q) => q.id === d.question.id) || d.question;
+      return { ...d, assignment, question };
+    });
+  }
 
   // Accepts a "doc" (sample file or model output): {type,subject,title,questions,...}
   addAssignmentDoc(doc, { silent = false } = {}) {
@@ -303,7 +354,7 @@ class Store extends EventTarget {
   /** Copy a set. The copy gets fresh question ids so it keeps its own
    *  spaced-repetition schedule rather than sharing the original's. */
   duplicateAssignment(id) {
-    const a = this.getAssignment(id);
+    const a = this.getRawAssignment(id);
     if (!a) return null;
     const copy = {
       ...structuredClone(a),

@@ -7,7 +7,9 @@ import { questionEditor } from "../components/question-editor.js";
 import { t, plural } from "../lib/i18n.js";
 
 export function renderEdit(assignmentId) {
-  const original = store.getAssignment(assignmentId);
+  // Raw, not the English-overlay view: saving must not bake the display
+  // language into the stored record and lose the Swedish original.
+  const original = store.getRawAssignment(assignmentId);
   if (!original) {
     return {
       title: t("session.notFoundTitle"),

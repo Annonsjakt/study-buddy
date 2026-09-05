@@ -5,6 +5,7 @@ import { store } from "../store.js";
 import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { masteryByTopic, masteryForAssignment, masteryForSubject } from "../lib/mastery.js";
 import { t, plural, getLang } from "../lib/i18n.js";
+import { preloadQuestionTranslations } from "../lib/library-content.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
 let tab = "assignment";
@@ -12,7 +13,10 @@ let subjectFilter = "all";
 let sortBy = "recent";
 let query = "";
 
-export function renderMenu() {
+export async function renderMenu() {
+  // So a set imported back when the app was in Swedish shows its translated
+  // title here too, not just once a session has warmed the cache.
+  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
   const topicMastery = masteryByTopic(store.attempts);
 
   const grid = el("div.grid");

@@ -101,7 +101,10 @@ export function renderParentHub() {
       el("option", { value: a.id }, `${a.title} (${a.questions.length} questions)`)));
     const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.assign"));
     btn.addEventListener("click", async () => {
-      const a = store.getAssignment(sel.value);
+      // Raw, not the English-overlay view: this becomes the student's own
+      // stored copy, so it must carry the canonical (Swedish) content, not
+      // whatever language the parent's own display happens to be in.
+      const a = store.getRawAssignment(sel.value);
       if (!a) return;
       const doc = {
         title: a.title,

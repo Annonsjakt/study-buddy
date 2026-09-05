@@ -12,8 +12,13 @@ import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
 import { t, plural } from "../lib/i18n.js";
+import { preloadQuestionTranslations } from "../lib/library-content.js";
 
 export async function renderSession(assignmentId, qs) {
+  // Warms the cache store.getAssignment() reads from — needed even for a
+  // set that was imported back when the app was in Swedish, since its
+  // content was copied into the student's own store as-is at import time.
+  await preloadQuestionTranslations([assignmentId]);
   const assignment = store.getAssignment(assignmentId);
   if (!assignment) return notFound(t("session.setGone"));
   if (!assignment.questions.length) return notFound(t("session.setEmpty"));
@@ -46,6 +51,9 @@ export async function renderSession(assignmentId, qs) {
 }
 
 export async function renderReview() {
+  // A review mixes questions from any number of sets, so warm the cache for
+  // everything the student has, not just one assignment id.
+  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
   const due = store.dueQuestions();
   if (!due.length) {
     return {
@@ -73,6 +81,9 @@ export async function renderReview() {
 export async function renderPractice(attemptId) {
   const attempt = store.attempts.find((a) => a.id === attemptId);
   if (!attempt) return notFound(t("session.resultGone"));
+
+  // A missed-question practice run can span sets, same as review above.
+  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
 
   const ids = (attempt.items || [])
     .filter((i) => !i.correct)
