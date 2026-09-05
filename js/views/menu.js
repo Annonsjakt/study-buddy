@@ -387,25 +387,24 @@ function dashRow(topicMastery) {
     ]),
   ]);
 
-  // Value-then-caption here, unlike the hero's label-then-value above — these
-  // labels are full sentences ("Due now — tap to review"), not a short
-  // eyebrow, so they read as a caption under the number rather than a
-  // heading above it (and stay short-and-uppercase-free, since an all-caps
-  // sentence reads as shouting).
-  const streakCard = el("a.dash__card", { href: "#/progress" }, [
-    el("span.dash__icon", {}, icon(ICONS.flame, 20)),
-    el("div", {}, [
+  // Icon+value on their own row, caption running full-width below — these
+  // labels are full sentences ("Due now — tap to review"), too long to sit
+  // in a narrow column squeezed next to an icon without wrapping across
+  // several stacked lines.
+  const streakCard = el("a.dash__card.dash__card--stat", { href: "#/progress" }, [
+    el("div.dash__stat-top", {}, [
+      el("span.dash__icon", {}, icon(ICONS.flame, 20)),
       el("div.dash__value", {}, String(streak)),
-      el("div.dash__label", {}, streak > 0 ? t(streak === 1 ? "dash.dayStreak" : "dash.daysStreak") : t("dash.streakEmpty")),
     ]),
+    el("div.dash__label", {}, streak > 0 ? t(streak === 1 ? "dash.dayStreak" : "dash.daysStreak") : t("dash.streakEmpty")),
   ]);
 
-  const dueCard = el("a.dash__card", { href: due ? "#/review" : "#/progress" }, [
-    el("span", { class: "dash__icon" + (due ? " dash__icon--brand" : "") }, icon(ICONS.spark, 20)),
-    el("div", {}, [
+  const dueCard = el("a.dash__card.dash__card--stat", { href: due ? "#/review" : "#/progress" }, [
+    el("div.dash__stat-top", {}, [
+      el("span", { class: "dash__icon" + (due ? " dash__icon--brand" : "") }, icon(ICONS.spark, 20)),
       el("div.dash__value", {}, String(due)),
-      el("div.dash__label", {}, due ? t("dash.dueNow") : t("dash.dueForReview")),
     ]),
+    el("div.dash__label", {}, due ? t("dash.dueNow") : t("dash.dueForReview")),
   ]);
 
   return el("div.dash", {}, [hero, streakCard, dueCard]);

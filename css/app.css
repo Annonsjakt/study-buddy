@@ -273,18 +273,26 @@ h1:focus-visible, h2:focus-visible {
   text-decoration: none; color: inherit;
   min-width: 0;            /* let it shrink inside the grid instead of overflowing */
 }
-/* The label/value(/note) column next to the icon: a deliberate, even rhythm
-   instead of the default zero-gap block stacking, which read as cramped —
-   the note gets its own larger gap on top of this via a top border. */
-.dash__card > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+/* The hero's label/value/note column next to the ring: a deliberate, even
+   rhythm instead of the default zero-gap block stacking, which read as
+   cramped — the note gets its own larger gap on top of this via a top border. */
+.dash__card--hero > div { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .dash__card--hero { background: linear-gradient(135deg, var(--brand-tint), var(--surface) 70%); border-color: var(--brand); }
 a.dash__card { transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast); }
 a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+
+/* The streak/due cards: label sentences like "Due now — tap to review" are
+   too long to sit in the narrow column next to an icon without wrapping
+   across several stacked lines, so icon+value form their own row and the
+   label runs full-width underneath instead of being squeezed beside them. */
+.dash__card--stat { flex-direction: column; align-items: flex-start; gap: var(--s-2); }
+.dash__stat-top { display: flex; align-items: center; gap: var(--s-3); }
+
 .dash__label { font-size: var(--fs-sm); color: var(--ink-soft); }
 /* The hero's label is a short caption ABOVE the value ("Overall mastery"),
    so it reads well as a small-caps eyebrow — the stat cards' labels are full
-   sentences BELOW the value ("Due now — tap to review") and would look like
-   shouting in the same treatment, so they keep the plain style above. */
+   sentences ("Due now — tap to review") and would look like shouting in the
+   same treatment, so they keep the plain style above. */
 .dash__card--hero .dash__label {
   font-size: 12px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
   color: var(--ink-faint);
