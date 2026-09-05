@@ -13,6 +13,7 @@ import {
   studentStateUrl, unlinkUrl, clearAssignedUrl,
 } from "../config.js";
 import { t } from "../lib/i18n.js";
+import { subjectDisplayName } from "../lib/library-content.js";
 
 async function api(url, opts) {
   const res = await fetch(url, {
@@ -262,8 +263,8 @@ export async function renderParentStudent(studentUserId) {
     .map(({ s, m }) => {
       const pct = Math.round(m * 100);
       return el("div.meter", {}, [
-        el("span", {}, s.name),
-        el("div.meter__track", { role: "img", "aria-label": `${s.name}: ${pct}% mastery` },
+        el("span", {}, subjectDisplayName(s.name)),
+        el("div.meter__track", { role: "img", "aria-label": `${subjectDisplayName(s.name)}: ${pct}% mastery` },
           [el("div.meter__fill", { style: { width: `${pct}%` } })]),
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
       ]);

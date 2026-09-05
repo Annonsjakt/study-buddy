@@ -5,7 +5,7 @@ import { store } from "../store.js";
 import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { masteryByTopic, masteryForAssignment, masteryForSubject } from "../lib/mastery.js";
 import { t, plural, getLang } from "../lib/i18n.js";
-import { preloadQuestionTranslations } from "../lib/library-content.js";
+import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
 let tab = "assignment";
@@ -47,7 +47,7 @@ export async function renderMenu() {
   /* ---------------- painting ---------------- */
 
   function matchesQuery(a, q) {
-    const subject = store.subjects.find((s) => s.id === a.subjectId)?.name || "";
+    const subject = subjectDisplayName(store.subjects.find((s) => s.id === a.subjectId)?.name || "");
     return (a.title + " " + subject + " " + (a.topics || []).join(" ")).toLowerCase().includes(q);
   }
 
@@ -75,7 +75,7 @@ export async function renderMenu() {
     chipsRow.appendChild(chip(t("sets.chipAll"), "all", null));
     for (const s of store.subjects) {
       if (!inTab.some((a) => a.subjectId === s.id)) continue;
-      chipsRow.appendChild(chip(s.name, s.id, store.subjectColor(s.id)));
+      chipsRow.appendChild(chip(subjectDisplayName(s.name), s.id, store.subjectColor(s.id)));
     }
     if (subjectFilter !== "all" && !inTab.some((a) => a.subjectId === subjectFilter)) {
       subjectFilter = "all";
@@ -151,7 +151,7 @@ export async function renderMenu() {
       type: "button",
       "aria-pressed": String(selected),
       style: { "--subject": color.solid, "--subject-ink": color.ink, "--subject-tint": color.tint },
-      "aria-label": `${subject.name}: ${sets} set${sets === 1 ? "" : "s"}, ${questions} questions${pct == null ? ", not studied yet" : `, ${pct}% mastery`}`,
+      "aria-label": `${subjectDisplayName(subject.name)}: ${sets} set${sets === 1 ? "" : "s"}, ${questions} questions${pct == null ? ", not studied yet" : `, ${pct}% mastery`}`,
       onclick: () => {
         // Toggle off if it's already the active filter; otherwise select it —
         // and follow the subject into the tab where its sets actually live.
@@ -168,7 +168,7 @@ export async function renderMenu() {
       },
     }, [
       el("div.subjcard__top", {}, [
-        el("span.subjcard__name", {}, subject.name),
+        el("span.subjcard__name", {}, subjectDisplayName(subject.name)),
         el("span.subjcard__pct", {}, pct == null ? "–" : `${pct}%`),
       ]),
       el("div.subjcard__bar", {}, [
@@ -203,7 +203,7 @@ export async function renderMenu() {
     return el("div.acard", {
       role: "button", tabindex: "0",
       style: { "--subject": color.solid, "--subject-ink": color.ink, "--subject-tint": color.tint },
-      "aria-label": `${a.title}, ${subject?.name || "General"}, ${a.questions.length} questions${open ? ", in progress" : ""}`,
+      "aria-label": `${a.title}, ${subjectDisplayName(subject?.name) || "General"}, ${a.questions.length} questions${open ? ", in progress" : ""}`,
       onclick: () => { location.hash = `#/session/${a.id}`; },
       onkeydown: (e) => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); location.hash = `#/session/${a.id}`; }
@@ -211,7 +211,7 @@ export async function renderMenu() {
     }, [
       menuBtn,
       el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", paddingRight: "28px" } }, [
-        el("span.acard__tag", {}, subject?.name || t("sets.generalSubject")),
+        el("span.acard__tag", {}, subjectDisplayName(subject?.name) || t("sets.generalSubject")),
         open && el("span.acard__tag.acard__tag--open", {}, t("sets.inProgress")),
       ].filter(Boolean)),
       el("div.acard__title", {}, a.title),

@@ -12,7 +12,7 @@ import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
 import { t, plural } from "../lib/i18n.js";
-import { preloadQuestionTranslations } from "../lib/library-content.js";
+import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 
 export async function renderSession(assignmentId, qs) {
   // Warms the cache store.getAssignment() reads from — needed even for a
@@ -129,7 +129,7 @@ export async function renderNationalMix(subjectId, qs) {
   return runSession({
     key: nationalMixId(subjectId),
     assignmentId: nationalMixId(subjectId),
-    title: t("session.mixedTitle", { subject: subject?.name || t("session.nationalTest") }),
+    title: t("session.mixedTitle", { subject: subjectDisplayName(subject?.name) || t("session.nationalTest") }),
     type: "assignment",
     retryHash: `#/national/mix/${subjectId}?count=${count}`,
     questionIds: ids,

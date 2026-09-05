@@ -78,3 +78,46 @@ export async function preloadQuestionTranslations(assignmentIds) {
   if (getLang() !== "en") return;
   await Promise.all([...new Set(assignmentIds)].map(loadQuestionTranslation));
 }
+
+// A student's own subject list (store.subjects) is built by matching plain
+// name strings (ensureSubject()) against whatever a set's "subject" field
+// said at import time — kept untranslated deliberately (see js/store.js and
+// js/data/library.js) so that matching, and a new set landing in the same
+// bucket as an existing one, keeps working regardless of display language.
+// This is a *display-only* translation for the handful of curriculum
+// subject names the library ships, applied at render time in the views that
+// show a subject's name as text — never to the stored name itself, and
+// never to a value that's about to be compared against it or saved back.
+const SUBJECT_NAME_EN = {
+  "Matematik": "Mathematics",
+  "Matematik 1": "Mathematics 1",
+  "Matematik 2": "Mathematics 2",
+  "Matematik 3": "Mathematics 3",
+  "Svenska": "Swedish",
+  "Svenska 1": "Swedish 1",
+  "Svenska 2": "Swedish 2",
+  "Svenska 3": "Swedish 3",
+  "Engelska": "English",
+  "Engelska 5": "English 5",
+  "Engelska 6": "English 6",
+  "Engelska 7": "English 7",
+  "Biologi": "Biology",
+  "Fysik": "Physics",
+  "Kemi": "Chemistry",
+  "Naturkunskap 1b": "Natural Science 1b",
+  "Historia": "History",
+  "Historia 1a1": "History 1a1",
+  "Geografi": "Geography",
+  "Religionskunskap": "Religious Studies",
+  "Religionskunskap 1": "Religious Studies 1",
+  "Samhällskunskap": "Civics",
+  "Samhällskunskap 1a1": "Civics 1a1",
+};
+
+/** Translates a subject's display name for the current language, falling
+ *  back to the name as-is for anything outside the library's fixed set
+ *  (e.g. a subject the student typed themselves). */
+export function subjectDisplayName(name) {
+  if (getLang() !== "en" || !name) return name;
+  return SUBJECT_NAME_EN[name] || name;
+}

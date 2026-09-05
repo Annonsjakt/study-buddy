@@ -8,7 +8,7 @@ import { estimatedGrade } from "../lib/grade.js";
 import { dueLabel } from "../lib/srs.js";
 import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
 import { t, plural } from "../lib/i18n.js";
-import { preloadQuestionTranslations } from "../lib/library-content.js";
+import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 
 export async function renderProgress() {
   // So a set imported back when the app was in Swedish shows its translated
@@ -39,9 +39,9 @@ export async function renderProgress() {
       const pct = Math.round(m * 100);
       const grade = estimatedGrade(m);
       return el("div.meter", {}, [
-        el("span", {}, s.name),
+        el("span", {}, subjectDisplayName(s.name)),
         el("div.meter__track", {
-          role: "img", "aria-label": `${s.name}: ${pct}% mastery`,
+          role: "img", "aria-label": `${subjectDisplayName(s.name)}: ${pct}% mastery`,
         }, [el("div.meter__fill", { style: { width: "0%", "--subject": color.solid }, dataset: { w: pct } })]),
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
         el("span.gradepill", {
