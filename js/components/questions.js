@@ -10,6 +10,9 @@ import { gradeAnswer } from "../claude.js";
 import { fromCorrect } from "../lib/srs.js";
 import { speak, speechSupported, htmlToText } from "../lib/speech.js";
 import { t } from "../lib/i18n.js";
+import { heuristic } from "../lib/answer-match.js";
+import { mathKeypad } from "./math-keypad.js";
+import { playCorrect, playWrong } from "../lib/sound.js";
 
 export function renderQuestion(opts) {
   switch (opts.question.kind) {
@@ -94,12 +97,14 @@ function mc({ question, tutor, testMode, onDone }) {
       feedback.className = "feedback ok";
       feedback.innerHTML = renderRich(question.explanation || t("q.correctBang"));
       checkBtn.remove();
+      playCorrect();
       tutor?.celebrate(t("q.celebrateChoice"));
       onDone(finalize(result));
     } else {
       result.hintsUsed = attempts;
       feedback.className = "feedback retry";
       feedback.textContent = attempts >= 2 ? t("q.retryHint") : t("q.tryAgain");
+      playWrong();
       tutor?.note(t("q.wrongChoiceNote", { choice: question.choices[picked] }));
       triedWrong.add(picked);
       btns.forEach((b, i) => {
@@ -148,6 +153,7 @@ function mc({ question, tutor, testMode, onDone }) {
 function text({ question, tutor, live, testMode, onDone }) {
   const result = { correct: false, hintsUsed: 0 };
   const ta = el("textarea.answerbox", { placeholder: t("q.yourAnswerPlaceholder"), "aria-label": "Your answer" });
+  const keypad = mathKeypad(ta);
   const checkBtn = el("button.btn.btn--sm", { type: "button", onclick: check },
     testMode ? t("q.submitAnswer") : t("q.checkAnswer"));
   const feedback = el("div", {});
@@ -183,8 +189,8 @@ function text({ question, tutor, live, testMode, onDone }) {
       (verdict.missedPoints?.length ? `<ul>${verdict.missedPoints.map((m) => `<li>${escapeHtml(m)}</li>`).join("")}</ul>` : "") +
       `<p style="margin-top:10px"><strong>${t("q.modelAnswerLabel")}</strong> ${renderRich(question.answer)}</p>`;
 
-    if (verdict.correct) tutor?.celebrate(t("q.celebrateText"));
-    else tutor?.note(t("q.wroteNote", { answer: ans }));
+    if (verdict.correct) { playCorrect(); tutor?.celebrate(t("q.celebrateText")); }
+    else { playWrong(); tutor?.note(t("q.wroteNote", { answer: ans })); }
 
     // The grade stands on its own — the student no longer marks their own
     // work. They can appeal it, which is recorded rather than silently taken.
@@ -214,7 +220,14 @@ function text({ question, tutor, live, testMode, onDone }) {
     }
   }
 
-  return { result, el: shell(question, el("div", {}, [ta, el("div", { style: { marginTop: "12px" } }, [checkBtn]), feedback, selfRate])) };
+  return {
+    result,
+    el: shell(question, el("div", {}, [
+      ta, keypad.pad,
+      el("div", { style: { marginTop: "12px", display: "flex", gap: "8px" } }, [checkBtn, keypad.toggle]),
+      feedback, selfRate,
+    ])),
+  };
 }
 
 /* ---------------- flashcard ---------------- */
@@ -245,8 +258,8 @@ function flashcard({ question, tutor, onDone }) {
     result.correct = grade !== "again";
     result.selfRating = grade;
     rate.querySelectorAll("button").forEach((b) => (b.disabled = true));
-    if (grade === "again") tutor?.note(t("q.forgotNote"));
-    else tutor?.celebrate(t("q.rememberedCelebrate"));
+    if (grade === "again") { playWrong(); tutor?.note(t("q.forgotNote")); }
+    else { playCorrect(); tutor?.celebrate(t("q.rememberedCelebrate")); }
     onDone(result);
   }
 
@@ -334,14 +347,17 @@ function worked({ question, tutor, live, testMode, onDone }) {
   function end(correct) {
     result.correct = correct;
     selfRate.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    if (correct) playCorrect(); else playWrong();
     onDone(finalize(result));
   }
+
+  const keypad = mathKeypad(ta);
 
   return {
     result,
     el: shell(question, el("div", {}, [
-      ta,
-      el("div", { style: { marginTop: "12px", display: "flex", gap: "8px", flexWrap: "wrap" } }, [revealBtn, doneBtn].filter(Boolean)),
+      ta, keypad.pad,
+      el("div", { style: { marginTop: "12px", display: "flex", gap: "8px", flexWrap: "wrap" } }, [revealBtn, doneBtn, keypad.toggle].filter(Boolean)),
       revealed, feedback, selfRate,
     ])),
   };
@@ -351,18 +367,6 @@ function worked({ question, tutor, live, testMode, onDone }) {
 function finalize(result) {
   if (!result.srsGrade) result.srsGrade = fromCorrect(result.correct, result.hintsUsed);
   return result;
-}
-
-function heuristic(ans, model) {
-  const norm = (s) => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter((w) => w.length > 3);
-  const a = new Set(norm(ans)), m = norm(model);
-  if (!m.length) return { correct: ans.length > 8, feedback: t("q.heuristicNoModel") };
-  const hit = m.filter((w) => a.has(w)).length / m.length;
-  return {
-    correct: hit >= 0.34,
-    feedback: hit >= 0.34 ? t("q.heuristicGood") : t("q.heuristicMissing"),
-    missedPoints: [],
-  };
 }
 
 function escapeHtml(s) {

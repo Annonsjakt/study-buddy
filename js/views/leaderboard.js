@@ -6,6 +6,7 @@ import { store } from "../store.js";
 import { el, clear, toast, icon, ICONS } from "../lib/dom.js";
 import { FRIEND_INVITE_CODE_URL, FRIEND_REDEEM_URL, FRIEND_LEADERBOARD_URL, unfriendUrl } from "../config.js";
 import { shareCard, tierEmoji } from "../lib/share-card.js";
+import { confirmDialog } from "../components/confirm-dialog.js";
 import { t, plural } from "../lib/i18n.js";
 
 async function api(url, opts) {
@@ -102,7 +103,7 @@ export function renderLeaderboard() {
     const removeBtn = !entry.isMe ? el("button.iconbtn.iconbtn--sm", {
       type: "button", "aria-label": t("leaderboard.removeFriend"), title: t("leaderboard.removeFriend"),
       onclick: async () => {
-        if (!confirm(t("leaderboard.removeConfirm", { email: entry.email || "?" }))) return;
+        if (!(await confirmDialog({ message: t("leaderboard.removeConfirm", { email: entry.email || "?" }) }))) return;
         try { await api(unfriendUrl(entry.linkId), { method: "DELETE" }); paintBoard(); }
         catch (e) { toast(e.message); }
       },

@@ -6,6 +6,7 @@ import { renderRich } from "../lib/rich.js";
 import { markdown } from "../lib/markdown.js";
 import { deltaFromAttempt } from "../lib/mastery.js";
 import { celebrate, clearConfetti } from "../lib/confetti-helper.js";
+import { playFanfare } from "../lib/sound.js";
 import { estimatedGrade, gradeRank } from "../lib/grade.js";
 import { tutorStream, ClaudeError } from "../claude.js";
 import { explainSystem } from "../prompts.js";
@@ -50,7 +51,7 @@ export function renderResults(attemptId) {
     if (fg) fg.style.strokeDashoffset = String(C * (1 - score / 100));
   });
 
-  if (great) setTimeout(celebrate, 250);
+  if (great) setTimeout(() => { celebrate(); playFanfare(); }, 250);
 
   const deltaEntries = Object.entries(deltas).sort((a, b) => (b[1].after - b[1].before) - (a[1].after - a[1].before));
 

@@ -1,11 +1,12 @@
 // Router + persistent app shell.
 
 import { store } from "./store.js";
-import { el, append, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
+import { el, append, clear, mount, icon, ICONS, toast, showBanner, hideBanner, downloadText } from "./lib/dom.js";
 import { announce, focusHeading } from "./lib/a11y.js";
 import { getTheme, setTheme } from "./lib/theme.js";
 import { openPopover, closePopover } from "./lib/popover.js";
 import { maybeShowOnboarding } from "./lib/onboarding.js";
+import { localDayKey } from "./lib/activity.js";
 import { t, plural, LANGS, getLang, setLang, applyLang } from "./lib/i18n.js";
 import { renderMenu, renderCalendarPage } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
@@ -409,9 +410,45 @@ store.init().then(() => {
   // After first paint, keep menu/progress fresh when the store changes.
   store.addEventListener("change", () => {
     const h = location.hash.replace(/^#/, "");
-    if (h === "" || h === "/" || h === "/progress") render();
+    if (h === "" || h === "/" || h === "/progress" || h === "/calendar") render();
   });
   store.addEventListener("syncConflict", () => {
     toast(t("store.syncConflict"));
   });
+  store.addEventListener("saveFailed", () => {
+    showBanner(t("save.failedBanner"), {
+      actionLabel: t("save.emergencyExport"),
+      closeLabel: t("common.close"),
+      onAction: () => {
+        downloadText(`studybuddy-backup-${localDayKey()}.json`, store.exportJSON());
+        toast(t("settings.backupDownloaded"));
+      },
+    });
+  });
+  store.addEventListener("saveRecovered", hideBanner);
+}).catch((e) => {
+  console.error("Boot failed:", e);
+  bootFailure(e);
 });
+
+/** Last resort: the app failed to start. Deliberately independent of `store`
+ *  and shell() — the thing that just broke — so it reads localStorage
+ *  directly rather than through the Store class, which may never have
+ *  finished constructing correctly. */
+function bootFailure(err) {
+  let raw = null;
+  try { raw = localStorage.getItem("studybuddy.v1"); } catch {}
+
+  mount(app, el("div.empty", {}, [
+    el("h2", {}, t("boot.failedTitle")),
+    el("p", {}, t("boot.failedBody")),
+    el("p.note", {}, String(err?.message || err)),
+    el("div", { style: { display: "flex", gap: "10px", justifyContent: "center", marginTop: "16px", flexWrap: "wrap" } }, [
+      el("button.btn", { type: "button", onclick: () => location.reload() }, t("boot.reload")),
+      raw ? el("button.btn.btn--ghost", {
+        type: "button",
+        onclick: () => downloadText(`studybuddy-emergency-${localDayKey()}.json`, raw),
+      }, t("boot.downloadData")) : null,
+    ].filter(Boolean)),
+  ]));
+}

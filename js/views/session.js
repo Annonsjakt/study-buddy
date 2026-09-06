@@ -12,6 +12,8 @@ import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
 import { weakSpotQuestions } from "../lib/mastery.js";
+import { playChime } from "../lib/sound.js";
+import { confirmDialog } from "../components/confirm-dialog.js";
 import { t, plural } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 import { showAchievementUnlocks } from "../lib/achievement-toast.js";
@@ -215,6 +217,7 @@ function runSession(config) {
         autoSubmitted = true;
         stopTimer();
         toast(t("session.timeUp"));
+        playChime();
         finish({ timedOut: true });
       }
     } else {
@@ -368,9 +371,9 @@ function runSession(config) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function exit() {
+  async function exit() {
     persist();
-    if (confirm(t("session.exitConfirm"))) {
+    if (await confirmDialog({ message: t("session.exitConfirm") })) {
       location.hash = "#/";
     }
   }

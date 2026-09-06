@@ -9,6 +9,7 @@ import { t, plural, getLang } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 import { localDayKey } from "../lib/activity.js";
 import { datePicker, monthCalendar } from "../components/calendar.js";
+import { confirmDialog } from "../components/confirm-dialog.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
 let tab = "assignment";
@@ -361,12 +362,15 @@ export async function renderMenu() {
     toast(t("cardmenu.renamed"));
   }
 
-  function remove(a) {
+  async function remove(a) {
     const attempts = store.attempts.filter((x) => x.assignmentId === a.id).length;
     const extra = attempts ? t(attempts === 1 ? "cardmenu.deleteExtra" : "cardmenu.deleteExtraMany", { n: attempts }) : "";
-    if (!confirm(t("cardmenu.deleteConfirm", { title: a.title, extra }))) return;
-    store.deleteAssignment(a.id);
-    toast(t("cardmenu.deleted"));
+    if (!(await confirmDialog({ message: t("cardmenu.deleteConfirm", { title: a.title, extra }), danger: true }))) return;
+    const snapshot = store.deleteAssignment(a.id);
+    toast(t("cardmenu.deleted"), snapshot ? {
+      actionLabel: t("common.undo"),
+      onAction: () => store.restoreAssignment(snapshot),
+    } : undefined);
   }
 
   /* ---------------- header + today strip ---------------- */

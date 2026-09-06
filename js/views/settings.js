@@ -1,12 +1,13 @@
 // Settings: tutor server status, model, tutor verbosity, data export/wipe, roadmap.
 
 import { store } from "../store.js";
-import { el, clear, toast, icon, ICONS } from "../lib/dom.js";
+import { el, clear, toast, icon, ICONS, downloadText } from "../lib/dom.js";
 import { localDayKey } from "../lib/activity.js";
 import { PRESETS, DEFAULT_PRESET } from "../claude.js";
 import { THEMES, getTheme, setTheme } from "../lib/theme.js";
 import { getReadMode, setReadMode } from "../lib/readmode.js";
 import { LANGS, getLang, setLang, t, plural } from "../lib/i18n.js";
+import { confirmDialog } from "../components/confirm-dialog.js";
 
 export function renderSettings() {
   const s = store.settings;
@@ -74,6 +75,20 @@ export function renderSettings() {
     toast(readModeCheck.checked ? t("settings.dyslexiaOn") : t("settings.dyslexiaOff"));
   });
 
+  const soundCheck = el("input", { type: "checkbox", id: "sound-toggle" });
+  soundCheck.checked = s.sound !== false;
+  soundCheck.addEventListener("change", () => {
+    store.setSettings({ sound: soundCheck.checked });
+    toast(soundCheck.checked ? t("settings.soundOn") : t("settings.soundOff"));
+  });
+
+  const importInput = el("input", {
+    type: "file", accept: "application/json,.json", style: { display: "none" },
+    onchange: onImportFile,
+  });
+  const importStatus = el("p.note", { style: { margin: "8px 0 0" } });
+  const recovery = el("p.note.note--warn", { style: { margin: "6px 0 12px" } });
+
   const node = el("div.settings", {}, [
     el("h1", {}, t("settings.pageHeading")),
 
@@ -94,6 +109,13 @@ export function renderSettings() {
         el("span", {}, [
           el("strong", {}, t("settings.dyslexiaMode")),
           el("p.note", { style: { margin: "2px 0 0" } }, t("settings.dyslexiaExplain")),
+        ]),
+      ]),
+      el("label", { style: { display: "flex", alignItems: "flex-start", gap: "10px", marginTop: "12px" } }, [
+        soundCheck,
+        el("span", {}, [
+          el("strong", {}, t("settings.sound")),
+          el("p.note", { style: { margin: "2px 0 0" } }, t("settings.soundExplain")),
         ]),
       ]),
     ]),
@@ -132,10 +154,14 @@ export function renderSettings() {
       el("p.note", { style: { margin: "6px 0 12px" } }, store.authed
         ? t("settings.dataLocalSync")
         : t("settings.dataLocalOnly")),
+      recovery,
       el("div", { style: { display: "flex", gap: "10px", flexWrap: "wrap" } }, [
         el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: exportData }, t("settings.exportJson")),
+        el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: () => importInput.click() }, t("settings.importJson")),
+        importInput,
         el("button.btn.btn--ghost.btn--sm", { type: "button", style: { color: "var(--retry-ink)" }, onclick: wipe }, t("settings.wipeAll")),
       ]),
+      importStatus,
     ]),
 
     el("section.panel", {}, [
@@ -180,8 +206,8 @@ export function renderSettings() {
       if (loaded > 0) {
         actions.appendChild(el("button.btn.btn--ghost.btn--sm", {
           type: "button", style: { color: "var(--retry-ink)" },
-          onclick: () => {
-            if (!confirm(t("settings.removeDemoConfirm"))) return;
+          onclick: async () => {
+            if (!(await confirmDialog({ message: t("settings.removeDemoConfirm") }))) return;
             store.removeDemoContent();
             toast(t("settings.demoRemoved"));
             paint();
@@ -235,14 +261,49 @@ export function renderSettings() {
   }
 
   function exportData() {
-    const blob = new Blob([store.exportJSON()], { type: "application/json" });
-    const a = el("a", { href: URL.createObjectURL(blob), download: `studybuddy-backup-${localDayKey()}.json` });
-    document.body.appendChild(a); a.click(); a.remove();
+    downloadText(`studybuddy-backup-${localDayKey()}.json`, store.exportJSON());
     toast(t("settings.backupDownloaded"));
   }
 
-  function wipe() {
-    if (!confirm(t("settings.deleteConfirm"))) return;
+  async function onImportFile(e) {
+    const file = e.target.files[0];
+    e.target.value = ""; // allow re-picking the same file later
+    if (!file) return;
+    let text;
+    try { text = await file.text(); }
+    catch { importStatus.className = "note note--warn"; importStatus.textContent = t("settings.importReadFail"); return; }
+    if (!(await confirmDialog({ message: t("settings.importConfirm"), confirmLabel: t("settings.importAction"), danger: true }))) return;
+    try {
+      store.importJSON(text);
+      importStatus.className = "note"; importStatus.textContent = "";
+      toast(t("settings.imported"));
+      location.hash = "#/";
+    } catch {
+      importStatus.className = "note note--warn";
+      importStatus.textContent = t("settings.importBadFile");
+    }
+  }
+
+  function paintRecovery() {
+    const blob = store.recoveryBlob;
+    clear(recovery);
+    recovery.hidden = !blob;
+    if (!blob) return;
+    recovery.appendChild(el("span", {}, t("settings.recoveryFound") + " "));
+    recovery.appendChild(el("button.linkbtn", {
+      type: "button",
+      onclick: () => downloadText(`studybuddy-recovered-${localDayKey()}.txt`, blob, "text/plain"),
+    }, t("settings.recoveryDownload")));
+    recovery.appendChild(el("span", {}, " · "));
+    recovery.appendChild(el("button.linkbtn", {
+      type: "button",
+      onclick: () => { store.clearRecoveryBlob(); paintRecovery(); },
+    }, t("settings.recoveryDismiss")));
+  }
+  paintRecovery();
+
+  async function wipe() {
+    if (!(await confirmDialog({ message: t("settings.deleteConfirm"), danger: true }))) return;
     store.wipe();
     toast(t("settings.dataWiped"));
     location.hash = "#/";

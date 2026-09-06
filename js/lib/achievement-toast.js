@@ -7,6 +7,7 @@
 
 import { el, icon, ICONS } from "./dom.js";
 import { celebrate } from "./confetti-helper.js";
+import { playFanfare } from "./sound.js";
 import { t } from "./i18n.js";
 
 const TIER_RANK = { bronze: 0, silver: 1, gold: 2, platinum: 3 };
@@ -33,7 +34,7 @@ function showNext(queue) {
   requestAnimationFrame(() => overlay.classList.add("show"));
   // Confetti is a real flourish saved for the two rarer tiers — every unlock
   // playing it would cheapen the moment it's meant to mark.
-  if (def.tier === "gold" || def.tier === "platinum") celebrate();
+  if (def.tier === "gold" || def.tier === "platinum") { celebrate(); playFanfare(); }
 
   setTimeout(() => {
     overlay.classList.remove("show");

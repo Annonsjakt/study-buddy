@@ -45,13 +45,51 @@ export function clear(node) { while (node.firstChild) node.removeChild(node.firs
 export function mount(root, ...nodes) { clear(root); append(root, nodes); return root; }
 
 let toastTimer;
-export function toast(message) {
+/**
+ * toast("Saved")                              — plain, 2.6s
+ * toast("Deleted", { actionLabel: "Undo", onAction })  — with a button, 6s
+ */
+export function toast(message, opts) {
   let t = document.querySelector(".toast");
   if (!t) { t = el("div.toast"); document.body.appendChild(t); }
-  t.textContent = message;
+  clear(t);
+  const dismiss = () => t.classList.remove("show");
+
+  if (opts?.actionLabel && typeof opts.onAction === "function") {
+    t.appendChild(el("span", {}, message));
+    t.appendChild(el("button.toast__action", {
+      type: "button",
+      onclick: () => { opts.onAction(); clearTimeout(toastTimer); dismiss(); },
+    }, opts.actionLabel));
+  } else {
+    t.textContent = message;
+  }
+
   requestAnimationFrame(() => t.classList.add("show"));
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  toastTimer = setTimeout(dismiss, opts?.actionLabel ? 6000 : 2600);
+}
+
+let banner = null;
+/** A persistent top banner — unlike toast(), it never auto-dismisses. For
+ *  things the student must actually see, like a failed save. */
+export function showBanner(message, opts = {}) {
+  if (!banner) { banner = el("div.savebar"); document.body.appendChild(banner); }
+  clear(banner);
+  banner.appendChild(el("span", {}, message));
+  if (opts.actionLabel && typeof opts.onAction === "function") {
+    banner.appendChild(el("button.savebar__action", { type: "button", onclick: opts.onAction }, opts.actionLabel));
+  }
+  banner.appendChild(el("button.savebar__close", { type: "button", "aria-label": opts.closeLabel || "Dismiss", onclick: hideBanner }, "×"));
+  requestAnimationFrame(() => banner.classList.add("show"));
+}
+export function hideBanner() { banner?.classList.remove("show"); }
+
+/** Shared by Settings' Export and the emergency-export banner action. */
+export function downloadText(filename, text, mime = "application/json") {
+  const blob = new Blob([text], { type: mime });
+  const a = el("a", { href: URL.createObjectURL(blob), download: filename });
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);

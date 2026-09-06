@@ -45,6 +45,10 @@ const SCHEMA_VERSION = 5;
 // would reset it to 0 and desync from the server's real version, turning
 // every reload into a spurious conflict that clobbers local edits.
 const SYNC_VERSION_KEY = "studybuddy.syncVersion";
+// Separate key: the raw bytes of a save that failed to parse at boot, kept
+// around (not touched by migrate()/SCHEMA_VERSION) so Settings can offer a
+// download instead of the corruption just silently costing a fresh start.
+const RECOVERY_KEY = "studybuddy.v1.recovery";
 
 /** The bundled demo sets. They are no longer seeded automatically — they live
  *  in Settings under "Demo content" so a real library starts clean. */
@@ -89,7 +93,7 @@ export const DUE_GRACE_DAYS = 7;
 function seedState() {
   return {
     version: SCHEMA_VERSION,
-    settings: { preset: "balanced", tutorVerbosity: "normal", examDate: null, examLabel: "" },
+    settings: { preset: "balanced", tutorVerbosity: "normal", examDate: null, examLabel: "", sound: true },
     subjects: DEFAULT_SUBJECTS.map((name, i) => ({
       id: uid(), name, color: PALETTE[i % PALETTE.length].name,
     })),
@@ -170,6 +174,7 @@ class Store extends EventTarget {
     // "keyConfigured" so Settings can tell the two failure modes apart.
     this.proxyUp = false;
     this.proxyKeyConfigured = false;
+    this._saveFailed = false;
 
     // Auth/sync status — also instance-only, not synced app data. Sign-in is
     // opt-in: local-only mode (authed === false) works exactly as before.
@@ -191,7 +196,13 @@ class Store extends EventTarget {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       try { this.state = migrate(JSON.parse(raw)); }
-      catch { this.state = seedState(); }
+      catch (e) {
+        console.error("Corrupt save data, falling back to a fresh start:", e);
+        // Preserve the original bytes before overwriting them below — the
+        // corruption could itself be quota-related, hence its own try/catch.
+        try { localStorage.setItem(RECOVERY_KEY, raw); } catch {}
+        this.state = seedState();
+      }
     } else {
       this.state = seedState();
     }
@@ -264,8 +275,15 @@ class Store extends EventTarget {
   }
 
   save({ skipPush = false } = {}) {
-    try { localStorage.setItem(KEY, JSON.stringify(this.state)); }
-    catch (e) { console.error("Save failed (storage full or blocked):", e); }
+    try {
+      localStorage.setItem(KEY, JSON.stringify(this.state));
+      if (this._saveFailed) { this._saveFailed = false; this.dispatchEvent(new CustomEvent("saveRecovered")); }
+    } catch (e) {
+      console.error("Save failed (storage full or blocked):", e);
+      // Only dispatch on the first failure in a streak — a broken write
+      // shouldn't fire an event on every keystroke/answer while it stays broken.
+      if (!this._saveFailed) { this._saveFailed = true; this.dispatchEvent(new CustomEvent("saveFailed", { detail: e })); }
+    }
     // Local write is always synchronous and unconditional — this is just the
     // additive, debounced background half. Every existing save()/update()
     // call site keeps working exactly as before, authed or not.
@@ -452,13 +470,32 @@ class Store extends EventTarget {
     return copy;
   }
 
+  /** Returns a snapshot for restoreAssignment() — lets a delete be undone. */
   deleteAssignment(id) {
+    let snapshot = null;
     this.update((s) => {
       const a = s.assignments.find((x) => x.id === id);
+      if (!a) return;
+      const srs = {};
+      // Drop review scheduling for questions that no longer exist, but keep
+      // it in the snapshot so an undo restores it exactly as it was.
+      for (const q of a.questions || []) {
+        if (s.srs[q.id]) { srs[q.id] = s.srs[q.id]; delete s.srs[q.id]; }
+      }
+      snapshot = { assignment: a, srs };
       s.assignments = s.assignments.filter((x) => x.id !== id);
       delete s.sessions[id];
-      // Drop review scheduling for questions that no longer exist.
-      for (const q of a?.questions || []) delete s.srs[q.id];
+    });
+    return snapshot;
+  }
+
+  /** Puts back a set removed by deleteAssignment(), scheduling included. */
+  restoreAssignment(snapshot) {
+    if (!snapshot?.assignment) return;
+    this.update((s) => {
+      if (s.assignments.some((x) => x.id === snapshot.assignment.id)) return;
+      s.assignments.unshift(snapshot.assignment);
+      Object.assign(s.srs, snapshot.srs || {});
     });
   }
 
@@ -688,11 +725,28 @@ class Store extends EventTarget {
   // ---------- data management ----------
   exportJSON() { return JSON.stringify(this.state, null, 2); }
 
+  /** The inverse of exportJSON() — replaces the whole store with a
+   *  previously-exported backup, run through the same migrate() path a
+   *  normal load uses so an older backup still upgrades cleanly. */
+  importJSON(text) {
+    this.state = migrate(JSON.parse(text));
+    this.save();
+    this.emit();
+  }
+
   wipe() {
     localStorage.removeItem(KEY);
     this.state = seedState();
     this.save();
     this.emit();
+  }
+
+  /** The bytes of a save that failed to parse at boot, if any — see init(). */
+  get recoveryBlob() {
+    try { return localStorage.getItem(RECOVERY_KEY); } catch { return null; }
+  }
+  clearRecoveryBlob() {
+    try { localStorage.removeItem(RECOVERY_KEY); } catch {}
   }
 }
 

@@ -25,6 +25,7 @@ import {
 } from "../config.js";
 import { t } from "../lib/i18n.js";
 import { subjectDisplayName } from "../lib/library-content.js";
+import { confirmDialog } from "../components/confirm-dialog.js";
 
 async function api(url, opts) {
   const res = await fetch(url, {
@@ -94,7 +95,7 @@ export function renderParentHub() {
           el("button.btn.btn--ghost.btn--sm", {
             type: "button", style: { color: "var(--retry-ink)" },
             onclick: async () => {
-              if (!confirm(t("parent.unlinkConfirm", { email: link.studentEmail }))) return;
+              if (!(await confirmDialog({ message: t("parent.unlinkConfirm", { email: link.studentEmail }) }))) return;
               try { await api(unlinkUrl(link.linkId), { method: "DELETE" }); refreshLinks(); }
               catch (e) { toast(e.message); }
             },
@@ -165,7 +166,7 @@ export function renderParentHub() {
               el("button.btn.btn--ghost.btn--sm", {
                 type: "button", style: { color: "var(--retry-ink)" },
                 onclick: async () => {
-                  if (!confirm(t("parent.unlinkConfirm", { email: link.parentEmail }))) return;
+                  if (!(await confirmDialog({ message: t("parent.unlinkConfirm", { email: link.parentEmail }) }))) return;
                   try { await api(unlinkUrl(link.linkId), { method: "DELETE" }); refreshLinks(); }
                   catch (e) { toast(e.message); }
                 },
