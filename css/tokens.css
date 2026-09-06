@@ -2,15 +2,17 @@
    Every screen consumes these variables; avoid ad-hoc colors/sizes elsewhere. */
 
 :root {
-  /* --- canvas & ink --- */
-  --canvas:        #F6F7FA;
-  --surface:       #FFFFFF;
-  --surface-sunk:  #EEF0F4;
+  /* --- canvas & ink ---
+     Surface sits just short of pure white on purpose — #FFFFFF against this
+     much whitespace read as glare, not "clean". */
+  --canvas:        #EFF1F5;
+  --surface:       #FBFBFD;
+  --surface-sunk:  #E8EAEF;
   --ink:           #16181F;
   --ink-soft:      #4A4E5A;
   --ink-faint:     #626672;   /* AA on both canvas and surface */
-  --line:          #E4E6EC;
-  --line-strong:   #CBCFDA;
+  --line:          #DDDFE6;
+  --line-strong:   #C4C8D3;
 
   /* --- brand ---
      `--brand` sits behind white button text, so it has to clear 4.5:1.
