@@ -21,6 +21,14 @@ export const STRINGS = {
 
     "streak.days": "{n}-day streak",
     "streak.none": "No streak yet",
+    "streak.freezeUsedOne": "🧊 Streak freeze used — yesterday's gap is covered.",
+    "streak.freezeUsedMany": "🧊 {n} streak freezes used — the gap is covered.",
+    "streak.freezeEarnedOne": "🧊 Earned a streak freeze!",
+    "streak.freezeEarnedMany": "🧊 Earned {n} streak freezes!",
+    "streak.freezeCount": "{n} freeze",
+    "streak.freezeCountMany": "{n} freezes",
+    "streak.freezeTooltip": "Earn a freeze every {days}-day streak (max {max}). If you miss a day, one is used automatically to protect your streak.",
+    "streak.frozenDayTooltip": "Streak freeze used this day",
 
     "theme.group": "Theme",
     "theme.light": "Light",
@@ -716,6 +724,14 @@ export const STRINGS = {
 
     "streak.days": "{n}-dagars streak",
     "streak.none": "Ingen streak än",
+    "streak.freezeUsedOne": "🧊 Streakfrys använd — gårdagens lucka är täckt.",
+    "streak.freezeUsedMany": "🧊 {n} streakfrysar använda — luckan är täckt.",
+    "streak.freezeEarnedOne": "🧊 Tjänade en streakfrys!",
+    "streak.freezeEarnedMany": "🧊 Tjänade {n} streakfrysar!",
+    "streak.freezeCount": "{n} frys",
+    "streak.freezeCountMany": "{n} frysar",
+    "streak.freezeTooltip": "Tjäna en frys var {days}:e dag i din studiesvit (max {max}). Missar du en dag används en automatiskt för att skydda din svit.",
+    "streak.frozenDayTooltip": "Streakfrys användes denna dag",
 
     "theme.group": "Tema",
     "theme.light": "Ljust",

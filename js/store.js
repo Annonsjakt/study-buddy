@@ -1,11 +1,11 @@
 // Single source of truth. One JSON blob in localStorage behind this module so a
 // future cloud/account backend can replace persistence without touching views.
 
-import { uid } from "./lib/dom.js";
-import { localDayKey, currentStreak } from "./lib/activity.js";
+import { uid, toast } from "./lib/dom.js";
+import { localDayKey, addDays, currentStreak } from "./lib/activity.js";
 import { findQuestion as findQuestionPure, dueQuestions as dueQuestionsPure } from "./lib/library.js";
 import { PROXY_HEALTH_URL, AUTH_SIGNUP_URL, AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL, STATE_URL } from "./config.js";
-import { t, getLang } from "./lib/i18n.js";
+import { t, plural, getLang } from "./lib/i18n.js";
 import { getCachedQuestionTranslation } from "./lib/library-content.js";
 import { ACHIEVEMENTS, achievementMetrics } from "./lib/achievements.js";
 
@@ -73,6 +73,13 @@ export const PRACTICE_ID = "__practice__";
 export const NATIONAL_MIX_PREFIX = "__npmix__";
 export const nationalMixId = (subjectId) => `${NATIONAL_MIX_PREFIX}${subjectId}`;
 
+// A freeze every 7 days of streak, capped — a spendable resource, unlike
+// achievements, which are permanent records. Capping it keeps "earned",
+// same reasoning a Duolingo-style freeze uses: an unlimited stockpile would
+// make the streak itself meaningless.
+const FREEZE_MILESTONE_DAYS = 7;
+const MAX_STREAK_FREEZES = 2;
+
 function seedState() {
   return {
     version: SCHEMA_VERSION,
@@ -87,6 +94,9 @@ function seedState() {
     activity: { daysStudied: [] },   // streak is derived, never stored
     readNotifications: {},           // { [notificationId]: signature } — see topbarActions() in main.js
     achievements: {},                // { [achievementId]: unlockedAtMs } — see checkAchievements()
+    streakFreezes: 0,                // available freezes — see checkStreakFreeze()
+    frozenDays: [],                  // day keys a freeze covered, distinct from activity.daysStudied
+    freezeMilestone: 0,              // highest streak length (a multiple of FREEZE_MILESTONE_DAYS) already rewarded
   };
 }
 
@@ -138,6 +148,9 @@ function migrate(state) {
   s.assignments = s.assignments || [];
   s.readNotifications = s.readNotifications || {};
   s.achievements = s.achievements || {};
+  s.streakFreezes = s.streakFreezes || 0;
+  s.frozenDays = s.frozenDays || [];
+  s.freezeMilestone = s.freezeMilestone || 0;
   return s;
 }
 
@@ -177,6 +190,10 @@ class Store extends EventTarget {
       this.state = seedState();
     }
     this.save({ skipPush: true });
+    // A day (or more) may have passed since this device last opened the
+    // app — bridge any gap a freeze can cover before anything reads the
+    // streak, achievements included.
+    this.checkStreakFreeze();
     // Backfills badges for history that already qualifies (e.g. a returning
     // user whose existing streak/attempts already clear a threshold), so
     // this feature's rollout doesn't start every existing student at zero.
@@ -423,7 +440,7 @@ class Store extends EventTarget {
   // ---------- attempts + progress ----------
   get attempts() { return this.state.attempts; }
 
-  get streak() { return currentStreak(this.state.activity.daysStudied); }
+  get streak() { return currentStreak(this.state.activity.daysStudied, this.state.frozenDays); }
 
   recordAttempt(attempt) {
     this.update((s) => {
@@ -434,6 +451,7 @@ class Store extends EventTarget {
         s.activity.daysStudied.sort();
       }
     });
+    this.checkStreakFreeze();
     return this.checkAchievements();
   }
 
@@ -465,6 +483,69 @@ class Store extends EventTarget {
     }
     if (newly.length) this.save();
     return newly;
+  }
+
+  // ---------- streak freeze ----------
+  // Earning: one freeze every FREEZE_MILESTONE_DAYS of streak, capped at
+  // MAX_STREAK_FREEZES. Spending: automatic and silent — on load (and right
+  // after finishing a session), a single missed day between the last real
+  // streak day and today is covered by a freeze if one's available, so the
+  // streak keeps going. Frozen days are recorded separately from
+  // activity.daysStudied — this never pretends a day was actually studied,
+  // it just protects the streak count the same way an achievement, once
+  // unlocked, doesn't get taken back.
+  get streakFreezes() { return this.state.streakFreezes; }
+  get frozenDays() { return this.state.frozenDays; }
+
+  /** Runs at load and after every recorded attempt. Toasts about whatever
+   *  it finds — both empty most days. */
+  checkStreakFreeze() {
+    const frozen = this._bridgeStreakGap();
+    const earned = this._awardStreakFreezeMilestones();
+    if (frozen.length) toast(plural(frozen.length, "streak.freezeUsedOne", "streak.freezeUsedMany"));
+    if (earned) toast(plural(earned, "streak.freezeEarnedOne", "streak.freezeEarnedMany"));
+    if (frozen.length || earned) this.save();
+    return { frozen, earned };
+  }
+
+  // currentStreak() walks back from today and stops at the first uncovered
+  // day it hits — so freezing only the OLDER half of a gap while the day
+  // closest to today stays uncovered wouldn't save anything. Either the
+  // whole gap gets bridged, or none of it does; a gap too long for the
+  // available freezes leaves them banked rather than spent for nothing.
+  _bridgeStreakGap() {
+    const s = this.state;
+    const studied = new Set(s.activity.daysStudied);
+    const frozenSet = new Set(s.frozenDays);
+    const isCovered = (day) => studied.has(day) || frozenSet.has(day);
+
+    const gapDays = [];
+    let cursor = addDays(localDayKey(), -1); // yesterday
+    // Bounded by streakFreezes + 1 checks — a gap already longer than the
+    // available freezes can't be bridged either way, so there's no reason
+    // to keep walking backward hunting for an anchor that, on an old
+    // account with a long-since-broken streak, might be months away.
+    while (gapDays.length <= s.streakFreezes && !isCovered(cursor)) {
+      gapDays.push(cursor);
+      cursor = addDays(cursor, -1);
+    }
+    if (!gapDays.length || gapDays.length > s.streakFreezes || !isCovered(cursor)) return [];
+
+    for (const day of gapDays) { s.frozenDays.push(day); frozenSet.add(day); }
+    s.streakFreezes -= gapDays.length;
+    return gapDays;
+  }
+
+  _awardStreakFreezeMilestones() {
+    const s = this.state;
+    const streak = currentStreak(s.activity.daysStudied, s.frozenDays);
+    let earned = 0;
+    while (s.streakFreezes < MAX_STREAK_FREEZES && streak >= s.freezeMilestone + FREEZE_MILESTONE_DAYS) {
+      s.freezeMilestone += FREEZE_MILESTONE_DAYS;
+      s.streakFreezes++;
+      earned++;
+    }
+    return earned;
   }
 
   // ---------- settings ----------

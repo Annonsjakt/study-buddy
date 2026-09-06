@@ -28,13 +28,17 @@ export function daysBetween(a, b) {
 }
 
 /**
- * Consecutive days studied, counting back from today.
+ * Consecutive days studied, counting back from today. `frozenDays` (see
+ * store.js's streak-freeze mechanic) count the same as a studied day here —
+ * it's a day the streak survived, just not one where anything was actually
+ * studied.
  * Today not studied yet is fine — the streak survives until the day ends,
- * so it only breaks once you've actually missed a full day.
+ * so it only breaks once you've actually missed a full day (with no freeze
+ * to cover it).
  */
-export function currentStreak(daysStudied, today = localDayKey()) {
-  if (!daysStudied || !daysStudied.length) return 0;
-  const days = new Set(daysStudied);
+export function currentStreak(daysStudied, frozenDays = [], today = localDayKey()) {
+  if ((!daysStudied || !daysStudied.length) && (!frozenDays || !frozenDays.length)) return 0;
+  const days = new Set([...(daysStudied || []), ...(frozenDays || [])]);
   let cursor = days.has(today) ? today : addDays(today, -1);
   if (!days.has(cursor)) return 0;
   let n = 0;

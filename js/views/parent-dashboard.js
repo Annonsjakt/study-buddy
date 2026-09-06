@@ -264,7 +264,7 @@ export async function renderParentStudent(studentUserId) {
   }
 
   const tm = masteryByTopic(blob.attempts || []);
-  const streak = currentStreak(blob.activity?.daysStudied || []);
+  const streak = currentStreak(blob.activity?.daysStudied || [], blob.frozenDays || []);
   const due = dueQuestions(blob.assignments || [], blob.srs || {});
 
   const meters = (blob.subjects || [])

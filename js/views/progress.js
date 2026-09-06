@@ -17,6 +17,7 @@ export async function renderProgress() {
   const tm = masteryByTopic(store.attempts);
   const attemptsCount = store.attempts.length;
   const streak = store.streak;
+  const freezes = store.streakFreezes;
 
   const progress = attemptsCount ? masteryProgress(store.attempts) : null;
   const trend = progress ? Math.round((progress.nowPct - progress.startPct) * 100) : null;
@@ -24,13 +25,15 @@ export async function renderProgress() {
 
   // ---- streak strip: last 14 local days ----
   const studied = new Set(store.state.activity.daysStudied);
+  const frozenDays = new Set(store.frozenDays);
   const today = localDayKey();
   const days = recentDays(14).map((key) => {
     const label = Number(key.slice(8, 10));
+    const frozen = frozenDays.has(key);
     return el("div", {
-      class: "streak__day" + (studied.has(key) ? " on" : "") + (key === today ? " today" : ""),
-      title: key + (studied.has(key) ? " — studied" : ""),
-    }, String(label));
+      class: "streak__day" + (studied.has(key) ? " on" : frozen ? " frozen" : "") + (key === today ? " today" : ""),
+      title: key + (studied.has(key) ? " — studied" : frozen ? ` — ${t("streak.frozenDayTooltip")}` : ""),
+    }, frozen ? "🧊" : String(label));
   });
 
   // ---- mastery meters ----
@@ -66,9 +69,11 @@ export async function renderProgress() {
       [t("progress.title"), trendBadge].filter(Boolean)),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px" } }, [
+      el("h3", { style: { marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" } }, [
         t("progress.studyStreak"),
         el("span.streakbadge", {}, [icon(ICONS.flame, 13), t("streak.days", { n: streak })]),
+        el("span.freezebadge", { title: t("streak.freezeTooltip", { days: 7, max: 2 }) },
+          ["🧊", plural(freezes, "streak.freezeCount", "streak.freezeCountMany")]),
       ]),
       el("div.streak", { role: "img", "aria-label": `Studied on ${[...studied].filter((d) => recentDays(14).includes(d)).length} of the last 14 days` }, days),
       el("p.note", { style: { marginTop: "10px" } },

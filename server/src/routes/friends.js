@@ -99,7 +99,7 @@ friends.get("/friends/leaderboard", requireAuth, (req, res) => {
       isMe: userId === req.user.userId,
       synced: !!row,
       questionsThisWeek,
-      streak: currentStreakFromUTC(blob?.activity?.daysStudied || []),
+      streak: currentStreakFromUTC(blob?.activity?.daysStudied || [], blob?.frozenDays || []),
     };
   });
 
@@ -116,10 +116,13 @@ function startOfWeekUTC(nowMs) {
 // Same algorithm as js/lib/activity.js's currentStreak(), duplicated here in
 // UTC terms — the server has no access to that frontend module, and the
 // function is small enough that hand-keeping it in sync beats sharing a
-// build step for one function.
-function currentStreakFromUTC(daysStudied) {
-  if (!daysStudied || !daysStudied.length) return 0;
-  const days = new Set(daysStudied);
+// build step for one function. frozenDays (the student's streak-freeze
+// mechanic) count the same as a studied day, same reasoning as the frontend
+// version, so a friend's leaderboard streak matches what they see on their
+// own Progress page.
+function currentStreakFromUTC(daysStudied, frozenDays = []) {
+  if ((!daysStudied || !daysStudied.length) && (!frozenDays || !frozenDays.length)) return 0;
+  const days = new Set([...(daysStudied || []), ...(frozenDays || [])]);
   const today = dayKeyUTC(Date.now());
   let cursor = days.has(today) ? today : addDaysUTC(today, -1);
   if (!days.has(cursor)) return 0;
