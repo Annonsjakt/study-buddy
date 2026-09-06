@@ -31,7 +31,7 @@ export async function renderProgress() {
     const label = Number(key.slice(8, 10));
     const frozen = frozenDays.has(key);
     return el("div", {
-      class: "streak__day" + (studied.has(key) ? " on" : frozen ? " frozen" : "") + (key === today ? " today" : ""),
+      class: "streak__day" + (studied.has(key) ? " on" : frozen ? " frozen" : "") + (key === today ? " streak__day--current" : ""),
       title: key + (studied.has(key) ? " — studied" : frozen ? ` — ${t("streak.frozenDayTooltip")}` : ""),
     }, frozen ? "🧊" : String(label));
   });
