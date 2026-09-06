@@ -3,7 +3,7 @@
 
 import { store } from "../store.js";
 import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
-import { masteryByTopic, masteryForAssignment, masteryForSubject } from "../lib/mastery.js";
+import { masteryByTopic, masteryForAssignment, masteryForSubject, masteryProgress } from "../lib/mastery.js";
 import { t, plural, getLang } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 
@@ -374,13 +374,23 @@ function dashRow(topicMastery) {
   const streak = store.streak;
   const sessions = store.attempts.length;
 
+  // "Where you started" vs "where you are now" — only worth a highlight
+  // when there's a genuine improvement to report; flat or down says nothing
+  // rather than something discouraging.
+  const progress = store.attempts.length ? masteryProgress(store.attempts) : null;
+  const trend = progress ? Math.round((progress.nowPct - progress.startPct) * 100) : null;
+  const trendBadge = trend > 0 ? el("span.dash__trend", {}, t("dash.trendUp", { n: trend })) : null;
+
   const hero = el("div.dash__card.dash__card--hero", {}, [
     overall == null
       ? el("span.dash__icon.dash__icon--brand", { style: { width: "72px", height: "72px" } }, icon(ICONS.spark, 28))
       : ring(overall, "var(--brand)", "ring--lg"),
     el("div", {}, [
       el("div.dash__label", {}, overall == null ? t("dash.noResults") : t("dash.overallMastery")),
-      el("div.dash__value", {}, overall == null ? t("dash.startStudying") : `${Math.round(overall * 100)}%`),
+      el("div.dash__valuerow", {}, [
+        el("div.dash__value", {}, overall == null ? t("dash.startStudying") : `${Math.round(overall * 100)}%`),
+        trendBadge,
+      ].filter(Boolean)),
       el("p.note.dash__hero-note", {}, overall == null
         ? t("dash.heroHintEmpty")
         : t("dash.heroHint", {

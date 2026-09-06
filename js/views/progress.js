@@ -3,7 +3,7 @@
 import { store } from "../store.js";
 import { el, icon, ICONS } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
-import { masteryByTopic, masteryForSubject } from "../lib/mastery.js";
+import { masteryByTopic, masteryForSubject, masteryProgress } from "../lib/mastery.js";
 import { estimatedGrade } from "../lib/grade.js";
 import { dueLabel } from "../lib/srs.js";
 import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
@@ -17,6 +17,10 @@ export async function renderProgress() {
   const tm = masteryByTopic(store.attempts);
   const attemptsCount = store.attempts.length;
   const streak = store.streak;
+
+  const progress = attemptsCount ? masteryProgress(store.attempts) : null;
+  const trend = progress ? Math.round((progress.nowPct - progress.startPct) * 100) : null;
+  const trendBadge = trend > 0 ? el("span.dash__trend", {}, t("dash.trendUp", { n: trend })) : null;
 
   // ---- streak strip: last 14 local days ----
   const studied = new Set(store.state.activity.daysStudied);
@@ -55,7 +59,8 @@ export async function renderProgress() {
   const dueItems = store.dueQuestions();
 
   const node = el("div.progress-dash", {}, [
-    el("h1", {}, t("progress.title")),
+    el("h1", { style: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" } },
+      [t("progress.title"), trendBadge].filter(Boolean)),
 
     el("section.panel", {}, [
       el("h3", { style: { marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px" } }, [
