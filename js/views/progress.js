@@ -3,41 +3,60 @@
 import { store } from "../store.js";
 import { el, icon, ICONS } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
-import { masteryByTopic, masteryForSubject, masteryProgress } from "../lib/mastery.js";
-import { estimatedGrade } from "../lib/grade.js";
-import { dueLabel } from "../lib/srs.js";
-import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
+import { clozeToUnderscores } from "../components/questions.js";
+import { masteryByTopic, masteryForSubject } from "../lib/mastery.js";
+import { dueLabel, reviewReason } from "../lib/srs.js";
+import { localDayKey, recentDays, questionsAnsweredToday, reviewAccuracyTrend } from "../lib/activity.js";
 import { t, plural } from "../lib/i18n.js";
-import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
-import { hasCurriculum, loadCurriculum, curriculumCoverage } from "../lib/curriculum.js";
+import { weakSpotQuestions } from "../lib/mastery.js";
+import { goalRing } from "../components/goal-ring.js";
+import { homeButton } from "../components/nav.js";
+import { ACHIEVEMENTS, nextAchievement } from "../lib/achievements.js";
+import { estimatedGrade } from "../lib/grade.js";
 
-export async function renderProgress() {
-  // So a set imported back when the app was in Swedish shows its translated
-  // title in the per-assignment badges below, not just Swedish leftovers.
-  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
+export function renderProgress() {
   const tm = masteryByTopic(store.attempts);
   const attemptsCount = store.attempts.length;
-  const streak = store.streak;
-  const freezes = store.streakFreezes;
-
-  const progress = attemptsCount ? masteryProgress(store.attempts) : null;
-  const trend = progress ? Math.round((progress.nowPct - progress.startPct) * 100) : null;
-  const trendBadge = trend > 0 ? el("span.dash__trend", {}, t("progress.trendUp", { n: trend })) : null;
+  const { streak, freezes, atRisk, displayStreak, bestStreak, nextFreezeIn } = store.streakInfo;
 
   // ---- streak strip: last 14 local days ----
   const studied = new Set(store.state.activity.daysStudied);
-  const frozenDays = new Set(store.frozenDays);
+  const frozen = new Set(store.state.activity.frozenDays);
   const today = localDayKey();
-  const days = recentDays(14).map((key) => {
-    const label = Number(key.slice(8, 10));
-    const frozen = frozenDays.has(key);
+  const dayCell = (key, cls) => {
+    const on = studied.has(key), fz = frozen.has(key);
+    // "is-today", not "today": a bare .today rule (the menu strip) would
+    // otherwise turn this into a 210px grid column and shove the number out.
     return el("div", {
-      class: "streak__day" + (studied.has(key) ? " on" : frozen ? " frozen" : "") + (key === today ? " streak__day--current" : ""),
-      title: key + (studied.has(key) ? " — studied" : frozen ? ` — ${t("streak.frozenDayTooltip")}` : ""),
-    }, frozen ? "🧊" : String(label));
-  });
+      class: cls + (fz ? " frozen" : on ? " on" : "") + (key === today ? " is-today" : ""),
+      title: key + (fz ? ` — ${t("streak.frozenDay")}` : on ? " — studied" : ""),
+    }, cls === "streak__day" ? [String(Number(key.slice(8, 10)))] : []);
+  };
+  const days = recentDays(14).map((key) => dayCell(key, "streak__day"));
+
+  // ---- 12-week study heatmap, week-aligned (Mon top → Sun bottom) ----
+  const td = new Date();
+  const mondayIdx = (td.getDay() + 6) % 7;             // Mon=0 … Sun=6
+  const spanDays = mondayIdx + 11 * 7 + 1;             // back to the Monday 12 weeks ago
+  const heatCells = recentDays(spanDays).map((key) => dayCell(key, "heatmap__cell"));
+
+  // ---- daily goal ----
+  const goal = Number(store.settings.dailyGoal) || 0;
+  const answeredToday = questionsAnsweredToday(store.attempts);
 
   // ---- mastery meters ----
+  // The most recent real per-set attempt for each subject — shown as a
+  // one-off score next to the long-term mastery %, so "69%" doesn't read as a
+  // contradiction of the 88% the student just got on the test.
+  const lastScoreBySubject = {};
+  for (const at of store.attempts) {
+    if (!at.items?.length) continue;
+    const sid = store.getAssignment(at.assignmentId)?.subjectId;
+    if (!sid) continue;
+    const prev = lastScoreBySubject[sid];
+    if (!prev || (at.finishedAt || 0) > (prev.finishedAt || 0)) lastScoreBySubject[sid] = at;
+  }
+
   const subjectMeters = store.subjects
     .map((s) => ({ s, m: masteryForSubject(s.id, store.assignments, tm) }))
     .filter((x) => x.m != null)
@@ -46,113 +65,143 @@ export async function renderProgress() {
       const color = store.subjectColor(s.id);
       const pct = Math.round(m * 100);
       const grade = estimatedGrade(m);
-      return el("div.meter", {}, [
-        el("span", { style: { display: "flex", alignItems: "center", gap: "6px", minWidth: "0" } }, [
-          el("span.subject-dot", { style: { "--subject": color.solid } }),
-          el("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, subjectDisplayName(s.name)),
-        ]),
+      const meter = el("div.meter", {}, [
+        el("span", {}, s.name),
         el("div.meter__track", {
-          role: "img", "aria-label": `${subjectDisplayName(s.name)}: ${pct}% mastery`,
+          role: "img", "aria-label": t("prog.masteryAria", { subject: s.name, pct }),
         }, [el("div.meter__fill", { style: { width: "0%", "--subject": color.solid }, dataset: { w: pct } })]),
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
-        el("span.gradepill", {
-          class: `gradepill--${grade.tier}`,
-          title: t("progress.gradeTooltip", { letter: grade.letter }),
+        el("span.gradepill" + `.gradepill--${grade.tier}`, {
+          title: t("prog.gradeTooltip", { letter: grade.letter }),
         }, grade.letter),
       ]);
+      const extras = [];
+      const last = lastScoreBySubject[s.id];
+      if (last) {
+        extras.push(el("p.note.meter__context", {},
+          t("prog.masteryVsScore", { score: last.scorePct })));
+      }
+      // A near-mastered subject earns a victory lap: explain it back.
+      if (m >= 0.8) {
+        extras.push(el("a.linkbtn", { href: `#/teachback/${s.id}`, style: { fontSize: "var(--fs-sm)" } },
+          [icon(ICONS.spark, 13), " ", t("teach.tile")]));
+      }
+      return extras.length
+        ? el("div", { style: { padding: "2px 0" } }, [meter, ...extras])
+        : meter;
     });
-
-  // ---- kursplan (Lgr22) coverage, for subjects we've mapped so far ----
-  const curriculumPanels = [];
-  for (const s of store.subjects) {
-    if (!hasCurriculum(s.name)) continue;
-    const doc = await loadCurriculum(s.name);
-    if (!doc) continue;
-    curriculumPanels.push({ subject: s, doc, areas: curriculumCoverage(s.name, tm) });
-  }
-
-  function curriculumAreaRow(area) {
-    const started = area.mastery != null;
-    const pct = started ? Math.round(area.mastery * 100) : 0;
-    const grade = started ? estimatedGrade(area.mastery) : null;
-    return el("div.meter", {}, [
-      el("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, area.name),
-      el("div.meter__track", {
-        role: "img",
-        "aria-label": `${area.name}: ${started ? pct + "%" : t("progress.curriculumNotStarted")}`,
-      }, [el("div.meter__fill", { style: { width: "0%" }, dataset: { w: pct } })]),
-      el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, started ? `${pct}%` : "–"),
-      started
-        ? el("span.gradepill", { class: `gradepill--${grade.tier}`, title: t("progress.gradeTooltip", { letter: grade.letter }) }, grade.letter)
-        : el("span.note", { style: { textAlign: "center" } }, "–"),
-    ]);
-  }
-
-  function curriculumPanel({ subject, doc, areas }) {
-    return el("section.panel.panel--full", {}, [
-      el("h3", { style: { marginBottom: "4px" } }, t("progress.curriculumTitle", { subject: subject.name })),
-      el("p.note", { style: { marginBottom: "12px" } }, t("progress.curriculumExplain")),
-      el("div", {}, areas.map(curriculumAreaRow)),
-      el("details", { style: { marginTop: "14px" } }, [
-        el("summary", {}, t("progress.curriculumKravSummary")),
-        el("div", { style: { marginTop: "10px", display: "grid", gap: "10px" } }, ["E", "C", "A"].map((letter) =>
-          el("p.note", {}, [el("strong", {}, t("progress.curriculumGradeLabel", { letter }) + ": "), doc.kunskapskrav[letter]]))),
-        el("p.note", { style: { marginTop: "10px", fontStyle: "italic" } },
-          t("progress.curriculumSource", { date: doc.fetchedAt })),
-      ]),
-    ]);
-  }
 
   // ---- due for review ----
   const dueItems = store.dueQuestions();
+  const weakCount = weakSpotQuestions(store.assignments, store.attempts).length;
+  const recall = reviewAccuracyTrend(store.attempts);
 
-  const node = el("div.progress-dash", {}, [
-    el("h1", { style: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" } },
-      [t("progress.title"), trendBadge].filter(Boolean)),
+  const node = el("div.dash", {}, [
+    homeButton({ grid: true }),
+    el("h1", {}, t("prog.title")),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "12px", display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" } }, [
-        t("progress.studyStreak"),
-        el("span.streakbadge", {}, [icon(ICONS.flame, 13), t("streak.days", { n: streak })]),
-        el("span.freezebadge", { title: t("streak.freezeTooltip", { days: 7, max: 2 }) },
-          ["🧊", plural(freezes, "streak.freezeCount", "streak.freezeCountMany")]),
+      el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap", marginBottom: "12px" } }, [
+        el("h3", { style: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" } }, [
+          t("prog.streak"),
+          el("span.streakbadge" + (atRisk ? ".streakbadge--risk" : ""), {}, [
+            icon(atRisk ? ICONS.shield : ICONS.flame, 13),
+            plural(displayStreak, "prog.streakDaysOne", "prog.streakDaysMany"),
+          ]),
+          freezes > 0 && el("span.freezechip", { title: t("streak.freezeHelp") }, [icon(ICONS.shield, 13), `×${freezes}`]),
+        ].filter(Boolean)),
+        goal > 0 && el("span", { style: { display: "flex", alignItems: "center", gap: "8px", color: "var(--ink-soft)", fontSize: "var(--fs-sm)", fontWeight: "700" } }, [
+          goalRing(answeredToday, goal),
+          answeredToday >= goal ? t("menu.goalDone", { done: answeredToday }) : t("menu.goalToday", { done: answeredToday, goal }),
+        ]),
+      ].filter(Boolean)),
+      atRisk && el("p.note.note--warn", { style: { marginBottom: "10px" } }, t("streak.atRisk", { n: displayStreak })),
+      el("div.streak", { role: "img", "aria-label": t("prog.streakAria", { n: [...studied].filter((d) => recentDays(14).includes(d)).length }) }, days),
+      el("p.note", { style: { marginTop: "10px" } }, [
+        t("prog.summary", {
+          days: plural(store.state.activity.daysStudied.length, "prog.daysOne", "prog.daysMany"),
+          sessions: plural(attemptsCount, "prog.sessionsOne", "prog.sessionsMany"),
+        }),
+        bestStreak > displayStreak ? " · " + t("prog.personalBest", { n: bestStreak }) : "",
+        freezes === 0 && displayStreak > 0 && nextFreezeIn > 0
+          ? " · " + plural(nextFreezeIn, "streak.freezeNextOne", "streak.freezeNext") : "",
       ]),
-      el("div.streak", { role: "img", "aria-label": `Studied on ${[...studied].filter((d) => recentDays(14).includes(d)).length} of the last 14 days` }, days),
-      el("p.note", { style: { marginTop: "10px" } },
-        plural(store.state.activity.daysStudied.length, "progress.studiedDays", "progress.studiedDaysMany") +
-        " · " + plural(attemptsCount, "progress.sessionsOne", "progress.sessionsMany")),
     ]),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "8px" } }, t("progress.masteryBySubject")),
-      subjectMeters.length ? el("div", {}, [
-        el("p.note", { style: { marginBottom: "10px" } }, t("progress.gradeExplain")),
-        ...subjectMeters,
-      ])
-        : el("p.note", {}, t("progress.noMasteryYet")),
+      el("h3", { style: { marginBottom: "6px" } }, t("prog.heatmapTitle")),
+      el("p.note", { style: { marginBottom: "12px" } }, t("prog.heatmapSub")),
+      el("div.heatmap", { role: "img", "aria-label": t("prog.heatmapSub") }, heatCells),
     ]),
 
-    ...curriculumPanels.map(curriculumPanel),
+    (() => {
+      const unlockedMap = store.unlockedAchievements;
+      const got = ACHIEVEMENTS.filter((a) => a.id in unlockedMap).length;
+      const next = nextAchievement(store.state);
+      return el("a.panel.achteaser", { href: "#/achievements" }, [
+        el("div.achteaser__top", {}, [
+          el("h3", {}, t("ach.teaserTitle")),
+          el("span.badge", {}, t("ach.subtitle", { unlocked: got, total: ACHIEVEMENTS.length })),
+        ]),
+        el("p.note", {}, next
+          ? t("ach.teaserNext", { desc: `${t(next.def.nameKey)} · ${t(next.def.descKey, { n: next.def.target })} (${next.have}/${next.need})` })
+          : t("ach.teaserAllDone")),
+      ]);
+    })(),
 
-    el("section.panel.panel--full", {}, [
+    el("section.panel", {}, [
+      el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "8px" } }, [
+        el("h3", {}, t("prog.mastery")),
+        el("div", { style: { display: "flex", gap: "8px", flexWrap: "wrap" } }, [
+          subjectMeters.length ? el("a.btn.btn--ghost.btn--sm", { href: "#/exam-prep" },
+            [icon(ICONS.graduation, 16), t("nav.examPrep")]) : null,
+          // Only offered once there's enough history to know what "weak" means.
+          weakCount ? el("a.btn.btn--sm", { href: "#/practice-weak" },
+            [icon(ICONS.target, 16), t("prog.practiseWeak")]) : null,
+        ].filter(Boolean)),
+      ].filter(Boolean)),
+      subjectMeters.length ? el("div", {}, [
+        el("p.note", { style: { marginBottom: "10px" } }, t("prog.gradeExplain")),
+        ...subjectMeters,
+      ]) : el("p.note", {}, t("prog.masteryEmpty")),
+    ]),
+
+    // "Is my recall actually improving?" — score on the last few cross-set
+    // review sessions. Needs a few before a line means anything.
+    recall.length >= 3 ? el("section.panel", {}, [
+      el("h3", { style: { marginBottom: "6px" } }, t("prog.recallTitle")),
+      el("p.note", { style: { marginBottom: "12px" } }, t("prog.recallSub", { n: recall.length })),
+      sparkline(recall),
+    ]) : null,
+
+    el("section.panel", {}, [
       el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" } }, [
-        el("h3", {}, t("progress.dueForReview") + (dueItems.length ? ` (${dueItems.length})` : "")),
-        dueItems.length ? el("a.btn.btn--sm", { href: "#/review" }, [icon(ICONS.spark, 16), t("progress.reviewToday")]) : null,
+        el("h3", {}, dueItems.length ? t("prog.dueCount", { n: dueItems.length }) : t("prog.due")),
+        dueItems.length ? el("a.btn.btn--sm", { href: "#/review" }, [icon(ICONS.spark, 16), t("prog.reviewToday")]) : null,
       ].filter(Boolean)),
       dueItems.length
         ? el("div", {}, [
-            el("p.note", { style: { marginBottom: "10px" } }, t("progress.reviewTodayExplain")),
-            el("div.due-list", {}, dueItems.slice(0, 12).map(({ assignment, question, rec }) =>
-              el("div.due-item", {}, [
-                el("span", { html: renderRich(question.prompt.length > 80 ? question.prompt.slice(0, 80) + "…" : question.prompt) }),
+            el("p.note", { style: { marginBottom: "10px" } },
+              t("prog.reviewExplain")),
+            el("div.due-list", {}, dueItems.slice(0, 12).map(({ assignment, question, rec }) => {
+              const why = reviewReason(rec);
+              return el("div.due-item", {}, [
+                el("div.due-item__main", {}, [
+                  el("span", { html: renderRich((() => {
+                    const p = question.kind === "cloze" ? clozeToUnderscores(question.prompt) : question.prompt;
+                    return p.length > 80 ? p.slice(0, 80) + "…" : p;
+                  })()) }),
+                  why ? el("span.due-item__why", {}, why) : null,
+                ].filter(Boolean)),
                 el("span", { style: { display: "flex", gap: "8px", flex: "none", alignItems: "center" } }, [
                   el("span.note", {}, dueLabel(rec)),
                   el("span.badge", {}, assignment.title),
                 ]),
-              ]))),
-            dueItems.length > 12 ? el("p.note", { style: { marginTop: "10px" } }, t("progress.moreItems", { n: dueItems.length - 12 })) : null,
+              ]);
+            })),
+            dueItems.length > 12 ? el("p.note", { style: { marginTop: "10px" } }, t("prog.moreDue", { n: dueItems.length - 12 })) : null,
           ].filter(Boolean))
-        : el("p.note", {}, t("progress.nothingDue")),
+        : el("p.note", {}, t("prog.nothingDue")),
     ]),
 
     el("a.btn.btn--ghost", { href: "#/", style: { justifySelf: "start" } }, [icon(ICONS.back, 16), t("common.backToMenu")]),
@@ -162,5 +211,28 @@ export async function renderProgress() {
     node.querySelectorAll(".meter__fill").forEach((f) => { f.style.width = `${f.dataset.w}%`; });
   });
 
-  return { title: t("progress.pageTitle"), node };
+  return { title: t("common.progress"), node };
+}
+
+/** A bare line chart of review-session scores, built like the results-screen
+ *  ring — SVG via innerHTML, no library. viewBox is wide so it scales up
+ *  uniformly to the panel width; y maps 0%→bottom, 100%→top. */
+function sparkline(pts) {
+  const w = 600, h = 60, pad = 6;
+  const x = (i) => pad + (i * (w - 2 * pad)) / Math.max(1, pts.length - 1);
+  const y = (p) => h - pad - (p / 100) * (h - 2 * pad);
+  const poly = pts.map((d, i) => `${x(i).toFixed(1)},${y(d.pct).toFixed(1)}`).join(" ");
+  const wrap = el("div", {
+    role: "img",
+    "aria-label": t("prog.recallAria", { list: pts.map((d) => `${d.pct}%`).join(", ") }),
+  });
+  wrap.innerHTML =
+    `<svg class="sparkline" viewBox="0 0 ${w} ${h}">` +
+    `<polyline points="${poly}"/>` +
+    pts.map((d, i) => {
+      const last = i === pts.length - 1;
+      return `<circle cx="${x(i).toFixed(1)}" cy="${y(d.pct).toFixed(1)}" r="${last ? 5 : 3.5}"${last ? ' class="last"' : ""}/>`;
+    }).join("") +
+    `</svg>`;
+  return wrap;
 }

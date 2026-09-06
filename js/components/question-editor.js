@@ -9,13 +9,17 @@
 
 import { el, clear, icon, ICONS, uid } from "../lib/dom.js";
 import { t } from "../lib/i18n.js";
+import { parseCloze } from "./questions.js";
 
-const KINDS = () => [
-  ["mc", t("qedit.mc")],
-  ["text", t("qedit.text")],
-  ["flashcard", t("qedit.flashcard")],
-  ["worked", t("qedit.worked")],
-];
+function kinds() { return [
+  ["mc", t("ed.kindMc")],
+  ["text", t("ed.kindText")],
+  ["cloze", t("ed.kindCloze")],
+  ["flashcard", t("ed.kindFlash")],
+  ["worked", t("ed.kindWorked")],
+]; }
+
+const blankCount = (s) => parseCloze(s).filter((p) => p.blank).length;
 
 export function questionEditor(doc, { onChange } = {}) {
   const list = el("div");
@@ -26,17 +30,42 @@ export function questionEditor(doc, { onChange } = {}) {
     clear(list);
     if (!doc.questions.length) {
       list.appendChild(el("p.note", { style: { padding: "16px 0" } },
-        t("qedit.noQuestions")));
+        t("ed.none")));
     }
     doc.questions.forEach((q, i) => list.appendChild(questionBlock(q, i)));
     changed();
   }
 
+  function move(from, to) {
+    if (to < 0 || to >= doc.questions.length || from === to) return;
+    const [q] = doc.questions.splice(from, 1);
+    doc.questions.splice(to, 0, q);
+    paint();
+  }
+
   function questionBlock(q, idx) {
-    const wrap = el("div.qedit");
+    const wrap = el("div.qedit", { dataset: { i: String(idx) } });
+    // Only the grip starts a drag — leaving text selection inside the fields alone.
+    const grip = el("span.qedit__grip", {
+      draggable: "true", title: t("ed.dragReorder"), "aria-hidden": "true",
+    }, "⠿");
+    grip.addEventListener("dragstart", (e) => {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(idx));
+      wrap.classList.add("is-dragging");
+    });
+    grip.addEventListener("dragend", () => wrap.classList.remove("is-dragging"));
+    wrap.addEventListener("dragover", (e) => { e.preventDefault(); wrap.classList.add("is-dragover"); });
+    wrap.addEventListener("dragleave", () => wrap.classList.remove("is-dragover"));
+    wrap.addEventListener("drop", (e) => {
+      e.preventDefault();
+      wrap.classList.remove("is-dragover");
+      const from = Number(e.dataTransfer.getData("text/plain"));
+      if (!Number.isNaN(from)) move(from, idx);
+    });
 
     const promptTa = el("textarea", {
-      rows: "2", "aria-label": `Question ${idx + 1} text`,
+      rows: "2", "aria-label": t("ed.qTextAria", { n: idx + 1 }),
       oninput: (e) => { q.prompt = e.target.value; },
     });
     promptTa.value = q.prompt || "";
@@ -51,18 +80,18 @@ export function questionEditor(doc, { onChange } = {}) {
         q.choices.forEach((c, ci) => {
           const radio = el("input", {
             type: "radio", name: `correct-${q.id}`, checked: q.answer === ci,
-            "aria-label": `Choice ${String.fromCharCode(65 + ci)} is correct`,
+            "aria-label": t("ed.choiceCorrect", { letter: String.fromCharCode(65 + ci) }),
             onchange: () => { q.answer = ci; },
           });
           const text = el("input", {
             type: "text", value: c, style: { flex: "1" },
-            "aria-label": `Choice ${String.fromCharCode(65 + ci)}`,
+            "aria-label": t("ed.choiceAria", { letter: String.fromCharCode(65 + ci) }),
             oninput: (e) => { q.choices[ci] = e.target.value; },
           });
           body.appendChild(el("div.qedit__row", {}, [
             radio, text,
             q.choices.length > 2 && el("button.iconbtn.iconbtn--sm", {
-              type: "button", "aria-label": `Remove choice ${String.fromCharCode(65 + ci)}`,
+              type: "button", "aria-label": t("ed.removeChoice", { letter: String.fromCharCode(65 + ci) }),
               onclick: () => {
                 q.choices.splice(ci, 1);
                 if (q.answer >= q.choices.length) q.answer = 0;
@@ -72,21 +101,28 @@ export function questionEditor(doc, { onChange } = {}) {
             }, "×"),
           ].filter(Boolean)));
         });
-        body.appendChild(el("p.note", { style: { marginTop: "4px" } }, t("qedit.selectCorrect")));
+        body.appendChild(el("p.note", { style: { marginTop: "4px" } }, t("ed.selectCorrect")));
         if (q.choices.length < 5) {
           body.appendChild(el("button.btn.btn--ghost.btn--sm", {
             type: "button", style: { marginTop: "8px" },
             onclick: () => { q.choices.push(""); paintBody(); },
-          }, t("qedit.addChoice")));
+          }, t("ed.addChoice")));
         }
+      } else if (q.kind === "cloze") {
+        // The prompt *is* the question — the answers live inside {{…}}.
+        const count = el("p.note", { style: { marginTop: "8px" } }, t("ed.clozeCount", { n: blankCount(q.prompt) }));
+        promptTa.addEventListener("input", () => {
+          count.textContent = t("ed.clozeCount", { n: blankCount(promptTa.value) });
+        });
+        body.append(el("p.note", { style: { marginTop: "8px" } }, t("ed.clozeHint")), count);
       } else {
         const ansTa = el("textarea", {
-          rows: "2", "aria-label": "Answer",
+          rows: "2", "aria-label": t("ed.answerAria"),
           oninput: (e) => { q.answer = e.target.value; },
         });
         ansTa.value = typeof q.answer === "string" ? q.answer : "";
         body.appendChild(el("label.field", { style: { marginTop: "8px", marginBottom: "0" } }, [
-          el("span", {}, q.kind === "flashcard" ? t("qedit.backOfCard") : t("qedit.modelAnswer")),
+          el("span", {}, t(q.kind === "flashcard" ? "ed.backOfCard" : "ed.modelAnswer")),
           ansTa,
         ]));
       }
@@ -94,7 +130,7 @@ export function questionEditor(doc, { onChange } = {}) {
     paintBody();
 
     const kindSel = el("select", {
-      "aria-label": "Question type",
+      "aria-label": t("ed.type"),
       onchange: (e) => {
         q.kind = e.target.value;
         if (q.kind === "mc") {
@@ -105,28 +141,37 @@ export function questionEditor(doc, { onChange } = {}) {
         }
         paintBody();
       },
-    }, KINDS().map(([v, l]) => el("option", { value: v }, l)));
+    }, kinds().map(([v, l]) => el("option", { value: v }, l)));
     kindSel.value = q.kind;
 
     const topicInput = el("input", {
       type: "text", value: q.topic || "", style: { maxWidth: "170px" },
-      placeholder: t("qedit.topicPlaceholder"), "aria-label": "Topic tag",
+      placeholder: t("ed.topicPlaceholder"), "aria-label": t("ed.topicAria"),
       oninput: (e) => { q.topic = e.target.value.toLowerCase(); },
     });
 
     wrap.appendChild(el("div.qedit__row", {}, [
-      el("span.badge", {}, `Q${idx + 1}`),
+      grip,
+      el("span.badge", {}, t("ed.qBadge", { n: idx + 1 })),
       kindSel,
       topicInput,
       el("span", { style: { flex: "1" } }),
       el("button.iconbtn.iconbtn--sm", {
-        type: "button", "aria-label": `Delete question ${idx + 1}`, title: t("qedit.deleteQuestion"),
+        type: "button", "aria-label": t("ed.moveUp", { n: idx + 1 }), disabled: idx === 0,
+        onclick: () => move(idx, idx - 1),
+      }, "↑"),
+      el("button.iconbtn.iconbtn--sm", {
+        type: "button", "aria-label": t("ed.moveDown", { n: idx + 1 }), disabled: idx === doc.questions.length - 1,
+        onclick: () => move(idx, idx + 1),
+      }, "↓"),
+      el("button.iconbtn.iconbtn--sm", {
+        type: "button", "aria-label": t("ed.deleteQuestion", { n: idx + 1 }), title: t("ed.deleteQuestionTitle"),
         style: { color: "var(--retry-ink)" },
         onclick: () => { doc.questions.splice(idx, 1); paint(); },
       }, [icon(ICONS.trash, 15)]),
     ]));
     wrap.appendChild(el("label.field", { style: { marginBottom: "8px" } }, [
-      el("span", {}, t("qedit.questionLabel")), promptTa,
+      el("span", {}, t("ed.question")), promptTa,
     ]));
     wrap.appendChild(body);
     return wrap;

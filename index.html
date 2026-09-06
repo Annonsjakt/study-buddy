@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,38 +8,43 @@
   <link rel="icon" href="assets/favicon.svg" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#6E4EF5" />
+  <meta name="theme-color" content="#2C5CD6" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0A0C11" media="(prefers-color-scheme: dark)" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="StudyBuddy" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
 
-  <!-- Set the palette and reading mode before first paint so there's no flash
-       of the wrong theme/typeface. -->
+  <!-- Set the palette and language before first paint, so there's no flash of
+       the wrong theme and <html lang> is right for screen readers from the start. -->
   <script>
     (function () {
+      var root = document.documentElement;
       try {
         var t = localStorage.getItem("studybuddy.theme");
-        document.documentElement.setAttribute("data-theme",
-          ["light", "dark", "system"].indexOf(t) >= 0 ? t : "system");
+        root.setAttribute("data-theme", ["light", "dark", "system"].indexOf(t) >= 0 ? t : "system");
       } catch (e) {
-        document.documentElement.setAttribute("data-theme", "system");
+        root.setAttribute("data-theme", "system");
       }
       try {
-        if (localStorage.getItem("studybuddy.readmode") === "on") {
-          document.documentElement.setAttribute("data-readmode", "");
-        }
-      } catch (e) {}
+        var f = localStorage.getItem("studybuddy.font");
+        root.setAttribute("data-font", f === "hyperlegible" ? "hyperlegible" : "system");
+        var sz = localStorage.getItem("studybuddy.textSize");
+        root.setAttribute("data-textsize", ["s", "m", "l"].indexOf(sz) >= 0 ? sz : "m");
+      } catch (e) {
+        root.setAttribute("data-font", "system");
+        root.setAttribute("data-textsize", "m");
+      }
       try {
-        var supported = ["sv", "en"];
+        var supported = ["en", "sv"];
         var l = localStorage.getItem("studybuddy.lang");
         // Every bundled set is Swedish curriculum content, so that's the
         // default when the student hasn't chosen — not a browser-language guess.
-        document.documentElement.setAttribute("lang", supported.indexOf(l) >= 0 ? l : "sv");
+        root.setAttribute("lang", supported.indexOf(l) >= 0 ? l : "sv");
       } catch (e) {
-        document.documentElement.setAttribute("lang", "sv");
+        root.setAttribute("lang", "sv");
       }
     })();
   </script>

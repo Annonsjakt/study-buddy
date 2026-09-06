@@ -9,7 +9,7 @@ import { t } from "./i18n.js";
  *  a naive [^a-z0-9] strip which destroys non-ASCII text. */
 export function normalizeAnswer(s) {
   let str = String(s ?? "").trim();
-  str = str.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/ /g, " ");
+  str = str.replace(/[’‘]/g, "'").replace(/[“”]/g, '"').replace(/ /g, " ");
   str = str.replace(/\s+/g, " ").trim();
   str = str.replace(/[.!?]+$/g, "").trim();
   // Numeric-shaped tokens only: "2 880" -> "2880" (thousands space),
@@ -31,23 +31,23 @@ export function tokenize(s) {
  *  fall back to keyword overlap. */
 export function heuristic(ans, model) {
   const modelStr = String(model ?? "").trim();
-  if (!modelStr) return { correct: ans.trim().length > 8, feedback: t("q.heuristicNoModel"), missedPoints: [] };
+  if (!modelStr) return { correct: false, feedback: t("q.heuristicMiss"), missedPoints: [] };
 
   const modelWords = modelStr.split(/\s+/).filter(Boolean).length;
   if (modelWords <= 3) {
     const correct = normalizeAnswer(ans) === normalizeAnswer(modelStr);
-    return { correct, feedback: correct ? t("q.heuristicGood") : t("q.heuristicMissing"), missedPoints: [] };
+    return { correct, feedback: correct ? t("q.heuristicOk") : t("q.heuristicMiss"), missedPoints: [] };
   }
 
   const mTokens = tokenize(modelStr);
   const aTokens = new Set(tokenize(ans));
   if (!mTokens.length) {
-    return { correct: tokenize(ans).length > 0, feedback: t("q.heuristicGood"), missedPoints: [] };
+    return { correct: tokenize(ans).length > 0, feedback: t("q.heuristicMiss"), missedPoints: [] };
   }
   const hit = mTokens.filter((w) => aTokens.has(w)).length / mTokens.length;
   return {
     correct: hit >= 0.34,
-    feedback: hit >= 0.34 ? t("q.heuristicGood") : t("q.heuristicMissing"),
+    feedback: hit >= 0.34 ? t("q.heuristicOk") : t("q.heuristicMiss"),
     missedPoints: [],
   };
 }

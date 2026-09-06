@@ -3,8 +3,8 @@
 
 import { store } from "./store.js";
 import { generationSystem, gradingSystem, solveSystem } from "./prompts.js";
-import { PROXY_URL } from "./config.js";
 import { t } from "./lib/i18n.js";
+import { PROXY_URL } from "./config.js";
 
 const API_URL = PROXY_URL;
 
@@ -14,26 +14,17 @@ const API_URL = PROXY_URL;
  * (once per set); grading a one-line answer is not (many times per session).
  */
 export const PRESETS = {
-  get balanced() {
-    return {
-      label: t("claude.presetBalanced"),
-      hint: t("claude.presetBalancedHint"),
-      generate: "claude-opus-5", tutor: "claude-sonnet-5", grade: "claude-haiku-4-5", solve: "claude-opus-5",
-    };
+  balanced: {
+    labelKey: "preset.balanced", hintKey: "preset.balancedHint",
+    generate: "claude-opus-5", tutor: "claude-sonnet-5", grade: "claude-haiku-4-5", solve: "claude-opus-5",
   },
-  get best() {
-    return {
-      label: t("claude.presetBest"),
-      hint: t("claude.presetBestHint"),
-      generate: "claude-opus-5", tutor: "claude-opus-5", grade: "claude-opus-5", solve: "claude-opus-5",
-    };
+  best: {
+    labelKey: "preset.best", hintKey: "preset.bestHint",
+    generate: "claude-opus-5", tutor: "claude-opus-5", grade: "claude-opus-5", solve: "claude-opus-5",
   },
-  get cheapest() {
-    return {
-      label: t("claude.presetCheapest"),
-      hint: t("claude.presetCheapestHint"),
-      generate: "claude-sonnet-5", tutor: "claude-haiku-4-5", grade: "claude-haiku-4-5", solve: "claude-sonnet-5",
-    };
+  cheapest: {
+    labelKey: "preset.cheapest", hintKey: "preset.cheapestHint",
+    generate: "claude-sonnet-5", tutor: "claude-haiku-4-5", grade: "claude-haiku-4-5", solve: "claude-sonnet-5",
   },
 };
 
@@ -56,14 +47,15 @@ async function callJSON(body) {
   try {
     res = await fetch(API_URL, { method: "POST", headers: headers(), body: JSON.stringify(body) });
   } catch (e) {
-    throw new ClaudeError(t("claude.networkError"));
+    throw new ClaudeError(t("err.network"));
   }
   if (!res.ok) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch {}
-    if (res.status === 500 && /ANTHROPIC_API_KEY/.test(detail)) throw new ClaudeError(t("claude.noKeyConfigured"));
-    if (res.status === 429) throw new ClaudeError(t("claude.rateLimited"));
-    throw new ClaudeError(t("claude.apiError", { status: res.status, detail: detail ? `: ${detail}` : "" }));
+    if (res.status === 500 && /ANTHROPIC_API_KEY/.test(detail)) throw new ClaudeError(t("err.serverNoKey"));
+    if (res.status === 401) throw new ClaudeError(t("err.badKey"));
+    if (res.status === 429) throw new ClaudeError(t("err.rateLimited"));
+    throw new ClaudeError(detail ? t("err.apiDetail", { status: res.status, detail }) : t("err.api", { status: res.status }));
   }
   const data = await res.json();
   return data.content?.map((b) => b.text || "").join("") || "";
@@ -81,7 +73,7 @@ function parseLooseJSON(text) {
 
 // ---------- assignment generation ----------
 
-export async function generateAssignment({ material, topic, image, count = 6, gradeHint = "", preferFlashcards = false }) {
+export async function generateAssignment({ material, topic, image, count = 6, gradeHint = "", preferFlashcards = false, moreLike = null }) {
   const userContent = [];
   if (image) {
     userContent.push({
@@ -89,12 +81,18 @@ export async function generateAssignment({ material, topic, image, count = 6, gr
       source: { type: "base64", media_type: image.mediaType, data: image.data },
     });
   }
-  const ask = [
-    material ? `Study material:\n"""\n${material}\n"""` : null,
-    topic ? `Topic to build questions on: ${topic}` : null,
-    image ? "Use the attached image of the student's material." : null,
-    `Create about ${count} questions. Return the JSON object only.`,
-  ].filter(Boolean).join("\n\n");
+  const ask = moreLike
+    ? [
+        `Here is an existing question set titled "${moreLike.title}" (subject: ${moreLike.subject}).`,
+        `Existing questions (JSON):\n"""\n${JSON.stringify(moreLike.questions, null, 1)}\n"""`,
+        `Write about ${count} MORE questions in the same style, difficulty and topics. Do NOT repeat or lightly reword any existing question. Return the JSON object only — its "questions" array holds only the new questions.`,
+      ].join("\n\n")
+    : [
+        material ? `Study material:\n"""\n${material}\n"""` : null,
+        topic ? `Topic to build questions on: ${topic}` : null,
+        image ? "Use the attached image of the student's material." : null,
+        `Create about ${count} questions. Return the JSON object only.`,
+      ].filter(Boolean).join("\n\n");
   userContent.push({ type: "text", text: ask });
 
   const body = {
@@ -124,7 +122,7 @@ export async function generateAssignment({ material, topic, image, count = 6, gr
 function normalizeDoc(doc) {
   const questions = (doc.questions || []).map((q) => {
     const out = {
-      kind: ["mc", "text", "flashcard", "worked"].includes(q.kind) ? q.kind : "text",
+      kind: ["mc", "text", "cloze", "flashcard", "worked"].includes(q.kind) ? q.kind : "text",
       topic: (q.topic || (doc.topics && doc.topics[0]) || "general").toLowerCase(),
       prompt: q.prompt || "",
       explanation: q.explanation,
@@ -146,20 +144,20 @@ function normalizeDoc(doc) {
 
   return {
     title: doc.title || topicTitle(doc),
-    subject: doc.subject || t("sets.generalSubject"),
+    subject: doc.subject || "General",
     sourceSummary: doc.sourceSummary || "",
     topics: doc.topics || [...new Set(questions.map((q) => q.topic))],
     questions,
   };
 }
-function topicTitle(doc) { return (doc.topics && doc.topics[0]) ? cap(doc.topics[0]) : t("claude.untitledSet"); }
+function topicTitle(doc) { return (doc.topics && doc.topics[0]) ? cap(doc.topics[0]) : "New assignment"; }
 function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ---------- instant photo solve ----------
 
-/** One photographed problem -> one worked explanation. Kept separate from
- *  generateAssignment(): a single focused answer people expect back in
- *  seconds, not a whole question set. */
+/** One problem in, a worked explanation out. Returns
+ *  { restated, answer, steps[], topic, subject }. Throws ClaudeError with a
+ *  friendly message if the photo can't be read. */
 export async function solveProblem({ image, note = "" }) {
   const userContent = [
     { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.data } },
@@ -195,7 +193,7 @@ export async function solveProblem({ image, note = "" }) {
     answer: typeof parsed.answer === "string" ? parsed.answer : "",
     steps: Array.isArray(parsed.steps) ? parsed.steps.filter((s) => typeof s === "string" && s.trim()) : [],
     topic: typeof parsed.topic === "string" && parsed.topic.trim() ? parsed.topic.trim().toLowerCase() : "general",
-    subject: typeof parsed.subject === "string" && parsed.subject.trim() ? parsed.subject.trim() : t("sets.generalSubject"),
+    subject: typeof parsed.subject === "string" && parsed.subject.trim() ? parsed.subject.trim() : t("common.general"),
   };
 }
 
@@ -217,7 +215,7 @@ export async function gradeAnswer({ question, studentAnswer }) {
   const j = parseLooseJSON(raw);
   return {
     correct: !!j.correct,
-    feedback: j.feedback || (j.correct ? t("claude.gradeNiceWork") : t("claude.gradeNotQuite")),
+    feedback: j.feedback || t(j.correct ? "q.heuristicOk" : "q.heuristicMiss"),
     missedPoints: Array.isArray(j.missedPoints) ? j.missedPoints : [],
   };
 }
@@ -241,8 +239,10 @@ export async function* tutorStream({ system, messages, signal }) {
     let detail = "";
     try { detail = (await res.json())?.error?.message || ""; } catch {}
     throw new ClaudeError(res.status === 500 && /ANTHROPIC_API_KEY/.test(detail)
-      ? t("claude.noKeyConfigured")
-      : t("claude.tutorUnavailable", { status: res.status, detail: detail ? `: ${detail}` : "" }));
+      ? t("err.serverNoKey")
+      : res.status === 401
+      ? t("err.badKey")
+      : t("err.tutorUnavailable", { status: res.status }));
   }
 
   const reader = res.body.getReader();

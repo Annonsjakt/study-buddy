@@ -1,18 +1,18 @@
-// Small anchored dropdown for the topbar's bell/profile buttons — positioned
-// under `anchor`, closed by an outside click, Escape, or the next open call.
-// Mirrors the card ⋮ menu's positioning approach in views/menu.js, but kept
-// separate (own class, own close fn) since that one lives in a single view
-// while this one lives in the persistent shell and must survive route
+// Small anchored dropdown for the topbar/sidebar bell + profile buttons —
+// positioned under `anchor`, closed by an outside click, Escape, or the next
+// open call. Mirrors the card ⋮ menu's positioning approach in views/menu.js,
+// but kept separate (own class, own close fn) since that one lives in a single
+// view while this one lives in the persistent shell and must survive route
 // changes without the two systems' cleanup calls stepping on each other.
 
 import { el } from "./dom.js";
 
 function escClose(e) { if (e.key === "Escape") closePopover(); }
 
-// A click INSIDE the popover must not close it — otherwise a popover with
-// its own interactive content (tabs, buttons that repaint in place, not just
-// plain nav links) would destroy itself the instant anything inside it was
-// clicked, since the click still bubbles to this document-level listener.
+// A click INSIDE the popover must not close it — otherwise a popover with its
+// own interactive content (the notification panel's tabs and mark-read
+// buttons repaint in place) would destroy itself the instant anything inside
+// it was clicked, since the click still bubbles to this document listener.
 function outsideClick(e) {
   const open = document.querySelector(".popover");
   if (open && !open.contains(e.target)) closePopover();

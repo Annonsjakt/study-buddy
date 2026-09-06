@@ -1,77 +1,80 @@
-// Achievements page: every badge, grouped by track, locked ones showing
-// progress toward the next tier.
+// Achievements page: every badge, tiered tracks grouped by track then a
+// "Milestones" group for the one-off badges. Locked ones show progress.
 
 import { store } from "../store.js";
 import { el, icon, ICONS } from "../lib/dom.js";
-import { ACHIEVEMENTS, achievementMetrics } from "../lib/achievements.js";
-import { shareCard, tierEmoji } from "../lib/share-card.js";
+import { ACHIEVEMENTS, MILESTONES, achievementMetrics, achievementValue } from "../lib/achievements.js";
 import { t, getLang } from "../lib/i18n.js";
+import { homeButton } from "../components/nav.js";
 
 export function renderAchievements() {
-  const metrics = achievementMetrics({
-    attempts: store.attempts, streak: store.streak,
-    subjects: store.subjects, assignments: store.assignments,
-  });
+  const metrics = achievementMetrics(store.state);
   const unlocked = store.unlockedAchievements;
-  const unlockedCount = ACHIEVEMENTS.filter((a) => unlocked[a.id]).length;
+  const unlockedCount = ACHIEVEMENTS.filter((a) => a.id in unlocked).length;
 
+  // Tiered tracks — keep list order, one group per track.
   const byTrack = new Map();
   for (const a of ACHIEVEMENTS) {
+    if (!a.track) continue;
     if (!byTrack.has(a.track)) byTrack.set(a.track, []);
     byTrack.get(a.track).push(a);
   }
 
-  const groups = [...byTrack.values()].map((defs) =>
+  const trackGroups = [...byTrack.values()].map((defs) =>
     el("section.panel.achgroup", {}, [
-      el("h3.achgroup__title", {}, [icon(ICONS[defs[0].icon], 18), t(defs[0].nameKey)]),
+      el("h3.achgroup__title", {}, [icon(ICONS[defs[0].icon] || ICONS.award, 18), t(defs[0].nameKey)]),
       el("div.achrow", {}, defs.map((def) => badge(def, metrics, unlocked))),
     ]));
 
+  const milestoneGroup = MILESTONES.length ? el("section.panel.achgroup", {}, [
+    el("h3.achgroup__title", {}, [icon(ICONS.spark, 18), t("ach.milestonesTitle")]),
+    el("div.achrow", {}, MILESTONES.map((def) => badge(def, metrics, unlocked))),
+  ]) : null;
+
+  const pct = Math.round((unlockedCount / ACHIEVEMENTS.length) * 100);
+
   const node = el("div.achievements-page", {}, [
+    homeButton({ grid: true }),
     el("div.achievements-head", {}, [
       el("h1", {}, t("ach.pageTitle")),
       el("p.note", {}, t("ach.subtitle", { unlocked: unlockedCount, total: ACHIEVEMENTS.length })),
-      el("div.ach-summary__bar", {}, [
-        el("i", { style: { width: `${Math.round((unlockedCount / ACHIEVEMENTS.length) * 100)}%` } }),
-      ]),
+      el("div.ach-summary__bar", {}, [el("i", { style: { width: "0%" }, dataset: { w: pct } })]),
     ]),
-    ...groups,
-    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("common.backToMenu")]),
-  ]);
+    ...trackGroups,
+    milestoneGroup,
+    el("a.btn.btn--ghost", { href: "#/", style: { justifySelf: "start" } }, [icon(ICONS.back, 16), t("common.backToMenu")]),
+  ].filter(Boolean));
+
+  requestAnimationFrame(() => {
+    node.querySelectorAll("[data-w]").forEach((f) => { f.style.width = `${f.dataset.w}%`; });
+  });
 
   return { title: t("ach.pageTitle"), node };
 }
 
 function badge(def, metrics, unlockedMap) {
-  const isUnlocked = !!unlockedMap[def.id];
-  const value = Math.min(metrics[def.track] ?? 0, def.target);
+  const isUnlocked = def.id in unlockedMap;
+  const value = achievementValue(def, store.state, metrics);
   const pct = Math.round((value / def.target) * 100);
+  const stamp = unlockedMap[def.id];
+  // Tracked badges are one of four tiers → show the tier. Milestones each have
+  // their own name → show that instead of a generic "Milestone" four times.
+  const tierLabel = def.track ? t(`ach.tier.${def.tier}`) : t(def.nameKey);
 
-  return el(`div.achbadge.achbadge--${def.tier}`, { class: isUnlocked ? "achbadge--unlocked" : "" }, [
-    el("div.achbadge__icon", {}, icon(ICONS[def.icon], 22)),
+  return el(`div.achbadge.achbadge--${def.tier}` + (isUnlocked ? ".achbadge--unlocked" : ""), {}, [
+    el("div.achbadge__icon", {}, icon(ICONS[def.icon] || ICONS.award, 22)),
     el("div.achbadge__body", {}, [
       el("div.achbadge__top", {}, [
-        el("span.achbadge__tiername", {}, t(`ach.tier.${def.tier}`)),
+        el("span.achbadge__tiername", {}, tierLabel),
         isUnlocked ? el("span.achbadge__check", {}, icon(ICONS.check, 12)) : null,
       ].filter(Boolean)),
       el("p.achbadge__desc", {}, t(def.descKey, { n: def.target })),
       isUnlocked
-        ? el("div", {}, [
-            el("p.achbadge__unlockdate", {}, t("ach.unlockedOn", { date: formatDate(unlockedMap[def.id]) })),
-            el("button.btn.btn--ghost.btn--sm", {
-              type: "button", style: { marginTop: "6px" },
-              onclick: () => shareCard({
-                tone: def.tier,
-                tag: t("share.badgeTag"),
-                emoji: tierEmoji(def.tier),
-                headline: t(`ach.tier.${def.tier}`),
-                caption: t(def.descKey, { n: def.target }),
-                filename: `studybuddy-${def.id}.png`,
-              }),
-            }, [icon(ICONS.share, 13), t("share.shareButton")]),
-          ])
+        ? el("p.achbadge__unlockdate", {}, stamp ? t("ach.unlockedOn", { date: formatDate(stamp) }) : t("ach.unlockedEyebrow"))
+        : def.binary
+        ? el("p.achbadge__unlockdate", {}, t("ach.notYet"))
         : el("div.achbadge__progress", {}, [
-            el("div.achbadge__bar", {}, [el("i", { style: { width: `${pct}%` } })]),
+            el("div.achbadge__bar", {}, [el("i", { style: { width: "0%" }, dataset: { w: pct } })]),
             el("span.achbadge__fraction", {}, `${value}/${def.target}`),
           ]),
     ]),

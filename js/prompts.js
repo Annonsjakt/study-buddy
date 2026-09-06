@@ -1,14 +1,15 @@
 // System prompts + the shared question shape for Claude calls.
 
-import { t, aiLangInstruction } from "./lib/i18n.js";
+import { aiLangInstruction, getLang } from "./lib/i18n.js";
 
 export const QUESTION_SHAPE = `Each question object has:
-- "kind": one of "mc" (multiple choice), "text" (short written answer), "flashcard" (recall / self-rated), "worked" (multi-step problem solved together).
+- "kind": one of "mc" (multiple choice), "text" (short written answer), "cloze" (fill in the blank), "flashcard" (recall / self-rated), "worked" (multi-step problem solved together).
 - "topic": a short lowercase topic tag (2-4 words) so progress can be tracked per topic. Reuse the same tag across related questions.
 - "prompt": the question text. Use $...$ for inline math and $$...$$ for display math when helpful.
+  For "cloze" the prompt IS the sentence, with each missing word wrapped in double braces — e.g. "The powerhouse of the cell is the {{mitochondrion}}." Put accepted alternatives inside the braces separated by | (e.g. {{mitochondrion|mitochondria}}). Use 1-3 blanks, each a single word or short phrase, and never blank out something guessable from the sentence alone.
 - "choices": REQUIRED for "mc" only — an array of 3-5 short option strings.
 - "answerIndex": REQUIRED for "mc" only — the 0-based index of the correct choice.
-- "answer": REQUIRED for "text", "flashcard", "worked" — the correct/model answer as a string.
+- "answer": REQUIRED for "text", "flashcard", "worked" — the correct/model answer as a string. Not used for "cloze".
 - "rubric": for "text" only — one line on what earns full vs partial credit.
 - "explanation": for "mc" — one or two sentences on why the answer is right.
 - "steps": for "worked" — an array of 3-6 strings, the reasoning steps in order.
@@ -32,9 +33,14 @@ Respond with ONLY a single JSON object (no prose, no markdown fence) of this sha
 ${QUESTION_SHAPE}${aiLangInstruction()}`;
 }
 
-/** One photographed problem in, one worked explanation out — the "instant
- *  solve" flow (js/views/solve.js), deliberately separate from
- *  generationSystem(): a single focused answer, not a whole question set. */
+export function gradingSystem() {
+  return `You grade a K-12 student's short written answer. Be encouraging and fair — reward understanding over exact wording, and don't penalise spelling or phrasing.
+Respond with ONLY a JSON object: { "correct": boolean, "feedback": string, "missedPoints": string[] }
+- "correct": true if the answer would earn full or near-full credit.
+- "feedback": one or two warm sentences addressed to the student ("you").
+- "missedPoints": specific things missing or wrong, [] if none.${aiLangInstruction()}`;
+}
+
 export function solveSystem() {
   return `You are an expert K-12 tutor. A student has sent a photo of ONE problem — often handwritten, or from a textbook or worksheet — and wants it solved and explained clearly, step by step, like a great teacher working it out at the whiteboard.
 
@@ -51,14 +57,6 @@ Respond with ONLY a single JSON object (no prose, no markdown fence) of this sha
 
 Use $...$ for inline math and $$...$$ for display math where helpful.
 If the image is too blurry, unclear, or you genuinely cannot make out a solvable problem, instead respond with ONLY: { "error": "unreadable" } — never guess at a problem you can't actually read.${aiLangInstruction()}`;
-}
-
-export function gradingSystem() {
-  return `You grade a K-12 student's short written answer. Be encouraging and fair — reward understanding over exact wording, and don't penalise spelling or phrasing.
-Respond with ONLY a JSON object: { "correct": boolean, "feedback": string, "missedPoints": string[] }
-- "correct": true if the answer would earn full or near-full credit.
-- "feedback": one or two warm sentences addressed to the student ("you").
-- "missedPoints": specific things missing or wrong, [] if none.${aiLangInstruction()}`;
 }
 
 /**
@@ -100,7 +98,7 @@ ${lines.join("\n")}${unique.length ? `
 They have been finding these topics hard: ${unique.join(", ")}. If this question connects to one of them, say so and build on it.` : ""}`;
 }
 
-export function answerForRef(q) {
+function answerForRef(q) {
   if (q.kind === "mc" && Array.isArray(q.choices)) {
     const i = typeof q.answer === "number" ? q.answer : q.answerIndex;
     return `${q.choices[i]} (option ${String.fromCharCode(65 + i)})`;
@@ -108,31 +106,24 @@ export function answerForRef(q) {
   return typeof q.answer === "string" ? q.answer : JSON.stringify(q.answer ?? "");
 }
 
-/**
- * Post-session explainer, for a question the student already got wrong and
- * has finished the session on. Unlike tutorSystem's Socratic hint-ladder —
- * built for withholding the answer WHILE the student is still working the
- * question — the point here is the opposite: the session is over, they
- * already know they missed it, and holding back now would just be
- * unhelpful. Explain directly, then answer whatever they ask.
- */
-export function explainSystem({ assignment, question }) {
-  const choicesLine = question.kind === "mc" && Array.isArray(question.choices)
-    ? `Choices: ${question.choices.map((c, i) => `${String.fromCharCode(65 + i)}) ${c}`).join("   ")}\n`
-    : "";
-
-  return `You are StudyBuddy, a warm K-12 tutor. The student just finished a session and got ONE question wrong. They're asking about it now, afterward — the session is over, so explain directly and clearly. This is not the moment to withhold the answer or turn it into a guessing game; that phase already happened.
-
-The assignment is "${assignment.title}" (${assignment.type}). The question was:
-"${question.prompt}"
-${choicesLine}The correct answer: ${answerForRef(question)}
-
-First, explain clearly why that's the correct answer — a short paragraph, or a few numbered steps if the question is multi-step. Then answer whatever specific follow-up the student asks next. Use $...$ / $$...$$ for math. Address the student as "you". Keep it focused — a few sentences is usually enough.${aiLangInstruction()}`;
-}
-
 /** Used when a set predates stored openers. No API call, no repetition. */
+const OPENERS = {
+  en: [
+    "Have a look at this one — what's your first instinct?",
+    "Read it through once. What part of it do you already know something about?",
+    "Take a moment with this. What's the question really asking for?",
+    "What's the key word in this question? Start there.",
+    "Give it a go — I'll help if you get stuck.",
+  ],
+  sv: [
+    "Titta på den här — vad är din första ingivelse?",
+    "Läs igenom den en gång. Vilken del kan du redan något om?",
+    "Ta det lugnt med den här. Vad frågar den egentligen efter?",
+    "Vilket är nyckelordet i frågan? Börja där.",
+    "Kör på — jag hjälper till om du kör fast.",
+  ],
+};
+
 export function fallbackOpeners() {
-  return [
-    t("tutor.opener0"), t("tutor.opener1"), t("tutor.opener2"), t("tutor.opener3"), t("tutor.opener4"),
-  ];
+  return OPENERS[getLang()] || OPENERS.en;
 }

@@ -1,8 +1,9 @@
 // Instant photo-solve: snap a photo of ONE problem, get a clear step-by-step
 // explanation back in seconds. Deliberately separate from the Create flow —
-// that one is for building a whole study set (source, material, subject,
-// count, review); this one is a single focused answer, with none of that
-// ceremony, closer to "point your camera at it and go."
+// that one builds a whole study set (source, material, subject, count,
+// review); this one is a single focused answer, closer to "point your camera
+// at it and go." Needs the tutor server (store.hasKey()); until then the
+// button is disabled and the reason is spelled out, exactly like Create.
 
 import { store } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
@@ -10,9 +11,10 @@ import { renderRich } from "../lib/rich.js";
 import { readImageFile } from "../material.js";
 import { solveProblem, ClaudeError } from "../claude.js";
 import { t } from "../lib/i18n.js";
+import { homeButton } from "../components/nav.js";
 
 export function renderSolve() {
-  const root = el("div");
+  const root = el("div.solve");
   const state = {
     step: "idle",   // idle | loading | result
     image: null,    // { mediaType, data, preview }
@@ -23,10 +25,8 @@ export function renderSolve() {
 
   function paint() {
     clear(root);
-    root.appendChild(el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
-      el("a.iconbtn", { href: "#/", "aria-label": t("common.backToMenu") }, [icon(ICONS.back, 18)]),
-      el("h1", {}, t("solve.title")),
-    ]));
+    root.appendChild(homeButton({ grid: true }));
+    root.appendChild(el("h1", { style: { marginTop: "8px" } }, t("solve.title")));
     root.appendChild(
       state.step === "loading" ? loadingPanel()
         : state.step === "result" ? resultPanel()
@@ -45,7 +45,7 @@ export function renderSolve() {
       state.result = await solveProblem({ image: state.image, note: state.note });
       state.step = "result"; paint();
     } catch (e) {
-      state.error = e instanceof ClaudeError ? e.message : t("create.generationFailed");
+      state.error = e instanceof ClaudeError ? e.message : t("create.genFailed");
       state.step = "idle"; paint();
       toast(state.error);
     }
@@ -62,7 +62,7 @@ export function renderSolve() {
           state.image = await readImageFile(file);
         } catch (err) {
           state.image = null;
-          state.error = err.message || t("create.readError");
+          state.error = err.message || t("err.readFile");
         }
         paint();
       },
@@ -94,7 +94,8 @@ export function renderSolve() {
       el("label.field", { style: { marginTop: "16px" } }, [el("span", {}, t("solve.noteLabel")), noteInput]),
       state.error ? el("p.note.note--warn", { style: { marginTop: "12px" } }, state.error) : null,
       !store.hasKey() ? el("p.note.note--warn", { style: { marginTop: "16px" } }, [
-        t("create.needsServerPre"), el("a", { href: "#/settings" }, t("nav.settings")), t("create.needsServerPost"),
+        t("solve.noServerHere"),
+        el("a", { href: "#/library" }, t("solve.noServerAlt")),
       ]) : null,
       el("div", { style: { marginTop: "20px", textAlign: "center" } }, [
         el("button.btn", { type: "button", disabled: !state.image || !store.hasKey(), onclick: solve },

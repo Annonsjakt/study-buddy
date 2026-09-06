@@ -6,9 +6,10 @@ and adapts when you're stuck.
 
 Built for K–12. No framework, no build step, no npm — plain HTML, CSS, and ES modules.
 
-**Live:** <https://annonsjakt.github.io/study-buddy/> — the frontend, hosted on GitHub
-Pages. Runs in demo mode only, since Pages serves static files and there's no `server/`
-behind it; run `server/` locally for live mode (see below).
+**Live:** <https://annonsjakt.github.io/study-buddy/> — the frontend, hosted on
+GitHub Pages. Runs in demo mode only, since Pages serves static files and there's no
+`server/` behind it; run `server/` locally (or host it somewhere) for live mode and
+accounts — see below.
 
 ## Run it
 
@@ -49,12 +50,19 @@ it, there's no API for it to reach. Opening `index.html` directly with `file://`
   at 80%+, and a **Practise these now** button that drills just what you missed.
 - **Progress** — study streak, mastery meter per subject, and **Review today**, which
   builds a session from the questions that are due across *every* set (SM-2-lite).
+- **Due dates** — give an assignment or test a deadline (in Create, Edit, or the card
+  ⋮ menu). The menu shows an **Upcoming** list, soonest first, with a one-click
+  Study button per row. Overdue rows go amber and clear themselves a week later.
+- **Practise weak spots** — a session built from the topics you keep getting wrong,
+  across every set. Appears once there is enough history to know what "weak" means.
 - **Create** — generate a new set from your own material: paste text, upload a PDF
   (text is extracted locally), upload a photo, or just type a topic. Review and edit
   every question before saving.
 
-Light and dark themes (or follow your device), full keyboard shortcuts in a session
-(press `?` to see them), and it installs to a home screen and runs offline in demo mode.
+Light and dark themes (or follow your device), **English and Swedish** (interface
+*and* the AI tutor), full keyboard shortcuts in a session (the ⌨ button in the
+session header, or press `?`), and it installs to a home screen and runs offline
+in demo mode.
 
 Everything (assignments, attempts, progress) is stored in your browser's
 `localStorage`. Settings → **Export JSON** makes a backup.
@@ -68,7 +76,8 @@ the demo sets from the home screen or from Settings → Demo content.
 
 Run `server/` with a Claude key configured (see `server/README.md`) to turn on **live
 mode**: real question generation from your material, a real streaming tutor, and AI
-grading of written answers. Settings shows whether the tutor server is connected.
+grading of written answers. Settings shows whether the tutor server is connected. In
+Swedish mode the tutor, generated questions and grading all come back in Swedish.
 
 **Model presets.** Different jobs use different models, so you're not paying top rates
 to mark a one-line answer:
@@ -105,12 +114,13 @@ js/material.js       paste / PDF / image / topic -> generation inputs
 js/views/            one file per screen (menu, create, edit, session, results,
                      progress, settings)
 js/components/       question renderers, shared question editor, tutor chat, mascot
-js/lib/              srs, mastery, activity/streak, theme, a11y, markdown, dom
-js/config.js          backend server URLs
+js/lib/              srs, mastery, activity/streak, theme, i18n + strings, sound,
+                     a11y, markdown, dom, library (pure findQuestion/dueQuestions)
+js/config.js         backend server URLs
+js/data/national-tests.js      curated links to public Swedish national exams
 js/views/login.js    email/password sign in, optional
 js/views/parent-dashboard.js   linking, assigning sets, read-only student progress
-js/lib/library.js    pure findQuestion()/dueQuestions(), reused for a linked student's data
-data/samples/        demo sets + scripted tutor (demo mode)
+data/samples/        demo sets + scripted tutor, English and Swedish (demo mode)
 vendor/              pdf.js, KaTeX, canvas-confetti (committed, no npm)
 server/              serves the frontend + API: key proxy, accounts/sync, parent-teacher
                      linking (Node/Express/SQLite) — see server/README.md

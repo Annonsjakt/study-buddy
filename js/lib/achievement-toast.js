@@ -23,7 +23,7 @@ function showNext(queue) {
   if (!def) return;
 
   const overlay = el(`div.achtoast.achtoast--${def.tier}`, { role: "status" }, [
-    el("div.achtoast__icon", {}, icon(ICONS[def.icon], 28)),
+    el("div.achtoast__icon", {}, icon(ICONS[def.icon] || ICONS.award, 28)),
     el("div", {}, [
       el("p.achtoast__eyebrow", {}, t("ach.unlockedEyebrow")),
       el("p.achtoast__name", {}, `${t(`ach.tier.${def.tier}`)} · ${t(def.nameKey)}`),
@@ -32,8 +32,8 @@ function showNext(queue) {
   ]);
   document.body.appendChild(overlay);
   requestAnimationFrame(() => overlay.classList.add("show"));
-  // Confetti is a real flourish saved for the two rarer tiers — every unlock
-  // playing it would cheapen the moment it's meant to mark.
+  // The full flourish (confetti + fanfare) is saved for the two rarer tiers —
+  // every unlock playing it would cheapen the moment it's meant to mark.
   if (def.tier === "gold" || def.tier === "platinum") { celebrate(); playFanfare(); }
 
   setTimeout(() => {

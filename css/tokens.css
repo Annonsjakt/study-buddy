@@ -1,28 +1,29 @@
-/* StudyBuddy design tokens — restrained, professional Nordic edtech.
+/* StudyBuddy design tokens — "bright & playful", tuned for K–12 without being babyish.
    Every screen consumes these variables; avoid ad-hoc colors/sizes elsewhere. */
 
 :root {
   /* --- canvas & ink ---
-     Surface sits just short of pure white on purpose — #FFFFFF against this
-     much whitespace read as glare, not "clean". */
-  --canvas:        #EFF1F5;
-  --surface:       #FBFBFD;
-  --surface-sunk:  #E8EAEF;
-  --ink:           #16181F;
-  --ink-soft:      #4A4E5A;
-  --ink-faint:     #626672;   /* AA on both canvas and surface */
-  --line:          #DDDFE6;
-  --line-strong:   #C4C8D3;
+     Cool near-neutral grey with a faint blue bias toward the accent. Grounds
+     and text were re-tuned in the "Signal Blue" repaint for a crisper read:
+     ink is deeper, the faint label colour clears AA with headroom. */
+  --canvas:        #F5F7FC;
+  --surface:       #FFFFFF;
+  --surface-sunk:  #EDF0F7;
+  --ink:           #191D28;
+  --ink-soft:      #4B5362;
+  --ink-faint:     #5B6372;   /* AA on canvas, surface and sunk */
+  --line:          #E4E7EF;
+  --line-strong:   #C8CDDA;
 
   /* --- brand ---
-     `--brand` sits behind white button text, so it has to clear 4.5:1.
-     `--brand-bright` keeps a lighter indigo for decoration. */
-  --brand:         #2E3A8C;
-  --brand-bright:  #4453B8;
-  --brand-ink:     #1C2557;
-  --brand-tint:    #E9EBF7;
+     A confident blue (was a violet). `--brand` sits behind white button text,
+     so it clears 4.5:1; `--brand-bright` is the lighter blue for decoration. */
+  --brand:         #2C5CD6;
+  --brand-bright:  #3D6FE6;
+  --brand-ink:     #1F44A8;
+  --brand-tint:    #E7EDFD;
 
-  /* --- semantic (success green, "try again" is warm amber, never red) --- */
+  /* --- semantic (kid-safe: success green, "try again" is warm amber, never red) --- */
   --ok:            #1B7A50;
   --ok-bright:     #2FA36B;
   --ok-ink:        #1C6B45;   /* text on --ok-tint */
@@ -33,31 +34,22 @@
   --info:          #2E86C1;
   --info-tint:     #E4F1FA;
 
-  /* --- streak flame: warmer & more saturated than --retry, meant to glow --- */
-  --flame:         #ED6A1F;
-  --flame-tint:    #FDECDC;
-  --flame-glow:    rgba(237, 106, 31, .45);
-
   /* --- six subject colors ---
      solid = fills, bars, borders (graphical, 3:1 is enough)
      ink   = anything with text on or of it (>= 4.5:1 against white AND its tint)
      tint  = pale card wash */
-  --c-grape:       #6456C4;  --c-grape-ink:     #5647AD;  --c-grape-tint:     #ECEAFA;
+  --c-grape:       #7A5CFF;  --c-grape-ink:     #6B51E0;  --c-grape-tint:     #EDE9FF;
   --c-ocean:       #1F9FB5;  --c-ocean-ink:     #177788;  --c-ocean-tint:     #E1F4F6;
   --c-leaf:        #4C9F55;  --c-leaf-ink:      #3B7A41;  --c-leaf-tint:      #E7F5E7;
-  --c-tangerine:   #D97B33;  --c-tangerine-ink: #9C5E27;  --c-tangerine-tint: #FDEEDD;
-  --c-berry:       #C14A75;  --c-berry-ink:     #B0446A;  --c-berry-tint:     #FCE7EF;
-  --c-sky:         #3E6BDB;  --c-sky-ink:       #3E67C5;  --c-sky-tint:       #E6EDFD;
+  --c-tangerine:   #F0913C;  --c-tangerine-ink: #9C5E27;  --c-tangerine-tint: #FDEEDD;
+  --c-berry:       #E4588A;  --c-berry-ink:     #B0446A;  --c-berry-tint:     #FCE7EF;
+  /* Lightened toward cyan so the "sky" subject stays distinct from the blue brand. */
+  --c-sky:         #3AA4E6;  --c-sky-ink:       #2076A8;  --c-sky-tint:       #E4F1FB;
 
-  /* --- achievement tiers ---
-     Bronze/silver/gold as three more flat swatches, same pattern as the
-     subject colors above. Platinum has no flat swatch — it's built from
-     brand/ocean/berry as a gradient (see .achbadge--platinum in app.css),
-     since "the best tier" earns more by reading as genuinely different from
-     one more solid color than by matching this pattern for its own sake. */
-  --ach-bronze:    #B5651D;  --ach-bronze-ink:  #8A4A15;  --ach-bronze-tint:  #F7E7D8;
-  --ach-silver:    #8A93A6;  --ach-silver-ink:  #5F6779;  --ach-silver-tint:  #EAECF1;
-  --ach-gold:      #C9971F;  --ach-gold-ink:    #8F6B15;  --ach-gold-tint:    #FBF0D6;
+  /* --- achievement tiers --- */
+  --ach-bronze:    #B5793B;  --ach-bronze-ink:  #8A5A28;  --ach-bronze-tint:  #F6ECE0;
+  --ach-silver:    #8B93A1;  --ach-silver-ink:  #5F6774;  --ach-silver-tint:  #EEF0F3;
+  --ach-gold:      #C79A2E;  --ach-gold-ink:    #8F6D14;  --ach-gold-tint:    #F8EFD6;
 
   /* --- typography --- */
   --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -75,25 +67,34 @@
   --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
 
   /* --- shape --- */
-  --r-sm: 6px;
-  --r-md: 10px;
-  --r-lg: 16px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
   --r-full: 999px;
 
-  /* --- depth (flat, restrained shadows) --- */
-  --shadow-1: 0 1px 2px rgba(20,22,31,.05), 0 2px 8px rgba(20,22,31,.05);
-  --shadow-2: 0 2px 4px rgba(20,22,31,.06), 0 10px 24px rgba(20,22,31,.10);
+  /* --- depth (soft two-layer shadows) --- */
+  --shadow-1: 0 1px 2px rgba(43,43,58,.06), 0 4px 12px rgba(43,43,58,.06);
+  --shadow-2: 0 2px 6px rgba(43,43,58,.08), 0 14px 32px rgba(43,43,58,.12);
   --ring: 0 0 0 3px var(--canvas), 0 0 0 6px var(--brand);
 
   /* --- motion --- */
-  --ease-spring: cubic-bezier(.3, 0, .2, 1);
+  --ease-spring: cubic-bezier(.2, .9, .3, 1.3);
   --ease-out:    cubic-bezier(.2, .7, .3, 1);
   --dur-fast: 120ms;
   --dur-mid:  220ms;
   --dur-slow: 400ms;
 
-  --maxw: 980px;
+  --maxw: 1060px;
 }
+
+/* Reading-support options (Settings -> Look & feel). Set on <html> pre-paint
+   by the bootstrap in index.html, so there's no flash. */
+:root[data-font="hyperlegible"] {
+  --font-display: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --font-body:    "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+}
+:root[data-textsize="s"] body { font-size: 13px; }
+:root[data-textsize="l"] body { font-size: 17px; }
 
 @media (prefers-reduced-motion: reduce) {
   * , *::before, *::after {
@@ -104,45 +105,31 @@
 }
 
 /* ---------------------------------------------------------------
-   Reading mode: a more legible typeface (Atkinson Hyperlegible, designed
-   for low-vision and dyslexic readers) plus roomier spacing. Toggled from
-   Settings > Accessibility, applied as data-readmode on <html> — see
-   js/lib/readmode.js.
-   --------------------------------------------------------------- */
-html[data-readmode] {
-  --font-body:    "Atkinson Hyperlegible", "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Atkinson Hyperlegible", "Inter", "Segoe UI", system-ui, sans-serif;
-  --lh-body:  1.85;
-  --lh-tight: 1.5;
-}
-html[data-readmode] body { letter-spacing: .02em; word-spacing: .12em; }
-/* Italics are harder to decode for many dyslexic readers — underline instead. */
-html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decoration: underline; }
-
-/* ---------------------------------------------------------------
    Dark theme.
-   Same restrained shapes and colour meanings, just re-grounded: the
-   cool grey becomes a cool charcoal, subject colours brighten enough
-   to stay legible, and every "tint" becomes a dark wash rather than a
-   pale one. Applied by [data-theme="dark"] on <html>, or by the system
-   preference when the user hasn't chosen (data-theme="system").
+   Same playful shapes and colour meanings, just re-grounded: the
+   warm cream becomes a warm-tinted charcoal, subject colours brighten
+   enough to stay legible, and every "tint" becomes a dark wash rather
+   than a pale one. Applied by [data-theme="dark"] on <html>, or by the
+   system preference when the user hasn't chosen (data-theme="system").
    --------------------------------------------------------------- */
 :root[data-theme="dark"] {
-  --canvas:        #13151B;
-  --surface:       #1B1D25;
-  --surface-sunk:  #242630;
-  --ink:           #EDEEF3;
-  --ink-soft:      #ABAFBD;
-  --ink-faint:     #8B8F9E;
-  --line:          #2B2E38;
-  --line-strong:   #3B3F4C;
+  /* "Signal Blue" repaint: near-black ground with a faint blue bias, crisper
+     text (ink-faint clears ~6.5:1 on surface, up from ~5.7), blue accent. */
+  --canvas:        #0A0C11;
+  --surface:       #121620;
+  --surface-sunk:  #1B2130;
+  --ink:           #F1F4FA;
+  --ink-soft:      #B8BFCE;
+  --ink-faint:     #98A1B2;
+  --line:          #232A38;
+  --line-strong:   #333C4E;
 
   /* On dark, text sits ON these colours as light-on-dark far less often, so
      the bright hues double as the ink. */
-  --brand:         #4757C4;   /* white button text needs 4.5:1 here too */
-  --brand-bright:  #6472D6;
-  --brand-ink:     #A7B0EC;
-  --brand-tint:    #232A52;
+  --brand:         #3A6AE0;   /* white button text clears 4.5:1 here too */
+  --brand-bright:  #6E97FF;
+  --brand-ink:     #9FBCFF;
+  --brand-tint:    #162441;
 
   --ok:            #1B7A50;
   --ok-bright:     #4FBF8B;
@@ -150,24 +137,20 @@ html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decorat
   --ok-tint:       #1B3A2B;
   --retry:         #F2A45F;
   --retry-ink:     #F2A45F;
-  --retry-tint:    #3B2A17;
+  --retry-tint:    #382712;
   --info:          #57ABDD;
   --info-tint:     #17303F;
 
-  --flame:         #FF9A4D;
-  --flame-tint:    #3B2412;
-  --flame-glow:    rgba(255, 154, 77, .55);
-
-  --c-grape:       #8478D9;  --c-grape-ink:     #7368C9;  --c-grape-tint:     #262340;
+  --c-grape:       #9179FF;  --c-grape-ink:     #7F62FF;  --c-grape-tint:     #28223D;
   --c-ocean:       #45BCD0;  --c-ocean-ink:     #2A93A5;  --c-ocean-tint:     #14343A;
   --c-leaf:        #6BC176;  --c-leaf-ink:      #47954F;  --c-leaf-tint:      #1B3520;
-  --c-tangerine:   #E39A5C;  --c-tangerine-ink: #C77A2F;  --c-tangerine-tint: #3B2A16;
-  --c-berry:       #D580A0;  --c-berry-ink:     #C55074;  --c-berry-tint:     #351E29;
-  --c-sky:         #6E92E8;  --c-sky-ink:       #4E76D6;  --c-sky-tint:       #1E2740;
+  --c-tangerine:   #F5A65C;  --c-tangerine-ink: #C77A2F;  --c-tangerine-tint: #3B2A16;
+  --c-berry:       #F07BA6;  --c-berry-ink:     #C55074;  --c-berry-tint:     #3B1E2B;
+  --c-sky:         #63C0F0;  --c-sky-ink:       #3D97C7;  --c-sky-tint:       #123240;
 
-  --ach-bronze:    #D98F5D;  --ach-bronze-ink:  #E8A97A;  --ach-bronze-tint:  #3B2A17;
-  --ach-silver:    #AEB6C4;  --ach-silver-ink:  #C7CDD9;  --ach-silver-tint:  #262A33;
-  --ach-gold:      #E8C25A;  --ach-gold-ink:    #F0D488;  --ach-gold-tint:    #3B3016;
+  --ach-bronze:    #C08A4E;  --ach-bronze-ink:  #E0B486;  --ach-bronze-tint:  #33261A;
+  --ach-silver:    #A7AEBC;  --ach-silver-ink:  #C7CDD8;  --ach-silver-tint:  #2A2E36;
+  --ach-gold:      #D8B458;  --ach-gold-ink:    #EED493;  --ach-gold-tint:    #352C15;
 
   --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.30);
   --shadow-2: 0 2px 6px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.45);
@@ -184,19 +167,20 @@ html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decorat
 /* Follow the OS only when the user hasn't picked a side. */
 @media (prefers-color-scheme: dark) {
   :root[data-theme="system"] {
-    --canvas:        #13151B;
-    --surface:       #1B1D25;
-    --surface-sunk:  #242630;
-    --ink:           #EDEEF3;
-    --ink-soft:      #ABAFBD;
-    --ink-faint:     #8B8F9E;
-    --line:          #2B2E38;
-    --line-strong:   #3B3F4C;
+    /* Mirror of :root[data-theme="dark"] — see the notes there. */
+    --canvas:        #0A0C11;
+    --surface:       #121620;
+    --surface-sunk:  #1B2130;
+    --ink:           #F1F4FA;
+    --ink-soft:      #B8BFCE;
+    --ink-faint:     #98A1B2;
+    --line:          #232A38;
+    --line-strong:   #333C4E;
 
-    --brand:         #4757C4;
-    --brand-bright:  #6472D6;
-    --brand-ink:     #A7B0EC;
-    --brand-tint:    #232A52;
+    --brand:         #3A6AE0;
+    --brand-bright:  #6E97FF;
+    --brand-ink:     #9FBCFF;
+    --brand-tint:    #162441;
 
     --ok:            #1B7A50;
     --ok-bright:     #4FBF8B;
@@ -204,24 +188,20 @@ html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decorat
     --ok-tint:       #1B3A2B;
     --retry:         #F2A45F;
     --retry-ink:     #F2A45F;
-    --retry-tint:    #3B2A17;
+    --retry-tint:    #382712;
     --info:          #57ABDD;
     --info-tint:     #17303F;
 
-    --flame:         #FF9A4D;
-    --flame-tint:    #3B2412;
-    --flame-glow:    rgba(255, 154, 77, .55);
-
-    --c-grape:       #8478D9;  --c-grape-ink:     #7368C9;  --c-grape-tint:     #262340;
+    --c-grape:       #9179FF;  --c-grape-ink:     #7F62FF;  --c-grape-tint:     #28223D;
     --c-ocean:       #45BCD0;  --c-ocean-ink:     #2A93A5;  --c-ocean-tint:     #14343A;
     --c-leaf:        #6BC176;  --c-leaf-ink:      #47954F;  --c-leaf-tint:      #1B3520;
-    --c-tangerine:   #E39A5C;  --c-tangerine-ink: #C77A2F;  --c-tangerine-tint: #3B2A16;
-    --c-berry:       #D580A0;  --c-berry-ink:     #C55074;  --c-berry-tint:     #351E29;
-    --c-sky:         #6E92E8;  --c-sky-ink:       #4E76D6;  --c-sky-tint:       #1E2740;
+    --c-tangerine:   #F5A65C;  --c-tangerine-ink: #C77A2F;  --c-tangerine-tint: #3B2A16;
+    --c-berry:       #F07BA6;  --c-berry-ink:     #C55074;  --c-berry-tint:     #3B1E2B;
+    --c-sky:         #63C0F0;  --c-sky-ink:       #3D97C7;  --c-sky-tint:       #123240;
 
-    --ach-bronze:    #D98F5D;  --ach-bronze-ink:  #E8A97A;  --ach-bronze-tint:  #3B2A17;
-    --ach-silver:    #AEB6C4;  --ach-silver-ink:  #C7CDD9;  --ach-silver-tint:  #262A33;
-    --ach-gold:      #E8C25A;  --ach-gold-ink:    #F0D488;  --ach-gold-tint:    #3B3016;
+    --ach-bronze:    #C08A4E;  --ach-bronze-ink:  #E0B486;  --ach-bronze-tint:  #33261A;
+    --ach-silver:    #A7AEBC;  --ach-silver-ink:  #C7CDD8;  --ach-silver-tint:  #2A2E36;
+    --ach-gold:      #D8B458;  --ach-gold-ink:    #EED493;  --ach-gold-tint:    #352C15;
 
     --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.30);
     --shadow-2: 0 2px 6px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.45);
@@ -233,4 +213,5 @@ html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decorat
   :root[data-theme="system"] .acard__tag { color: var(--subject, var(--brand-ink)); }
   :root[data-theme="system"] .streakbadge { color: #21170C; }
 }
+
 

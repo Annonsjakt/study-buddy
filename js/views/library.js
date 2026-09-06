@@ -1,72 +1,44 @@
-// Övningsbiblioteket: välj nivå, sedan ämne, och se bara det ämnets set —
-// i stället för att lista allt på en enda lång sida. Fungerar utan
-// API-nyckel — allt innehåll är statiska filer.
+// The practice library: pick a level, then a subject, and see just that
+// subject's sets — instead of one endless page. Works with no API key; every
+// set is a static file that's copied into the student's own library on "Add".
 
-import { store, PALETTE } from "../store.js";
+import { store } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
-import { loadLibraryIndex, loadLibraryTranslations, isImported, importSet } from "../data/library.js";
 import { t, plural, getLang } from "../lib/i18n.js";
-
-// Library subjects are curriculum-defined (Matematik, Kemi, ...), a
-// different namespace from the student's own store.subjects — there's no
-// per-student color assignment for them yet, since nobody's added them to
-// their own library. A stable hash of the subject's own id (shared by every
-// student — "ak7-matematik" never changes) gives each one a consistent
-// color while browsing, without inventing a second color-assignment scheme
-// that would need to agree with ensureSubject()'s.
-function colorForSubjectId(id) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
-  const p = PALETTE[Math.abs(hash) % PALETTE.length];
-  return { solid: `var(--c-${p.name})`, ink: `var(--c-${p.name}-ink)`, tint: `var(--c-${p.name}-tint)` };
-}
-
-// The library's actual course content (subject names, descriptions, question
-// sets) is Swedish-curriculum material. In English mode it's shown through
-// an overlay (data/library/index.en.json for names/descriptions/titles —
-// covering all of them — and data/library-en/*.json for the full question
-// content, filled in file by file) rather than through this app's usual
-// per-string i18n, since it's bulk content, not UI chrome. Falls back to the
-// Swedish original wherever a given id hasn't been translated yet.
-//
-// These four level labels double as navigation categories rather than
-// content, so they get a normal i18n translation for the handful of ids we ship.
-const LEVEL_KEYS = { ak7: "library.levelAk7", ak8: "library.levelAk8", ak9: "library.levelAk9", gymnasiet: "library.levelGymnasiet" };
-function levelLabel(lvl) {
-  const key = lvl && LEVEL_KEYS[lvl.id];
-  return key ? t(key) : lvl?.label;
-}
+import { homeButton } from "../components/nav.js";
+import { loadLibraryIndex, loadLibraryTranslations, isImported, importSet } from "../data/library.js";
 
 export async function renderLibrary() {
   let index, tr;
   try {
     index = await loadLibraryIndex();
-    tr = getLang() === "en" ? await loadLibraryTranslations() : { subjects: {}, sets: {} };
-  } catch (e) {
+    tr = getLang() === "en" ? await loadLibraryTranslations() : { levels: {}, subjects: {}, sets: {} };
+  } catch {
     return {
-      title: t("library.pageTitle"),
+      title: t("lib.title"),
       node: el("div.empty", {}, [
-        el("h2", {}, t("library.loadFailed")),
-        el("p", {}, e.message || t("library.tryAgain")),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("library.toHome")),
+        el("h2", {}, t("lib.loadFail")),
+        el("p", {}, t("lib.loadFailBody")),
+        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
       ]),
     };
   }
 
-  const subjName = (subject) => tr.subjects[subject?.id]?.name || subject?.name;
-  const subjDesc = (subject) => tr.subjects[subject?.id]?.description || subject?.description;
-  const setTitle = (entry) => tr.sets[entry?.id]?.title || entry?.title;
-  const setSummary = (entry) => tr.sets[entry?.id]?.summary || entry?.summary;
+  // The library ships Swedish-curriculum content; in English mode these read
+  // the index.en.json overlay and fall back to the Swedish original for any id
+  // it doesn't cover. Used everywhere a level/subject/set name is shown.
+  const lvlLabel = (lvl) => tr.levels[lvl?.id] || lvl?.label;
+  const subjName = (s) => tr.subjects[s?.id]?.name || s?.name;
+  const subjDesc = (s) => tr.subjects[s?.id]?.description || s?.description;
+  const setTitle = (s) => tr.sets[s?.id]?.title || s?.title;
+  const setSummary = (s) => tr.sets[s?.id]?.summary || s?.summary;
 
   const root = el("div");
-  const state = { level: null, subject: null, query: "" };
+  const state = { level: null, subject: null, query: "", examMin: 0 };
 
-  // Built once so typing never loses focus — paintBody() only ever touches
-  // bodyEl, never this input or the header above it.
+  // Built once so typing never loses focus — paintBody() only touches bodyEl.
   const searchInput = el("input.search__input", {
-    type: "search",
-    placeholder: t("library.searchPlaceholder"),
-    "aria-label": t("library.searchAria"),
+    type: "search", placeholder: t("lib.search"), "aria-label": t("lib.searchAria"),
     value: state.query,
     oninput: (e) => { state.query = e.target.value; paintBody(); },
     onkeydown: (e) => {
@@ -77,10 +49,7 @@ export async function renderLibrary() {
   const headerEl = el("div");
   const bodyEl = el("div");
 
-  function paint() {
-    paintHeader();
-    paintBody();
-  }
+  function paint() { paintHeader(); paintBody(); }
 
   function paintHeader() {
     clear(headerEl);
@@ -90,12 +59,11 @@ export async function renderLibrary() {
         ? () => { state.level = null; paint(); }
         : null;
 
-    headerEl.appendChild(el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" } }, [
-      back
-        ? el("button.iconbtn", { type: "button", "aria-label": t("library.back"), onclick: back }, [icon(ICONS.back, 18)])
-        : el("a.iconbtn", { href: "#/", "aria-label": t("library.back") }, [icon(ICONS.back, 18)]),
-      el("h1", {}, t("library.pageTitle")),
-    ]));
+    headerEl.appendChild(homeButton());
+    headerEl.appendChild(el("div", { style: { display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" } }, [
+      back && el("button.iconbtn.iconbtn--sm", { type: "button", "aria-label": t("common.back"), onclick: back }, [icon(ICONS.back, 16)]),
+      el("h1", {}, t("lib.title")),
+    ].filter(Boolean)));
   }
 
   function paintBody() {
@@ -107,19 +75,16 @@ export async function renderLibrary() {
     else bodyEl.appendChild(setList());
   }
 
-  /* ---- sök: träffar över hela biblioteket, oavsett var man står ---- */
+  /* ---- search across the whole library, wherever you are ---- */
   function searchResults(q) {
     const matches = index.sets.filter((s) => {
       const subject = index.subjects.find((sub) => sub.id === s.subject);
       const level = index.levels.find((l) => l.id === subject?.level);
-      const haystack = [setTitle(s), setSummary(s), subjName(subject), levelLabel(level)].filter(Boolean).join(" ").toLowerCase();
-      return haystack.includes(q);
+      return [setTitle(s), setSummary(s), subjName(subject), lvlLabel(level)].filter(Boolean).join(" ").toLowerCase().includes(q);
     });
 
     if (!matches.length) {
-      return el("div.panel", {}, [
-        el("p.note", {}, t("library.noMatches", { query: state.query.trim() })),
-      ]);
+      return el("div.panel", {}, [el("p.note", {}, t("lib.noHits", { q: state.query.trim() }))]);
     }
 
     const bySubject = new Map();
@@ -132,55 +97,57 @@ export async function renderLibrary() {
       const subject = index.subjects.find((s) => s.id === subjId);
       const level = index.levels.find((l) => l.id === subject?.level);
       return el("section.panel", { style: { marginBottom: "20px" } }, [
-        el("p.note", { style: { display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" } }, [
-          el("span.subject-dot", { style: { "--subject": colorForSubjectId(subjId).solid } }),
-          [levelLabel(level), subjName(subject)].filter(Boolean).join(" · "),
-        ]),
+        el("p.note", { style: { marginBottom: "8px" } }, [lvlLabel(level), subjName(subject)].filter(Boolean).join(" · ")),
         el("div.libgrid", {}, sets.map(setCard)),
       ]);
     });
 
     return el("div", {}, [
-      el("p.note", { style: { marginBottom: "12px" } }, plural(matches.length, "library.matchOne", "library.matchMany")),
+      el("p.note", { style: { marginBottom: "12px" } }, plural(matches.length, "lib.hitsOne", "lib.hitsMany")),
       ...sections,
     ]);
   }
 
-  /* ---- steg 1: välj nivå ---- */
+  /* ---- step 1: pick a level ---- */
   function levelPicker() {
     const levels = index.levels.filter((l) => index.subjects.some((s) => s.level === l.id));
     return el("div.panel", {}, [
-      el("p", { style: { marginBottom: "16px" } }, t("library.levelIntro")),
+      el("p", { style: { marginBottom: "16px" } }, t("lib.intro")),
       el("div.source-grid", {}, levels.map((lvl) =>
         el("button.source-opt", { type: "button", onclick: () => { state.level = lvl.id; paint(); } }, [
-          icon(ICONS.graduation, 26), levelLabel(lvl),
+          icon(ICONS.graduation, 26), lvlLabel(lvl),
         ]))),
     ]);
   }
 
-  /* ---- steg 2: välj ämne ---- */
+  /* ---- step 2: pick a subject ---- */
   function subjectPicker() {
     const level = index.levels.find((l) => l.id === state.level);
     const subjects = index.subjects.filter((s) => s.level === state.level);
     return el("div.panel", {}, [
-      el("p", { style: { marginBottom: "16px" } }, t("library.subjectIntro", { level: levelLabel(level) })),
+      el("p", { style: { marginBottom: "16px" } }, t("lib.pickSubject", { level: lvlLabel(level) || "" })),
       el("div.source-grid", {}, subjects.map((subject) =>
-        el("button.source-opt.source-opt--subject", {
-          type: "button",
-          style: { "--subject": colorForSubjectId(subject.id).solid },
-          onclick: () => { state.subject = subject.id; paint(); },
-        }, [
+        el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
           icon(ICONS.book, 26), subjName(subject),
           el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subjDesc(subject)),
         ]))),
     ]);
   }
 
-  /* ---- steg 3: sett för valt ämne ---- */
+  /* ---- step 3: sets for the chosen subject ---- */
   function setList() {
     const subject = index.subjects.find((s) => s.id === state.subject);
     const sets = index.sets.filter((s) => s.subject === subject.id);
     const missing = sets.filter((s) => !isImported(s.id));
+
+    // The exam-prep page keys off the student's own subject id, which only
+    // exists once at least one set from here has been imported.
+    const importedHere = sets.find((s) => isImported(s.id));
+    const storeSubjectId = importedHere ? store.getAssignment(importedHere.id)?.subjectId : null;
+    const examPrepBtn = storeSubjectId
+      ? el("a.btn.btn--ghost.btn--sm", { href: `#/exam-prep/${storeSubjectId}` },
+          [icon(ICONS.target, 16), t("exam.prepFor", { subject: subjName(subject) })])
+      : null;
 
     const addAllBtn = el("button.btn.btn--sm", {
       type: "button",
@@ -188,24 +155,38 @@ export async function renderLibrary() {
         e.currentTarget.disabled = true;
         let added = 0;
         for (const s of missing) {
-          try { if (await importSet(s)) added++; } catch { /* skip whatever fails */ }
+          try { if (await importSet(s)) added++; } catch { /* skip the ones that fail */ }
         }
-        toast(added ? plural(added, "library.addedOne", "library.addedMany") : t("library.allAlready"));
+        toast(added ? t("lib.addedN", { n: added }) : t("lib.allThere"));
         paint();
       },
-    }, [icon(ICONS.plus, 16), t("library.addAll", { n: missing.length })]);
+    }, [icon(ICONS.plus, 16), t("lib.addAll", { n: missing.length })]);
+
+    const examSel = el("select", { "aria-label": t("lib.examLenLabel"), onchange: (e) => { state.examMin = Number(e.target.value) || 0; } }, [
+      el("option", { value: "0" }, t("lib.examLenNone")),
+      el("option", { value: "20" }, "20 min"),
+      el("option", { value: "40" }, "40 min"),
+      el("option", { value: "60" }, "60 min"),
+    ]);
+    examSel.value = String(state.examMin);
 
     return el("div", {}, [
-      el("section.panel", { style: { marginBottom: "24px" } }, [
-        el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
+      el("section.panel", {}, [
+        el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
           el("div", {}, [
-            el("h3", { style: { display: "flex", alignItems: "center", gap: "8px" } }, [
-              el("span.subject-dot", { style: { "--subject": colorForSubjectId(subject.id).solid } }),
-              subjName(subject),
-            ]),
+            el("h3", {}, subjName(subject)),
             el("p.note", { style: { marginTop: "4px" } }, subjDesc(subject)),
           ]),
-          missing.length ? addAllBtn : el("span.note", {}, t("library.allAdded")),
+          el("div", { style: { display: "flex", gap: "8px", flexWrap: "wrap" } }, [
+            examPrepBtn,
+            missing.length ? addAllBtn : el("span.note", { style: { alignSelf: "center" } }, t("lib.allAdded")),
+          ].filter(Boolean)),
+        ]),
+        el("details.libexam", {}, [
+          el("summary", {}, [icon(ICONS.clock, 14), t("lib.examOptions")]),
+          el("label.field", { style: { maxWidth: "220px", margin: "10px 0 0" } }, [
+            el("span", {}, t("lib.examLenLabel")), examSel,
+          ]),
         ]),
         el("div.libgrid", {}, sets.map(setCard)),
       ]),
@@ -214,42 +195,45 @@ export async function renderLibrary() {
 
   function setCard(entry) {
     const imported = isImported(entry.id);
+    const count = plural(entry.count, "common.questionOne", "common.questionMany");
 
+    // Added → "Study" is the primary action; "Exam mode" is the secondary.
+    // Not added → "Add" is primary, and exam mode isn't offered yet (it needs
+    // the set in the library).
     const action = imported
-      ? el("a.btn.btn--ghost.btn--sm", { href: `#/session/${entry.id}` }, [icon(ICONS.play, 16), t("library.study")])
+      ? el("a.btn.btn--sm", { href: `#/session/${entry.id}` }, [icon(ICONS.play, 16), t("lib.study")])
       : el("button.btn.btn--sm", {
           type: "button",
           onclick: async (e) => {
             e.currentTarget.disabled = true;
             try {
               await importSet(entry);
-              toast(t("library.added", { title: setTitle(entry) }));
+              toast(t("lib.added", { title: setTitle(entry) }));
               paint();
-            } catch (err) {
-              toast(err.message || t("library.addFailed"));
+            } catch {
+              toast(t("lib.addFail"));
               e.currentTarget.disabled = false;
             }
           },
-        }, [icon(ICONS.plus, 16), t("library.add")]);
+        }, [icon(ICONS.plus, 16), t("lib.add")]);
 
-    // Same set, exam conditions: locked tutor, answer key withheld until
-    // done, with a timer — only available once the set is already in the
-    // library.
     const examAction = imported
-      ? el("a.btn.btn--ghost.btn--sm", {
-          href: `#/session/${entry.id}?exam=1`,
-          title: t("library.examModeTooltip"),
-        }, [icon(ICONS.clock, 16), t("library.examMode")])
+      ? el("button.btn.btn--ghost.btn--sm", {
+          type: "button", title: t("lib.examTip"),
+          onclick: () => { location.hash = `#/session/${entry.id}?exam=1${state.examMin ? `&min=${state.examMin}` : ""}`; },
+        }, [icon(ICONS.clock, 16), t("lib.exam")])
       : null;
 
-    return el("div.libcard", {}, [
+    return el("div.libcard" + (imported ? ".libcard--added" : ""), {}, [
       el("div", {}, [
         el("div.libcard__title", {}, setTitle(entry)),
         el("p.note", { style: { margin: "4px 0 0" } }, setSummary(entry)),
       ]),
       el("div.libcard__foot", {}, [
-        el("span.note", {}, plural(entry.count, "library.questionsOne", "library.questionsMany")),
-        el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } }, [examAction, action].filter(Boolean)),
+        imported
+          ? el("span.libcard__added", {}, [icon(ICONS.check, 14), t("lib.addedTag"), el("span.libcard__count", {}, ` · ${count}`)])
+          : el("span.note", {}, count),
+        el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap" } }, [action, examAction].filter(Boolean)),
       ]),
     ]);
   }
@@ -258,5 +242,5 @@ export async function renderLibrary() {
   root.appendChild(searchWrap);
   root.appendChild(bodyEl);
   paint();
-  return { title: t("library.pageTitle"), node: root };
+  return { title: t("lib.title"), node: root };
 }

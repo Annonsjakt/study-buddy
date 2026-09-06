@@ -2,16 +2,12 @@
 // Read straight from localStorage at startup so the page never flashes the
 // wrong palette before the store has finished loading.
 
-import { t } from "./i18n.js";
-
 const KEY = "studybuddy.theme";
-export function THEMES() {
-  return [
-    ["system", t("theme.system")],
-    ["light", t("theme.light")],
-    ["dark", t("theme.dark")],
-  ];
-}
+export const THEMES = [
+  ["system", "Match my device"],
+  ["light", "Light"],
+  ["dark", "Dark"],
+];
 
 export function getTheme() {
   const t = localStorage.getItem(KEY);
@@ -25,6 +21,7 @@ export function applyTheme(theme = getTheme()) {
 export function setTheme(theme) {
   localStorage.setItem(KEY, theme);
   applyTheme(theme);
+  window.dispatchEvent(new CustomEvent("sb:themechange", { detail: { theme } }));
 }
 
 /** True if what's on screen right now is the dark palette. */

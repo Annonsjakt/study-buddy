@@ -15,7 +15,7 @@ export function fitText(s) {
 
 async function extractPdfTextFromBuffer(buf) {
   const lib = window.pdfjsLib;
-  if (!lib) throw new Error(t("material.pdfLoadFailed"));
+  if (!lib) throw new Error(t("err.pdfNoLib"));
   lib.GlobalWorkerOptions.workerSrc = "vendor/pdf.worker.min.js";
 
   const pdf = await lib.getDocument({ data: buf }).promise;
@@ -29,7 +29,7 @@ async function extractPdfTextFromBuffer(buf) {
   }
   const text = fitText(pages.join("\n\n"));
   if (text.replace(/\s/g, "").length < 20) {
-    throw new Error(t("material.noSelectableText"));
+    throw new Error(t("err.pdfNoText"));
   }
   return text;
 }
@@ -42,11 +42,11 @@ export async function extractPdfText(file) {
  *  downloads) and concatenates it — audio files (listening comprehension)
  *  are counted but skipped; there's no transcription here. */
 export async function extractZipText(file) {
-  if (!window.JSZip) throw new Error(t("material.zipLoadFailed"));
+  if (!window.JSZip) throw new Error(t("err.zipNoLib"));
   const zip = await window.JSZip.loadAsync(file);
   const entries = Object.values(zip.files).filter((f) => !f.dir);
   const pdfEntries = entries.filter((f) => /\.pdf$/i.test(f.name)).slice(0, 20); // cap runaway zips
-  if (!pdfEntries.length) throw new Error(t("material.noPdfInZip"));
+  if (!pdfEntries.length) throw new Error(t("err.zipNoPdf"));
 
   const parts = [];
   for (const entry of pdfEntries) {
@@ -58,7 +58,7 @@ export async function extractZipText(file) {
     }
     if (parts.join("\n\n").length > MAX_CHARS) break;
   }
-  if (!parts.length) throw new Error(t("material.noReadablePdf"));
+  if (!parts.length) throw new Error(t("err.zipNoText"));
 
   const skippedAudio = entries.filter((f) => /\.mp3$/i.test(f.name)).length;
   return {
@@ -73,11 +73,11 @@ export function readImageFile(file) {
   return new Promise((resolve, reject) => {
     const okTypes = ["image/png", "image/jpeg", "image/webp", "image/gif"];
     if (!okTypes.includes(file.type)) {
-      reject(new Error(t("material.badImageType")));
+      reject(new Error(t("err.imageType")));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      reject(new Error(t("material.imageTooBig")));
+      reject(new Error(t("err.imageSize")));
       return;
     }
     const fr = new FileReader();
@@ -86,7 +86,7 @@ export function readImageFile(file) {
       const comma = dataUrl.indexOf(",");
       resolve({ mediaType: file.type, data: dataUrl.slice(comma + 1), preview: dataUrl });
     };
-    fr.onerror = () => reject(new Error(t("material.couldNotRead")));
+    fr.onerror = () => reject(new Error(t("err.readFile")));
     fr.readAsDataURL(file);
   });
 }

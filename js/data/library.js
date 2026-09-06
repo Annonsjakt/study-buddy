@@ -1,42 +1,44 @@
-// Övningsbiblioteket: färdiga, granskade set som ligger som statiska
-// JSON-filer under data/library/. De behöver varken API-nyckel eller
-// backend — poängen är att en ny elev ska ha något att plugga på direkt,
-// utan att först skaffa fram eget material.
+// The practice library ("Övningsbibliotek"): ready-made, reviewed question
+// sets for the Swedish curriculum (åk 7–gymnasiet), as static JSON under
+// data/library/. No key, no backend — a new student has something to study
+// straight away without first bringing their own material.
 //
-// Innehållet är svenskt läroplansmaterial i grunden. Två separata
-// översättningslager läggs ovanpå när appen står på engelska:
-//   - index.en.json: kort bläddringstext (ämnesnamn/beskrivningar, set-titlar
-//     och sammanfattningar) — täcker alla 229 set direkt.
-//   - data/library-en/<samma filnamn>.json: själva frågeinnehållet. Ett
-//     redan importerat set har redan kopierat in sitt (svenska) innehåll i
-//     elevens egen store, så det räcker inte att bara byta vilken fil
-//     importSet() hämtar härnäst — store.js läser samma översatta dokument
-//     (via lib/library-content.js:s cache) och lägger den engelska texten
-//     ovanpå redan-importerade set också, utan att röra det sparade svenska
-//     originalet.
+// Content loading + the English overlay live in lib/library-content.js (which
+// doesn't import store.js), so store.js can reuse them for
+// syncLibraryLanguage() without an import cycle.
 
 import { store } from "../store.js";
-import { t, getLang } from "../lib/i18n.js";
+import { getLang } from "../lib/i18n.js";
 import { loadLibraryIndex, loadLibraryTranslations, englishFile } from "../lib/library-content.js";
 
 export { loadLibraryIndex, loadLibraryTranslations };
 
-/** Har det här biblioteks-setet redan lagts till i elevens egna bibliotek?
- *  store.addAssignmentDoc() behåller dokumentets id första gången, så det
- *  räcker att slå upp id:t. */
+/** Has this library set already been added to the student's own library?
+ *  addAssignmentDoc() keeps the document id the first time, so an id lookup
+ *  is enough. */
 export function isImported(setId) {
   return !!store.getAssignment(setId);
 }
 
-/** Hämtar setet och lägger till det i elevens bibliotek. Returnerar det
- *  sparade setet (eller null om det redan fanns). På engelska försöker den
- *  översatta filen först och faller tillbaka till den svenska originalfilen
- *  om den översatta versionen inte finns än. */
+/** Fetch the set and add it to the student's library. Returns the saved set,
+ *  or null if it was already there. In English mode the translated file is
+ *  tried first, falling back to the Swedish original if it isn't there yet;
+ *  the set is tagged with the language it actually landed in so a later
+ *  language switch can bring it up to date (see store.syncLibraryLanguage). */
 export async function importSet(entry) {
   if (isImported(entry.id)) return null;
-  let res = await fetch(getLang() === "en" ? englishFile(entry.file) : entry.file);
-  if (!res.ok) res = await fetch(entry.file);
-  if (!res.ok) throw new Error(t("library.setLoadFailed", { title: entry.title }));
+  const lang = getLang();
+  const wantFile = lang === "en" ? englishFile(entry.file) : entry.file;
+
+  let res = await fetch(wantFile);
+  let docLang = lang;
+  if (!res.ok && wantFile !== entry.file) { res = await fetch(entry.file); docLang = "sv"; }
+  if (!res.ok) throw new Error(String(res.status));
+
   const doc = await res.json();
-  return store.addAssignmentDoc(doc);
+  const a = store.addAssignmentDoc(doc, { silent: true });
+  if (a) a._libLang = docLang;
+  store.save();
+  store.emit();
+  return a;
 }

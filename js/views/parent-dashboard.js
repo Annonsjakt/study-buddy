@@ -3,29 +3,18 @@
 // read-only — reusing the exact same pure mastery/SRS/streak functions
 // #/progress runs for the signed-in user, just against a fetched blob.
 
-import { store, PALETTE } from "../store.js";
+import { store } from "../store.js";
 import { el, clear, toast, icon, ICONS } from "../lib/dom.js";
+import { t, plural } from "../lib/i18n.js";
+import { homeButton } from "../components/nav.js";
+import { confirmDialog } from "../components/confirm-dialog.js";
 import { masteryByTopic, masteryForSubject } from "../lib/mastery.js";
-
-// The blob here is the STUDENT's own state, fetched read-only — store's own
-// subjectColor() looks up the signed-in PARENT's local subjects and would
-// silently resolve every one of the student's subjects to the same
-// fallback color. Each subject record already carries its own color name
-// (assigned once by the student's own ensureSubject()), so that's read
-// directly instead.
-function colorFor(colorName) {
-  const p = PALETTE.find((c) => c.name === colorName) || PALETTE[0];
-  return { solid: `var(--c-${p.name})`, ink: `var(--c-${p.name}-ink)`, tint: `var(--c-${p.name}-tint)` };
-}
 import { dueQuestions } from "../lib/library.js";
 import { currentStreak } from "../lib/activity.js";
 import {
   LINKS_URL, INVITE_CODE_URL, REDEEM_CODE_URL, ASSIGNED_FOR_ME_URL, ASSIGN_URL,
   studentStateUrl, unlinkUrl, clearAssignedUrl,
 } from "../config.js";
-import { t } from "../lib/i18n.js";
-import { subjectDisplayName } from "../lib/library-content.js";
-import { confirmDialog } from "../components/confirm-dialog.js";
 
 async function api(url, opts) {
   const res = await fetch(url, {
@@ -34,7 +23,7 @@ async function api(url, opts) {
     ...opts,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error?.message || t("parent.requestFailed"));
+  if (!res.ok) throw new Error(data?.error?.message || t("login.somethingWrong"));
   return data;
 }
 
@@ -42,10 +31,10 @@ function signedOutNode() {
   return el("div.settings", {}, [
     el("h1", {}, t("parent.title")),
     el("section.panel", {}, [
-      el("p.note", { style: { marginBottom: "12px" } }, t("parent.signInIntro")),
+      el("p.note", { style: { marginBottom: "12px" } }, t("parent.signInPrompt")),
       el("a.btn", { href: "#/login" }, t("login.signIn")),
     ]),
-    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("common.backToMenu")]),
+    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("parent.backToMenu")]),
   ]);
 }
 
@@ -73,7 +62,7 @@ export function renderParentHub() {
       el("h3", { style: { marginBottom: "8px" } }, t("parent.studentsHeading")),
       list.length
         ? el("div", { style: { display: "grid", gap: "8px" } }, list.map(studentRow))
-        : el("p.note", { style: { marginBottom: "12px" } }, t("parent.noneYet")),
+        : el("p.note", { style: { marginBottom: "12px" } }, t("parent.studentsNone")),
       redeemForm(),
     );
   }
@@ -95,7 +84,7 @@ export function renderParentHub() {
           el("button.btn.btn--ghost.btn--sm", {
             type: "button", style: { color: "var(--retry-ink)" },
             onclick: async () => {
-              if (!(await confirmDialog({ message: t("parent.unlinkConfirm", { email: link.studentEmail }) }))) return;
+              if (!(await confirmDialog({ message: t("parent.unlinkConfirm", { email: link.studentEmail }), confirmLabel: t("parent.unlink"), danger: true }))) return;
               try { await api(unlinkUrl(link.linkId), { method: "DELETE" }); refreshLinks(); }
               catch (e) { toast(e.message); }
             },
@@ -111,23 +100,20 @@ export function renderParentHub() {
       return [el("p.note", {}, t("parent.noOwnSets"))];
     }
     const sel = el("select", {}, store.assignments.map((a) =>
-      el("option", { value: a.id }, `${a.title} (${a.questions.length} questions)`)));
+      el("option", { value: a.id }, `${a.title} (${plural(a.questions.length, "common.questionOne", "common.questionMany")})`)));
     const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.assign"));
     btn.addEventListener("click", async () => {
-      // Raw, not the English-overlay view: this becomes the student's own
-      // stored copy, so it must carry the canonical (Swedish) content, not
-      // whatever language the parent's own display happens to be in.
-      const a = store.getRawAssignment(sel.value);
+      const a = store.getAssignment(sel.value);
       if (!a) return;
       const doc = {
         title: a.title,
-        subject: store.subjects.find((s) => s.id === a.subjectId)?.name || t("sets.generalSubject"),
+        subject: store.subjects.find((s) => s.id === a.subjectId)?.name || t("common.general"),
         questions: a.questions,
       };
       btn.disabled = true;
       try {
         await api(ASSIGN_URL, { method: "POST", body: JSON.stringify({ studentUserId: link.studentUserId, doc }) });
-        toast(t("parent.assignedToast", { title: a.title, email: link.studentEmail }));
+        toast(t("parent.assigned", { title: a.title, email: link.studentEmail }));
       } catch (e) { toast(e.message); }
       btn.disabled = false;
     });
@@ -135,7 +121,7 @@ export function renderParentHub() {
   }
 
   function redeemForm() {
-    const input = el("input", { type: "text", placeholder: t("parent.inviteCodePlaceholder"), style: { textTransform: "uppercase" } });
+    const input = el("input", { type: "text", placeholder: "e.g. AB12CD", style: { textTransform: "uppercase" } });
     const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.link"));
     btn.addEventListener("click", async () => {
       const code = input.value.trim();
@@ -143,7 +129,7 @@ export function renderParentHub() {
       btn.disabled = true;
       try {
         const data = await api(REDEEM_CODE_URL, { method: "POST", body: JSON.stringify({ code }) });
-        toast(t("parent.linkedTo", { email: data.studentEmail }));
+        toast(t("parent.linkedToStudent", { email: data.studentEmail }));
         input.value = "";
         refreshLinks();
       } catch (e) { toast(e.message); }
@@ -166,24 +152,24 @@ export function renderParentHub() {
               el("button.btn.btn--ghost.btn--sm", {
                 type: "button", style: { color: "var(--retry-ink)" },
                 onclick: async () => {
-                  if (!(await confirmDialog({ message: t("parent.unlinkConfirm", { email: link.parentEmail }) }))) return;
+                  if (!(await confirmDialog({ message: t("parent.unlinkConfirm", { email: link.parentEmail }), confirmLabel: t("parent.unlink"), danger: true }))) return;
                   try { await api(unlinkUrl(link.linkId), { method: "DELETE" }); refreshLinks(); }
                   catch (e) { toast(e.message); }
                 },
               }, t("parent.unlink")),
             ])))
-        : el("p.note", {}, t("parent.noParentsYet")),
+        : el("p.note", {}, t("parent.parentsNone")),
     );
   }
 
   async function paintAssigned() {
     clear(assignedPanel);
-    assignedPanel.append(el("h3", { style: { marginBottom: "8px" } }, t("parent.assignedHeading")));
+    assignedPanel.append(el("h3", { style: { marginBottom: "8px" } }, t("parent.assignedToYouHeading")));
     let list;
     try { list = await api(ASSIGNED_FOR_ME_URL); }
-    catch (e) { assignedPanel.append(el("p.note", {}, t("parent.couldntLoadAssigned"))); return; }
+    catch (e) { assignedPanel.append(el("p.note", {}, t("parent.assignedLoadFail"))); return; }
 
-    if (!list.length) { assignedPanel.append(el("p.note", {}, t("parent.nothingWaiting"))); return; }
+    if (!list.length) { assignedPanel.append(el("p.note", {}, t("parent.assignedNone"))); return; }
     assignedPanel.append(el("div", { style: { display: "grid", gap: "8px" } }, list.map((item) => {
       const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.addToLibrary"));
       btn.addEventListener("click", async () => {
@@ -194,23 +180,23 @@ export function renderParentHub() {
         paintAssigned();
       });
       return el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", border: "1px solid var(--line)", borderRadius: "var(--r-md)", flexWrap: "wrap", gap: "8px" } }, [
-        el("span", {}, [item.doc.title, el("span.note", { style: { display: "block" } }, t("parent.fromEmail", { email: item.assignedByEmail }))]),
+        el("span", {}, [item.doc.title, el("span.note", { style: { display: "block" } }, t("parent.fromWho", { email: item.assignedByEmail }))]),
         btn,
       ]);
     })));
   }
 
   function paintInvite() {
-    const status = el("p.note", { style: { margin: "6px 0 12px" } }, t("parent.inviteStatus"));
+    const status = el("p.note", { style: { margin: "6px 0 12px" } }, t("parent.inviteIntro"));
     const codeDisplay = el("p", { style: { display: "none", fontSize: "22px", fontWeight: 700, letterSpacing: "0.1em", fontFamily: "monospace" } });
-    const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.generateCode"));
+    const btn = el("button.btn.btn--sm", { type: "button" }, t("parent.inviteGenerate"));
     btn.addEventListener("click", async () => {
       btn.disabled = true;
       try {
         const data = await api(INVITE_CODE_URL, { method: "POST" });
         codeDisplay.textContent = data.code;
         codeDisplay.style.display = "";
-        status.textContent = t("parent.inviteGenerated");
+        status.textContent = t("parent.inviteShare");
       } catch (e) { toast(e.message); }
       btn.disabled = false;
     });
@@ -222,12 +208,13 @@ export function renderParentHub() {
   paintInvite();
 
   const node = el("div.settings", {}, [
+    homeButton({ grid: true }),
     el("h1", {}, t("parent.title")),
     invitePanel,
     studentsPanel,
     parentsPanel,
     assignedPanel,
-    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("common.backToMenu")]),
+    el("a.btn.btn--ghost", { href: "#/" }, [icon(ICONS.back, 16), t("parent.backToMenu")]),
   ]);
 
   return { title: t("parent.title"), node };
@@ -257,15 +244,15 @@ export async function renderParentStudent(studentUserId) {
     return {
       title: t("parent.title"),
       node: el("div.settings", {}, [
-        el("h1", {}, t("parent.noDataYet")),
-        el("section.panel", {}, [el("p.note", {}, t("parent.notSyncedYet"))]),
+        el("h1", {}, t("parent.noDataTitle")),
+        el("section.panel", {}, [el("p.note", {}, t("parent.noDataBody"))]),
         el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), t("parent.back")]),
       ]),
     };
   }
 
   const tm = masteryByTopic(blob.attempts || []);
-  const streak = currentStreak(blob.activity?.daysStudied || [], blob.frozenDays || []);
+  const streak = currentStreak(blob.activity?.daysStudied || [], blob.activity?.frozenDays || []);
   const due = dueQuestions(blob.assignments || [], blob.srs || {});
 
   const meters = (blob.subjects || [])
@@ -274,41 +261,41 @@ export async function renderParentStudent(studentUserId) {
     .sort((a, b) => a.m - b.m)
     .map(({ s, m }) => {
       const pct = Math.round(m * 100);
-      const color = colorFor(s.color);
       return el("div.meter", {}, [
-        el("span", { style: { display: "flex", alignItems: "center", gap: "6px", minWidth: "0" } }, [
-          el("span.subject-dot", { style: { "--subject": color.solid } }),
-          el("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, subjectDisplayName(s.name)),
-        ]),
-        el("div.meter__track", { role: "img", "aria-label": `${subjectDisplayName(s.name)}: ${pct}% mastery` },
-          [el("div.meter__fill", { style: { width: `${pct}%`, "--subject": color.solid } })]),
+        el("span", {}, s.name),
+        el("div.meter__track", { role: "img", "aria-label": `${s.name}: ${pct}%` },
+          [el("div.meter__fill", { style: { width: `${pct}%` } })]),
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
       ]);
     });
 
   const node = el("div.settings", {}, [
-    el("h1", {}, t("parent.studentProgress")),
+    homeButton({ grid: true }),
+    el("h1", {}, t("parent.studentProgressTitle")),
 
     el("section.panel", {}, [
       el("h3", { style: { marginBottom: "10px", display: "flex", alignItems: "center", gap: "10px" } }, [
-        t("progress.studyStreak"),
-        el("span.streakbadge", {}, [icon(ICONS.flame, 13), t("streak.days", { n: streak })]),
+        t("parent.studyStreak"),
+        el("span.streakbadge", {}, [icon(ICONS.flame, 13), plural(streak, "parent.streakDay", "parent.streakDays")]),
       ]),
-      el("p.note", {}, t("parent.daysSessionsStat", { days: (blob.activity?.daysStudied || []).length, sessions: (blob.attempts || []).length })),
+      el("p.note", {}, t("parent.daysSessions", {
+        days: (blob.activity?.daysStudied || []).length,
+        sessions: (blob.attempts || []).length,
+      })),
     ]),
 
     el("section.panel", {}, [
-      el("h3", { style: { marginBottom: "8px" } }, t("progress.masteryBySubject")),
-      meters.length ? el("div", {}, meters) : el("p.note", {}, t("parent.noMasteryData")),
+      el("h3", { style: { marginBottom: "8px" } }, t("parent.masteryHeading")),
+      meters.length ? el("div", {}, meters) : el("p.note", {}, t("parent.noMastery")),
     ]),
 
     el("section.panel", {}, [
-      el("h3", {}, t("progress.dueForReview") + (due.length ? ` (${due.length})` : "")),
-      due.length ? el("p.note", {}, t("parent.questionsDue", { n: due.length })) : el("p.note", {}, t("parent.nothingDueNow")),
+      el("h3", {}, `${t("parent.dueHeading")}${due.length ? ` (${due.length})` : ""}`),
+      due.length ? el("p.note", {}, t("parent.dueCount", { n: due.length })) : el("p.note", {}, t("parent.dueNone")),
     ]),
 
     el("a.btn.btn--ghost", { href: "#/parent" }, [icon(ICONS.back, 16), t("parent.back")]),
   ]);
 
-  return { title: t("parent.studentProgress"), node };
+  return { title: t("parent.studentProgressTitle"), node };
 }

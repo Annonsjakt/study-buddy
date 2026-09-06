@@ -1,47 +1,48 @@
 // Run a set of questions: question on the left, tutor chat on the right.
 //
 // A session is {title, type, an ordered list of question ids, a cursor,
-// answers}. That shape covers a normal assignment, a test, a cross-set review
-// and a targeted practice run identically — and it's what gets saved so you
-// can resume.
+// answers}. That shape covers a normal assignment, a test, a cross-set review,
+// a targeted practice run and a weak-spots drill identically — and it's what
+// gets saved so you can resume.
 
 import { store, REVIEW_ID, PRACTICE_ID, WEAK_ID, NATIONAL_MIX_PREFIX, nationalMixId } from "../store.js";
-import { el, clear, icon, ICONS, uid, toast } from "../lib/dom.js";
+import { el, clear, icon, ICONS, toast, uid } from "../lib/dom.js";
 import { announce } from "../lib/a11y.js";
+import { t } from "../lib/i18n.js";
 import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
-import { review } from "../lib/srs.js";
-import { weakSpotQuestions } from "../lib/mastery.js";
-import { playChime } from "../lib/sound.js";
+import { homeButton } from "../components/nav.js";
 import { confirmDialog } from "../components/confirm-dialog.js";
-import { t, plural } from "../lib/i18n.js";
-import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
-import { showAchievementUnlocks } from "../lib/achievement-toast.js";
+import { review } from "../lib/srs.js";
+import { weakSpotQuestions, masteryByTopic } from "../lib/mastery.js";
+import { playCorrect, playWrong, playChime } from "../lib/sound.js";
+
+const TIP_SEEN_KEY = "studybuddy.shortcutTipSeen";
+
+// True while a session is on screen. main.js checks this on a language switch:
+// a running session updates its own question + tutor in place rather than
+// being torn down and rebuilt mid-set.
+let sessionActive = false;
+export function isSessionActive() { return sessionActive; }
 
 export async function renderSession(assignmentId, qs) {
-  // Warms the cache store.getAssignment() reads from — needed even for a
-  // set that was imported back when the app was in Swedish, since its
-  // content was copied into the student's own store as-is at import time.
-  await preloadQuestionTranslations([assignmentId]);
   const assignment = store.getAssignment(assignmentId);
-  if (!assignment) return notFound(t("session.setGone"));
-  if (!assignment.questions.length) return notFound(t("session.setEmpty"));
+  if (!assignment) return notFound(t("session.goneSet"));
+  if (!assignment.questions.length) return notFound(t("session.emptySet"));
 
-  // ?exam=1 runs ANY set — assignment or library import — under test
-  // conditions (locked tutor, no immediate feedback, on-screen clock)
-  // without touching how the set itself is stored or tagged.
-  const examMode = qs?.get("exam") === "1";
-  const rawMin = examMode ? Number(qs?.get("min")) : 0;
-  const timeLimitMin = rawMin > 0 ? Math.max(1, Math.min(240, rawMin)) : null;
+  // ?exam=1[&min=N] runs ANY set under exam conditions — locked tutor, no
+  // immediate feedback, an on-screen clock — without touching how the set is
+  // stored. An exam run is kept under its own session key so resuming a normal
+  // run of the same set doesn't inherit the timer/lock state.
+  const examMode = qs?.get?.("exam") === "1";
+  const rawMin = examMode ? Number(qs?.get?.("min")) : 0;
+  const timeLimitMin = rawMin > 0 ? Math.max(1, Math.min(240, Math.round(rawMin))) : null;
   const examQuery = examMode ? `?exam=1${timeLimitMin ? `&min=${timeLimitMin}` : ""}` : "";
 
   // Repeat runs are shuffled so a retry tests the material, not the order.
   const isRetry = store.attempts.some((a) => a.assignmentId === assignment.id);
 
   return runSession({
-    // Exam-mode and normal runs of the same set are kept as separate
-    // sessions — otherwise resuming one would silently resume the other,
-    // with the wrong tutor-lock/timer state attached.
     key: examMode ? `${assignment.id}::exam` : assignment.id,
     assignmentId: assignment.id,
     title: assignment.title,
@@ -54,40 +55,33 @@ export async function renderSession(assignmentId, qs) {
   });
 }
 
+// A review can span the whole library's backlog — cap a single sitting so
+// it's never hundreds of questions long, and let the rest wait for next time.
+const REVIEW_CAP = 40;
+
 export async function renderReview() {
-  // A review mixes questions from any number of sets, so warm the cache for
-  // everything the student has, not just one assignment id.
-  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
-  const due = store.dueQuestions();
+  const due = store.dueQuestions(); // most-overdue-first
   if (!due.length) {
-    return {
-      title: t("session.reviewTitle"),
-      node: el("div.empty", {}, [
-        icon(ICONS.check, 26),
-        el("h2", {}, t("session.nothingDue")),
-        el("p", {}, t("session.nothingDueBody")),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
-      ]),
-    };
+    return emptyScreen(t("session.nothingDueTitle"), t("session.nothingDueBody"), t("session.badgeReview"));
   }
+
+  const batch = due.slice(0, REVIEW_CAP);
 
   return runSession({
     key: REVIEW_ID,
     assignmentId: REVIEW_ID,
-    title: t("session.reviewSessionTitle"),
+    title: t("session.reviewTitle"),
     type: "assignment",
     retryHash: "#/review",
-    questionIds: due.map((d) => d.question.id),
+    questionIds: batch.map((d) => d.question.id),
+    reviewRemaining: due.length - batch.length,
   });
 }
 
 /** Practise just the questions missed in a given attempt. */
 export async function renderPractice(attemptId) {
   const attempt = store.attempts.find((a) => a.id === attemptId);
-  if (!attempt) return notFound(t("session.resultGone"));
-
-  // A missed-question practice run can span sets, same as review above.
-  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
+  if (!attempt) return notFound(t("session.goneResult"));
 
   const ids = (attempt.items || [])
     .filter((i) => !i.correct)
@@ -95,15 +89,7 @@ export async function renderPractice(attemptId) {
     .filter((id) => store.findQuestion(id));
 
   if (!ids.length) {
-    return {
-      title: t("session.practiceTitle"),
-      node: el("div.empty", {}, [
-        icon(ICONS.check, 26),
-        el("h2", {}, t("session.nothingToPractice")),
-        el("p", {}, t("session.nothingToPracticeBody")),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
-      ]),
-    };
+    return emptyScreen(t("session.nothingPractiseTitle"), t("session.nothingPractiseBody"), t("session.badgePractice"));
   }
 
   return runSession({
@@ -118,23 +104,18 @@ export async function renderPractice(attemptId) {
   });
 }
 
-/** Drill whatever topics you keep getting wrong, across every set. Reuses
- *  the same recency-weighted topic mastery Progress already shows — nothing
- *  new to track, just a session built from its weakest end. */
-export async function renderWeakPractice() {
-  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
-  const weak = weakSpotQuestions(store.assignments, store.attempts);
-
+/** Drill whatever topics you keep getting wrong. Across every set by
+ *  default; scoped to one subject when `?subject=<id>` is set (the
+ *  exam-prep page uses this — weakSpotQuestions already filters on the
+ *  assignments array it's handed, so a subset scopes it for free). */
+export async function renderWeakPractice(qs) {
+  const subjectId = qs?.get?.("subject") || null;
+  const pool = subjectId
+    ? store.assignments.filter((a) => a.subjectId === subjectId)
+    : store.assignments;
+  const weak = weakSpotQuestions(pool, store.attempts);
   if (!weak.length) {
-    return {
-      title: t("session.weakTitle"),
-      node: el("div.empty", {}, [
-        icon(ICONS.check, 26),
-        el("h2", {}, t("session.noWeakTitle")),
-        el("p", {}, t("session.noWeakBody")),
-        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
-      ]),
-    };
+    return emptyScreen(t("session.noWeakTitle"), t("session.noWeakBody"), t("session.badgeWeak"));
   }
 
   return runSession({
@@ -142,7 +123,7 @@ export async function renderWeakPractice() {
     assignmentId: WEAK_ID,
     title: t("session.weakTitle"),
     type: "assignment",
-    retryHash: "#/practice-weak",
+    retryHash: subjectId ? `#/practice-weak?subject=${subjectId}` : "#/practice-weak",
     questionIds: weak.map((w) => w.question.id),
     forceTutor: true,
   });
@@ -155,17 +136,28 @@ export async function renderNationalMix(subjectId, qs) {
   const sets = store.assignments.filter((a) => a.subjectId === subjectId);
   const pool = sets.flatMap((a) => a.questions.map((q) => q.id));
 
-  if (!pool.length) return notFound(t("session.noImportedSets"));
+  if (!pool.length) return notFound(t("session.nationalMixEmpty"));
+
+  // `?exam=1[&min=N]` turns the mix into a timed mock under exam conditions
+  // (locked tutor, no reveal, a countdown). runSession already reads
+  // config.examMode / config.timeLimitMin — the timer machinery is generic.
+  const examMode = qs?.get?.("exam") === "1";
+  const rawMin = examMode ? Number(qs?.get?.("min")) : 0;
+  const timeLimitMin = rawMin > 0 ? Math.max(1, Math.min(240, Math.round(rawMin))) : null;
 
   const count = Math.max(1, Math.min(Number(qs?.get("count")) || 15, pool.length));
   const ids = shuffled(pool).slice(0, count);
 
   return runSession({
-    key: nationalMixId(subjectId),
+    // A mock keeps its own resumable slot so it can't collide with a plain
+    // mix left in progress.
+    key: examMode ? `${nationalMixId(subjectId)}::exam` : nationalMixId(subjectId),
     assignmentId: nationalMixId(subjectId),
-    title: t("session.mixedTitle", { subject: subjectDisplayName(subject?.name) || t("session.nationalTest") }),
+    title: t("session.nationalMixTitle", { subject: subject?.name || t("session.nationalMixFallback") }),
     type: "assignment",
-    retryHash: `#/national/mix/${subjectId}?count=${count}`,
+    examMode,
+    timeLimitMin,
+    retryHash: `#/national/mix/${subjectId}?count=${count}${examMode ? `&exam=1${timeLimitMin ? `&min=${timeLimitMin}` : ""}` : ""}`,
     questionIds: ids,
     shuffle: true,
   });
@@ -181,68 +173,46 @@ function runSession(config) {
     ? { ...saved, order: saved.order.filter((id) => store.findQuestion(id)) }
     : freshState(config);
 
-  if (!state.order.length) return notFound(t("session.questionsGone"));
+  if (!state.order.length) return notFound(t("session.goneQuestions"));
+  sessionActive = true;   // cleared in cleanup()
   state.cursor = Math.min(state.cursor, state.order.length - 1);
   state.skipped = state.skipped || [];
   state.choiceOrder = state.choiceOrder || {};
+  // Question ids already written to SRS this session, whether by an earlier
+  // exit or a completed finish — lets commitSrs() below run from both without
+  // ever reviewing the same question twice.
+  state.committedSrs = state.committedSrs || [];
 
-  // In a test — or any set launched in exam mode — the tutor is locked: one
-  // attempt per question, no hints, no reveal. All the teaching happens
-  // afterwards, on the results screen.
-  const testMode = (config.type === "test" || config.examMode) && !config.forceTutor;
+  // In a test the tutor is locked by default — one attempt per question, no
+  // reveal. Settings can hand it a small hint allowance; 0 = the old behaviour.
+  // testMode / tutorSilent are mutable: the student can switch test mode off
+  // (and back on) mid-run from the banner. Once it's been off at all, the
+  // finished attempt is saved as practice, not a test.
+  // Exam mode = the same lock, but strict: no hint budget, no switching off,
+  // and a visible clock. It's triggered by ?exam=1 on any set.
+  const isExam = !!config.examMode;
+  const isTest = (config.type === "test" || isExam) && !config.forceTutor;
+  const hintBudget = isExam ? 0
+    : isTest ? Math.max(0, Math.min(3, Number(store.settings.testHints ?? 2)))
+    : Infinity;
+  let testMode = isTest;
+  let tutorSilent = testMode && hintBudget === 0;
+  let leftTestMode = false;
 
-  const tutor = new TutorChat({ locked: testMode });
-
-  // ----- exam clock: counts down to state.deadlineAt if a limit was set,
-  // otherwise counts up from the start — either way it keeps running across
-  // a resume, since deadlineAt/startedAt live in the persisted session. -----
-  const timerText = el("span");
-  const timerEl = el("div.examtimer", { hidden: !testMode }, [icon(ICONS.clock, 14), timerText]);
-  let timerHandle = null;
-  let autoSubmitted = false;
-
-  function formatClock(ms) {
-    const total = Math.max(0, Math.round(ms / 1000));
-    const m = Math.floor(total / 60);
-    const s = total % 60;
-    return `${m}:${String(s).padStart(2, "0")}`;
-  }
-
-  function tickTimer() {
-    if (state.deadlineAt) {
-      const remaining = state.deadlineAt - Date.now();
-      timerEl.classList.toggle("examtimer--warn", remaining <= 60000);
-      timerText.textContent = formatClock(remaining);
-      if (remaining <= 0 && !autoSubmitted) {
-        autoSubmitted = true;
-        stopTimer();
-        toast(t("session.timeUp"));
-        playChime();
-        finish({ timedOut: true });
-      }
-    } else {
-      timerText.textContent = formatClock(Date.now() - state.startedAt);
-    }
-  }
-
-  function startTimer() {
-    if (!testMode || timerHandle) return;
-    tickTimer();
-    timerHandle = setInterval(tickTimer, 1000);
-  }
-
-  function stopTimer() {
-    if (timerHandle) { clearInterval(timerHandle); timerHandle = null; }
-  }
+  const tutor = new TutorChat({ locked: tutorSilent, hintBudget });
 
   const fill = el("div.progressbar__fill");
   const label = el("div.progress-label");
+  const adaptiveEl = el("div.adaptive");
+  const testBar = el("div.testbar");
   const stage = el("div");
   const nextBtn = el("button.btn", { type: "button", disabled: true, onclick: next }, t("session.next"));
   const skipBtn = el("button.btn.btn--ghost", { type: "button", onclick: skip }, t("session.skip"));
   const exitBtn = el("button.btn.btn--ghost", { type: "button", onclick: exit }, t("session.exit"));
 
   let currentRenderer = null;
+  let lastPrompt = null;   // wording of the question currently on stage — lets
+                           // onLangSession tell whether the content re-translated
 
   function answeredCount() { return Object.keys(state.items).length; }
   function currentId() { return state.order[state.cursor]; }
@@ -251,6 +221,22 @@ function runSession(config) {
   function firstUnansweredIndex() {
     const i = state.order.findIndex((id) => !state.items[id]);
     return i === -1 ? state.order.length - 1 : i;
+  }
+
+  /** The header title, recomputed (not baked) so a language switch updates it.
+   *  Review/practice/weak have a translated label; a real set uses its own
+   *  (now possibly re-translated) title. */
+  function headTitle() {
+    if (config.assignmentId === REVIEW_ID) return t("session.reviewTitle");
+    if (config.assignmentId === PRACTICE_ID) return t("session.practiceTitle");
+    if (config.assignmentId === WEAK_ID) return t("session.weakTitle");
+    return store.getAssignment(config.assignmentId)?.title || config.title;
+  }
+
+  function nextBtnLabel() {
+    const answered = !!state.items[currentId()];
+    return unansweredCount() === 0 || (answered && state.cursor === state.order.length - 1)
+      ? t("session.finish") : t("session.next");
   }
 
   function persist() {
@@ -268,6 +254,7 @@ function runSession(config) {
       items: state.items,
       skipped: state.skipped,
       choiceOrder: state.choiceOrder,
+      committedSrs: state.committedSrs,
       startedAt: state.startedAt,
       deadlineAt: state.deadlineAt,
     });
@@ -278,8 +265,8 @@ function runSession(config) {
     fill.style.width = `${(done / state.order.length) * 100}%`;
     const skippedLeft = state.skipped.filter((id) => !state.items[id]).length;
     label.textContent =
-      t("session.progressLabel", { n: state.cursor + 1, total: state.order.length, done }) +
-      (skippedLeft ? t("session.progressSkipped", { n: skippedLeft }) : "");
+      t("session.questionOf", { n: state.cursor + 1, total: state.order.length, done })
+      + (skippedLeft ? t("session.skippedSuffix", { n: skippedLeft }) : "");
   }
 
   /** Apply this session's shuffled choice order without touching stored data. */
@@ -289,35 +276,143 @@ function runSession(config) {
     return { ...q, choices: perm.map((i) => q.choices[i]), answer: perm.indexOf(q.answer) };
   }
 
+  /* ----- exam clock (exam mode only) ----- */
+  const examTimeText = el("span");
+  const examTimer = el("span.examtimer", { hidden: !isExam }, [icon(ICONS.clock, 13), examTimeText]);
+  let examTick = null, examAutoSubmitted = false;
+
+  function fmtClock(ms) {
+    const total = Math.max(0, Math.round(ms / 1000));
+    return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
+  }
+  function tickExam() {
+    if (state.deadlineAt) {
+      const left = state.deadlineAt - Date.now();
+      examTimer.classList.toggle("examtimer--warn", left <= 60000);
+      examTimeText.textContent = fmtClock(left);
+      if (left <= 0 && !examAutoSubmitted) {
+        examAutoSubmitted = true;
+        stopExam();
+        toast(t("session.examTimeUp"));
+        finish({ timedOut: true });
+      }
+    } else {
+      examTimeText.textContent = fmtClock(Date.now() - state.startedAt);
+    }
+  }
+  function startExam() {
+    if (!isExam || examTick) return;
+    tickExam();
+    examTick = setInterval(tickExam, 1000);
+  }
+  function stopExam() { if (examTick) { clearInterval(examTick); examTick = null; } }
+
+  /* ----- test mode: leave / re-enter mid-run ----- */
+  function paintTestBar() {
+    // Exam mode: a fixed warning, no toggle.
+    if (isExam) {
+      testBar.hidden = false;
+      clear(testBar);
+      testBar.className = "testbar note note--warn";
+      testBar.append(el("span", {}, t("session.examBanner")));
+      return;
+    }
+    if (!isTest) { testBar.hidden = true; return; }
+    testBar.hidden = false;
+    clear(testBar);
+    if (testMode) {
+      testBar.className = "testbar note note--warn";
+      testBar.append(
+        el("span", {}, tutorSilent ? t("session.testBanner") : t("session.testBannerHints", { n: hintBudget })),
+        el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: tryLeaveTestMode }, t("session.testOff")),
+      );
+    } else {
+      testBar.className = "testbar note";
+      testBar.append(
+        el("span", {}, t("session.testModeOff")),
+        el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: () => setTestMode(true) }, t("session.testOn")),
+      );
+    }
+  }
+
+  async function tryLeaveTestMode() {
+    // Explain the trade-off once; after that it's a free toggle.
+    if (!leftTestMode) {
+      const ok = await confirmDialog({
+        message: t("session.testOffConfirm"),
+        confirmLabel: t("session.testOff"),
+        cancelLabel: t("common.cancel"),
+      });
+      if (!ok) return;
+    }
+    setTestMode(false);
+  }
+
+  function setTestMode(on) {
+    testMode = on;
+    tutorSilent = testMode && hintBudget === 0;
+    if (!on) leftTestMode = true;
+
+    tutor.locked = tutorSilent;
+    tutor.formEl.hidden = tutorSilent;
+    hintFab.hidden = tutorSilent;
+
+    paintTestBar();
+    // Redo the current question so the change lands now, not next question —
+    // but only if it hasn't been answered yet.
+    const cur = currentId();
+    if (cur && !state.items[cur]) loadQuestion();
+    toast(t(on ? "session.testOnToast" : "session.testOffToast"));
+  }
+
+  /* ----- confidence prompt: only ask when it changes the schedule ----- */
+  // Same rule everywhere — regular practice, Review, and Weak-spots alike:
+  // only the ambiguous case (a clean first-try correct answer that might be
+  // a guess). Two is a ceiling, not a quota — rolling for it instead of
+  // always taking it means it doesn't land on the first eligible answer
+  // every time, and plenty of sessions get asked once or not at all.
+  let confidenceAsks = 0;
+  function askConfidence(result) {
+    if (!result.correct) return false;
+    if (result.srsGrade !== "easy") return false;
+    if (confidenceAsks >= 2) return false;
+    if (Math.random() >= 0.3) return false;
+    confidenceAsks++;
+    return true;
+  }
+
   function loadQuestion() {
     clear(stage);
     const found = store.findQuestion(currentId());
     if (!found) { dropMissing(); return; }
     const { assignment, question } = found;
+    lastPrompt = question.prompt;
 
     const answered = !!state.items[question.id];
     nextBtn.disabled = !answered;
-    nextBtn.textContent = unansweredCount() === 0 || (answered && state.cursor === state.order.length - 1)
-      ? t("session.finish") : t("session.next");
+    nextBtn.textContent = nextBtnLabel();
 
     // Skipping is only offered while there's somewhere else to go.
     const alreadySkipped = state.skipped.includes(question.id);
     skipBtn.hidden = answered || alreadySkipped || unansweredCount() <= 1;
 
-    if (testMode) tutor.showLocked(config.title);
+    if (tutorSilent) tutor.showLocked();
     else tutor.setQuestion(assignment, question);
 
     const r = renderQuestion({
       question: viewQuestion(question),
-      tutor: testMode ? null : tutor,
+      tutor: tutorSilent ? null : tutor,
       live: store.hasKey(),
       testMode,
+      askConfidence,
       onDone: (result) => {
+        const isNew = !state.items[question.id];
         state.items[question.id] = {
           questionId: question.id,
           topic: question.topic,
           correct: !!result.correct,
           selfRating: result.selfRating || null,
+          confidence: result.confidence || null,
           srsGrade: result.srsGrade,
           hintsUsed: result.hintsUsed || 0,
           appealed: !!result.appealed,
@@ -327,16 +422,73 @@ function runSession(config) {
         nextBtn.textContent = unansweredCount() === 0 ? t("session.finish") : t("session.next");
         paintProgress();
         persist();
+        if (isNew) adapt();
         // An appeal re-fires onDone for the same question; only log it once.
         if (!result.revised) tutor.recordOutcome(question, result);
-        if (!testMode) announce(result.correct ? "Correct." : "Not correct. The tutor can help.");
-        else announce("Answer recorded.");
+        // Sound follows the first verdict only — an appeal shouldn't re-chime.
+        if (isNew) (result.correct ? playCorrect : playWrong)();
+        if (!testMode) announce(result.correct ? t("session.annCorrect") : t("session.annWrong"));
+        else announce(t("session.annRecorded"));
       },
     });
 
     stage.appendChild(r.el);
     currentRenderer = r;
     paintProgress();
+  }
+
+  /* ----- adaptive pacing -----
+   * A practice run reacts once to how it's going: struggling opens the tutor
+   * and pulls the student's stronger topics forward; cruising offers an early
+   * finish. Session-local, never persisted, at most one of each. */
+  let easedAlready = false, cruiseOffered = false;
+
+  function recentAccuracy(n = 4) {
+    const items = Object.values(state.items).slice(-n);
+    if (!items.length) return null;
+    return items.filter((i) => i.correct).length / items.length;
+  }
+
+  function easeUpcoming() {
+    // Blend lifetime mastery with what's happened in this session so far.
+    const tm = masteryByTopic(store.attempts);
+    for (const it of Object.values(state.items)) {
+      if (!it.topic) continue;
+      const now = it.correct ? 1 : 0;
+      tm[it.topic] = tm[it.topic] == null ? now : (tm[it.topic] + now) / 2;
+    }
+    const rest = state.order.filter((id) => !state.items[id]);
+    const topicOf = (id) => store.findQuestion(id)?.question.topic;
+    rest.sort((a, b) => (tm[topicOf(b)] ?? 0.5) - (tm[topicOf(a)] ?? 0.5));
+    let i = 0;
+    state.order = state.order.map((id) => (state.items[id] ? id : rest[i++]));
+    persist();
+  }
+
+  function adapt() {
+    if (testMode || store.settings.adaptive === false) return;
+    const acc = recentAccuracy();
+    if (acc == null) return;
+
+    if (!easedAlready && answeredCount() >= 3 && acc < 0.4 && unansweredCount() > 1) {
+      easedAlready = true;
+      easeUpcoming();
+      tutor.el.classList.add("is-open");   // matters on mobile, harmless on desktop
+      clear(adaptiveEl);
+      adaptiveEl.appendChild(el("p.note.note--warn", {}, t("session.adaptiveEase")));
+      announce(t("session.adaptiveEase"));
+      return;
+    }
+
+    if (!cruiseOffered && answeredCount() >= 5 && acc >= 0.85 && unansweredCount() > 1) {
+      cruiseOffered = true;
+      clear(adaptiveEl);
+      adaptiveEl.appendChild(el("p.note", {}, [
+        t("session.adaptiveCruise"),
+        " ",
+        el("button.linkbtn", { type: "button", onclick: finish }, t("session.adaptiveFinishNow")),
+      ]));
+    }
   }
 
   function dropMissing() {
@@ -355,7 +507,7 @@ function runSession(config) {
     if (state.cursor >= state.order.length) state.cursor = state.order.length - 1;
     persist();
     loadQuestion();
-    announce(t("session.skippedAnnounce"));
+    announce(t("session.annSkipped"));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -363,23 +515,47 @@ function runSession(config) {
     if (!state.items[currentId()]) return;
     if (unansweredCount() === 0) { finish(); return; }
     // Advance to the next question that still needs answering.
-    const remaining = firstUnansweredIndex();
-    state.cursor = remaining;
+    state.cursor = firstUnansweredIndex();
     persist();
     loadQuestion();
-    announce(t("session.questionAnnounce", { n: state.cursor + 1, total: state.order.length }));
+    announce(t("session.annQuestion", { n: state.cursor + 1, total: state.order.length }));
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // Writes SRS for whatever in `items` hasn't already been committed this
+  // session (by an earlier exit, or an earlier call here), and marks it
+  // committed — so exiting partway through no longer throws away spaced-
+  // repetition credit for what was actually answered, and a later finish()
+  // of the same resumed session can't review the same question twice.
+  function commitSrs(items) {
+    const committed = new Set(state.committedSrs);
+    const fresh = items.filter((it) => !committed.has(it.questionId));
+    for (const it of fresh) {
+      const rec = review(store.state.srs[it.questionId], it.srsGrade || (it.correct ? "good" : "again"));
+      store.setSrs(it.questionId, rec);
+      committed.add(it.questionId);
+    }
+    state.committedSrs = [...committed];
   }
 
   async function exit() {
     persist();
-    if (await confirmDialog({ message: t("session.exitConfirm") })) {
+    if (await confirmDialog({
+      message: t("session.exitConfirm"),
+      confirmLabel: t("nav.leave"),
+      cancelLabel: t("nav.stay"),
+    })) {
+      // Only once the leave is actually confirmed — not speculatively before
+      // — so cancelling and then appealing the current question can still
+      // reschedule it (its id wouldn't be marked committed yet).
+      commitSrs(Object.values(state.items));
+      persist();
       location.hash = "#/";
     }
   }
 
   function finish(opts = {}) {
-    stopTimer();
+    stopExam();
     const answered = Object.values(state.items);
     const correct = answered.filter((i) => i.correct).length;
     const attempt = {
@@ -388,24 +564,21 @@ function runSession(config) {
       isReview: config.assignmentId === REVIEW_ID,
       title: config.title,
       retryHash: config.retryHash,
-      wasTest: testMode,
-      examMode: !!config.examMode,
+      // Switched out of test mode at any point → it's a practice run now.
+      wasTest: (config.type === "test" && !leftTestMode) || isExam,
+      examMode: isExam,
       timeLimitMin: config.timeLimitMin || null,
       timedOut: !!opts.timedOut,
       startedAt: state.startedAt,
       finishedAt: Date.now(),
       scorePct: answered.length ? Math.round((correct / answered.length) * 100) : 0,
+      tutorHints: Number.isFinite(hintBudget) ? hintBudget - tutor.hintsLeft : 0,
       items: answered,
     };
-    const newAchievements = store.recordAttempt(attempt);
-
-    for (const it of answered) {
-      const rec = review(store.state.srs[it.questionId], it.srsGrade || (it.correct ? "good" : "again"));
-      store.setSrs(it.questionId, rec);
-    }
+    store.recordAttempt(attempt);
+    commitSrs(answered);
 
     store.clearSession(config.key);
-    showAchievementUnlocks(newAchievements);
     location.hash = `#/results/${attempt.id}`;
   }
 
@@ -418,12 +591,12 @@ function runSession(config) {
   // ----- initial paint -----
   if (resumable) {
     const done = answeredCount();
-    const remaining = state.order.length - done;
+    const left = state.order.length - done;
     stage.appendChild(el("div.panel.resume", {}, [
       el("h3", {}, t("session.resumeTitle")),
       el("p.note", { style: { margin: "6px 0 16px" } },
-        plural(state.order.length, "session.resumeBodyOne", "session.resumeBodyMany", { done, total: state.order.length }) +
-        (remaining ? t("session.resumeMore", { n: remaining }) : t("session.resumeReady"))),
+        left ? t("session.resumeRemaining", { n: done, total: state.order.length, left })
+             : t("session.resumeDone", { n: done, total: state.order.length })),
       el("div", { style: { display: "flex", gap: "10px", flexWrap: "wrap" } }, [
         el("button.btn", {
           type: "button",
@@ -437,13 +610,13 @@ function runSession(config) {
   } else {
     loadQuestion();
   }
-  startTimer();
+  startExam();
 
   /* ----- keyboard shortcuts ----- */
   function onKeyDown(e) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
-    const t = e.target;
-    const typing = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
+    const target = e.target;
+    const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
 
     if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
       if (typing) return;
@@ -468,20 +641,24 @@ function runSession(config) {
   function toggleShortcuts() { shortcutsEl ? closeShortcuts() : openShortcuts(); }
   function closeShortcuts() { shortcutsEl?.remove(); shortcutsEl = null; }
   function openShortcuts() {
-    shortcutsEl = el("div.modal", { role: "dialog", "aria-modal": "true", "aria-label": "Keyboard shortcuts",
-      onclick: (e) => { if (e.target === shortcutsEl) closeShortcuts(); } }, [
+    shortcutsEl = el("div.modal", {
+      role: "dialog", "aria-modal": "true", "aria-label": t("keys.title"),
+      onclick: (e) => { if (e.target === shortcutsEl) closeShortcuts(); },
+    }, [
       el("div.modal__card", {}, [
-        el("h3", { style: { marginBottom: "12px" } }, t("session.shortcutsTitle")),
+        el("h3", { style: { marginBottom: "12px" } }, t("keys.title")),
         el("table.preset-table", {}, [el("tbody", {}, [
-          keyRow("A – D  or  1 – 4", t("session.shortcutPickMc")),
-          keyRow("Enter", t("session.shortcutCheck")),
-          keyRow("→", t("session.shortcutNext")),
-          keyRow("S", t("session.shortcutSkip")),
-          keyRow("Space", t("session.shortcutFlip")),
-          keyRow("?", t("session.shortcutShow")),
-          keyRow("Esc", t("session.close")),
+          keyRow("A – D  ·  1 – 4", t("keys.pick")),
+          keyRow("Enter", t("keys.enter")),
+          keyRow("→", t("keys.next")),
+          keyRow("S", t("keys.skip")),
+          keyRow("Space", t("keys.space")),
+          keyRow("?", t("keys.show")),
+          keyRow("Esc", t("keys.close")),
         ])]),
-        el("button.btn.btn--ghost.btn--sm", { type: "button", style: { marginTop: "16px" }, onclick: closeShortcuts }, t("session.close")),
+        el("button.btn.btn--ghost.btn--sm", {
+          type: "button", style: { marginTop: "16px" }, onclick: closeShortcuts,
+        }, t("common.close")),
       ]),
     ]);
     document.body.appendChild(shortcutsEl);
@@ -493,6 +670,47 @@ function runSession(config) {
 
   document.addEventListener("keydown", onKeyDown);
 
+  // A one-time nudge that the shortcuts exist at all — the button carries it
+  // from then on. Shown once ever, per browser.
+  let tipTimer = null;
+  try {
+    if (!localStorage.getItem(TIP_SEEN_KEY)) {
+      localStorage.setItem(TIP_SEEN_KEY, "1");
+      tipTimer = setTimeout(() => toast(t("session.shortcutTip")), 1200);
+    }
+  } catch { /* private mode — skip the tip rather than fail */ }
+
+  const shortcutsBtn = el("button.iconbtn.shortcutsbtn", {
+    type: "button",
+    "aria-label": t("session.shortcutsBtn"),
+    title: `${t("session.shortcutsBtn")}  (?)`,
+    onclick: toggleShortcuts,
+  }, [icon(ICONS.keyboard, 18)]);
+
+  /* ----- optional Pomodoro focus timer ----- */
+  const pomoMin = Number(store.settings.pomodoro) || 0;
+  const pomoEl = el("span.pomo", { hidden: !pomoMin, title: t("session.pomoTitle") });
+  let pomoLeft = pomoMin * 60, pomoTimer = null, pomoRung = false;
+  function paintPomo() {
+    const m = Math.floor(Math.max(0, pomoLeft) / 60);
+    const s = Math.max(0, pomoLeft) % 60;
+    pomoEl.textContent = `${m}:${String(s).padStart(2, "0")}`;
+    pomoEl.classList.toggle("is-up", pomoLeft <= 0);
+  }
+  if (pomoMin) {
+    paintPomo();
+    pomoTimer = setInterval(() => {
+      pomoLeft--;
+      paintPomo();
+      if (pomoLeft <= 0 && !pomoRung) {
+        pomoRung = true;
+        playChime();
+        toast(t("session.pomoDone"));
+        clearInterval(pomoTimer);
+      }
+    }, 1000);
+  }
+
   /* ----- mobile: tutor as a slide-up sheet ----- */
   const hintFab = el("button.hintfab", {
     type: "button",
@@ -503,20 +721,58 @@ function runSession(config) {
       if (open) tutor.el.querySelector(".tutor__log")?.scrollTo(0, 0);
     },
   }, t("session.needHint"));
-  if (testMode) hintFab.hidden = true;
+  if (tutorSilent) hintFab.hidden = true;
+
+  paintTestBar();
+
+  // Kept as refs so a mid-session language switch can refresh their text
+  // without rebuilding the session (see onLangSession below).
+  const headH2 = el("h2", {}, headTitle());
+  const badgeEl = el("span.badge", {}, badgeLabel(config));
+  const reviewMoreEl = config.reviewRemaining > 0
+    ? el("p.note", {}, t("session.reviewMore", { n: config.reviewRemaining })) : null;
+
+  /** Language switched mid-session. main.js has already re-translated demo and
+   *  library set content in the store; refresh this session's chrome text, and
+   *  reload the current question only if its wording actually changed and it's
+   *  still unanswered — so a student's own set (or an answered question the
+   *  student's done with) keeps its tutor thread and any half-typed answer. */
+  function onLangSession() {
+    const title = headTitle();
+    headH2.textContent = title;
+    document.title = `${title} · StudyBuddy`;   // render() skips this on the chrome-only path
+    badgeEl.textContent = badgeLabel(config);
+    nextBtn.textContent = nextBtnLabel();
+    skipBtn.textContent = t("session.skip");
+    exitBtn.textContent = t("session.exit");
+    if (reviewMoreEl) reviewMoreEl.textContent = t("session.reviewMore", { n: config.reviewRemaining });
+    if (!hintFab.hidden) {
+      hintFab.textContent = tutor.el.classList.contains("is-open")
+        ? t("session.hideTutor") : t("session.needHint");
+    }
+    paintProgress();
+    paintTestBar();
+    const q = store.findQuestion(currentId())?.question;
+    if (q && lastPrompt != null && q.prompt !== lastPrompt && !state.items[q.id]) loadQuestion();
+  }
+  window.addEventListener("sb:langsession", onLangSession);
 
   const node = el("div", {}, [
-    el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", marginBottom: "8px", flexWrap: "wrap" } }, [
-      el("h2", {}, config.title),
-      el("div", { style: { display: "flex", gap: "8px", alignItems: "center", flex: "none" } }, [
-        timerEl,
-        el("span.badge", {}, badgeLabel(config)),
+    homeButton({ confirm: true }),
+    el("div.session__head", {}, [
+      headH2,
+      el("span.session__headright", {}, [
+        examTimer,
+        pomoEl,
+        badgeEl,
+        shortcutsBtn,
       ]),
     ]),
-    testMode ? el("p.note.note--warn", { style: { marginBottom: "10px" } },
-      t("session.testModeWarn")) : null,
+    testBar,
+    reviewMoreEl,
     el("div.progressbar", {}, [fill]),
     label,
+    adaptiveEl,
     el("div.session", {}, [
       el("div", {}, [
         stage,
@@ -528,18 +784,19 @@ function runSession(config) {
       tutor.el,
     ]),
     hintFab,
-    el("p.note.kbdhint", {}, [
-      t("session.kbdHintPre"), el("kbd", {}, "?"), t("session.kbdHintPost"),
-    ]),
   ].filter(Boolean));
 
   return {
     title: config.title,
     node,
     cleanup: () => {
+      sessionActive = false;
       document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("sb:langsession", onLangSession);
+      clearTimeout(tipTimer);
+      clearInterval(pomoTimer);
+      stopExam();
       closeShortcuts();
-      stopTimer();
       tutor.destroy();
     },
   };
@@ -571,19 +828,31 @@ function shuffled(arr) {
 }
 
 function badgeLabel(config) {
+  if (config.examMode) return t("session.examBadge");
   if (config.assignmentId === REVIEW_ID) return t("session.badgeReview");
   if (config.assignmentId === PRACTICE_ID) return t("session.badgePractice");
   if (config.assignmentId === WEAK_ID) return t("session.badgeWeak");
-  if (config.assignmentId?.startsWith?.(NATIONAL_MIX_PREFIX)) return t("session.nationalTest");
-  if (config.examMode) return t("session.badgeExamMode");
-  return config.type === "test" ? t("session.badgeTest") : t("session.badgeAssignment");
+  if (config.assignmentId?.startsWith?.(NATIONAL_MIX_PREFIX)) return t("session.badgeNationalMix");
+  return config.type === "test" ? t("common.test") : t("common.assignment");
+}
+
+function emptyScreen(title, body, pageTitle) {
+  return {
+    title: pageTitle,
+    node: el("div.empty", {}, [
+      icon(ICONS.check, 26),
+      el("h2", {}, title),
+      el("p", {}, body),
+      el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
+    ]),
+  };
 }
 
 function notFound(message) {
   return {
     title: t("session.notFoundTitle"),
     node: el("div.empty", {}, [
-      el("h2", {}, t("session.nothingToStudy")),
+      el("h2", {}, t("session.notFoundTitle")),
       el("p", {}, message),
       el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
     ]),

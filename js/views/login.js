@@ -8,22 +8,26 @@ import { t } from "../lib/i18n.js";
 export function renderLogin() {
   let mode = "login"; // | "signup"
 
-  const emailInput = el("input", { type: "email", autocomplete: "email", placeholder: "you@example.com" });
-  const passInput = el("input", { type: "password", placeholder: "••••••••" });
-  const errorNote = el("p.note.note--warn", { style: { display: "none" } });
-  const submitBtn = el("button.btn", { type: "submit" }, t("login.signIn"));
+  // No server reachable → the whole form is inert; disable it rather than let
+  // someone fill it in and hit a network error.
+  const serverDown = !store.proxyUp;
+
+  const emailInput = el("input", { type: "email", autocomplete: "email", placeholder: "you@example.com", disabled: serverDown });
+  const passInput = el("input", { type: "password", placeholder: "••••••••", disabled: serverDown });
+  const errorNote = el("p.note.note--warn", { hidden: true });
+  const submitBtn = el("button.btn", { type: "submit", disabled: serverDown }, t("login.signIn"));
   const toggleBtn = el("button.btn.btn--ghost.btn--sm", { type: "button" }, "");
 
   function paintMode() {
     submitBtn.textContent = mode === "login" ? t("login.signIn") : t("login.createAccount");
     toggleBtn.textContent = mode === "login" ? t("login.needAccount") : t("login.haveAccount");
     passInput.autocomplete = mode === "login" ? "current-password" : "new-password";
-    passInput.placeholder = mode === "login" ? "••••••••" : t("login.atLeast8");
+    passInput.placeholder = mode === "login" ? "••••••••" : t("login.passwordHint");
   }
 
   toggleBtn.addEventListener("click", () => {
     mode = mode === "login" ? "signup" : "login";
-    errorNote.style.display = "none";
+    errorNote.hidden = true;
     paintMode();
   });
 
@@ -34,15 +38,15 @@ export function renderLogin() {
     if (!email || !password) return;
 
     submitBtn.disabled = true;
-    errorNote.style.display = "none";
+    errorNote.hidden = true;
     try {
       if (mode === "login") await store.login(email, password);
       else await store.signup(email, password);
-      toast(mode === "login" ? t("login.signedIn") : t("login.accountCreated"));
+      toast(mode === "login" ? t("login.signedInToast") : t("login.createdToast"));
       location.hash = "#/settings";
     } catch (err) {
       errorNote.textContent = err.message || t("login.somethingWrong");
-      errorNote.style.display = "";
+      errorNote.hidden = false;
     } finally {
       submitBtn.disabled = false;
     }
@@ -57,14 +61,14 @@ export function renderLogin() {
   ]);
 
   const node = el("div.settings", {}, [
-    el("h1", {}, t("login.pageHeading")),
+    el("h1", {}, t("login.title")),
     el("section.panel", {}, [
       el("p.note", { style: { margin: "0 0 16px" } }, t("login.intro")),
+      serverDown ? el("p.note.note--warn", { style: { margin: "0 0 16px" } }, t("login.serverDown")) : null,
       form,
-    ]),
-    !store.proxyUp && el("p.note", {}, t("login.backendDown")),
-    el("a.btn.btn--ghost", { href: "#/settings" }, [icon(ICONS.back, 16), t("login.backToSettings")]),
+    ].filter(Boolean)),
+    el("a.btn.btn--ghost", { href: "#/settings" }, [icon(ICONS.back, 16), t("login.back")]),
   ]);
 
-  return { title: t("login.pageTitle"), node };
+  return { title: t("login.title"), node };
 }
