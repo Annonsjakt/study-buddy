@@ -304,7 +304,7 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .dash__card--hero .dash__value { font-size: 2.25rem; }
 .dash__valuerow { display: flex; align-items: baseline; gap: var(--s-3); flex-wrap: wrap; }
 .dash__trend {
-  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--r-full);
+  display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--r-sm);
   background: var(--ok-tint); color: var(--ok-ink); font-size: var(--fs-sm); font-weight: 700;
   max-width: 100%;
 }
