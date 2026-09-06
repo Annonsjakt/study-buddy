@@ -649,6 +649,95 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .due-list { display: flex; flex-direction: column; gap: var(--s-2); }
 .due-item { display: flex; justify-content: space-between; gap: var(--s-3); padding: var(--s-3) var(--s-4); border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
 
+/* ---------- achievements ---------- */
+.achteaser { display: block; text-decoration: none; color: inherit; padding: var(--s-4); transition: transform var(--dur-fast) var(--ease-spring), box-shadow var(--dur-fast); }
+.achteaser:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+.achteaser__top { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-2); }
+.achteaser__top h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-faint); margin: 0; }
+.achteaser__top .badge { background: var(--brand-tint); color: var(--brand-ink); }
+
+.achievements-page { display: flex; flex-direction: column; gap: var(--s-5); }
+.achievements-head h1 { margin-bottom: 4px; }
+.ach-summary__bar { margin-top: var(--s-3); height: 8px; border-radius: var(--r-full); background: var(--surface-sunk); overflow: hidden; max-width: 360px; }
+.ach-summary__bar i { display: block; height: 100%; border-radius: inherit; background: var(--brand); transition: width var(--dur-slow) var(--ease-out); }
+
+.achgroup__title { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-4); color: var(--ink-soft); font-size: var(--fs-md); }
+.achrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s-3); }
+
+.achbadge {
+  display: flex; gap: var(--s-3); align-items: flex-start;
+  padding: var(--s-4); border-radius: var(--r-md);
+  background: var(--surface); border: 1px solid var(--line);
+  animation: pop-in var(--dur-mid) var(--ease-out) both;
+}
+.achbadge__icon {
+  flex: none; width: 44px; height: 44px; border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--surface-sunk); color: var(--ink-faint); border: 1px solid var(--line-strong);
+}
+.achbadge__body { min-width: 0; }
+.achbadge__top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.achbadge__tiername { font-weight: 700; font-size: var(--fs-sm); color: var(--ink-faint); text-transform: uppercase; letter-spacing: .03em; }
+.achbadge__check { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: var(--r-full); background: var(--ok); color: #fff; }
+.achbadge__desc { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.4; margin: 0 0 var(--s-2); }
+.achbadge__unlockdate { font-size: var(--fs-sm); color: var(--ink-faint); font-weight: 600; margin: 0; }
+.achbadge__progress { display: flex; align-items: center; gap: var(--s-2); }
+.achbadge__bar { flex: 1; height: 6px; border-radius: var(--r-full); background: var(--surface-sunk); overflow: hidden; }
+.achbadge__bar i { display: block; height: 100%; border-radius: inherit; background: var(--ink-faint); transition: width var(--dur-slow) var(--ease-out); }
+.achbadge__fraction { font-size: var(--fs-sm); color: var(--ink-faint); font-variant-numeric: tabular-nums; flex: none; }
+
+/* Locked badges stay neutral (no spoiler color until earned); unlocked ones
+   pick up their tier's color. Platinum has no flat token — it's the one tier
+   that gets a gradient, so "the best badge" reads as genuinely special
+   rather than as a fourth solid swatch next to gold. */
+.achbadge--unlocked { border-color: transparent; }
+.achbadge--unlocked:hover { transform: translateY(-2px); }
+
+.achbadge--unlocked.achbadge--bronze { background: var(--ach-bronze-tint); }
+.achbadge--unlocked.achbadge--bronze .achbadge__icon { background: var(--ach-bronze); color: #fff; border-color: transparent; }
+.achbadge--unlocked.achbadge--bronze .achbadge__tiername { color: var(--ach-bronze-ink); }
+
+.achbadge--unlocked.achbadge--silver { background: var(--ach-silver-tint); }
+.achbadge--unlocked.achbadge--silver .achbadge__icon { background: var(--ach-silver); color: #fff; border-color: transparent; }
+.achbadge--unlocked.achbadge--silver .achbadge__tiername { color: var(--ach-silver-ink); }
+
+.achbadge--unlocked.achbadge--gold { background: var(--ach-gold-tint); }
+.achbadge--unlocked.achbadge--gold .achbadge__icon { background: var(--ach-gold); color: #fff; border-color: transparent; }
+.achbadge--unlocked.achbadge--gold .achbadge__tiername { color: var(--ach-gold-ink); }
+
+.achbadge--unlocked.achbadge--platinum { background: linear-gradient(135deg, var(--brand-tint), var(--c-ocean-tint) 60%, var(--c-berry-tint)); }
+.achbadge--unlocked.achbadge--platinum .achbadge__icon {
+  background: linear-gradient(135deg, var(--brand), var(--c-ocean) 55%, var(--c-berry));
+  color: #fff; border-color: transparent;
+  box-shadow: 0 0 0 3px var(--surface), 0 0 14px rgba(100, 86, 196, .35);
+}
+.achbadge--unlocked.achbadge--platinum .achbadge__tiername { color: var(--brand-ink); }
+
+/* The unlock celebration: a card that drops in from the top, independent of
+   routing (appended straight to <body>), so it survives the navigation from
+   the session to the results page that normally follows right away. */
+.achtoast {
+  position: fixed; left: 50%; top: var(--s-5); z-index: 90;
+  display: flex; align-items: center; gap: var(--s-3);
+  min-width: 280px; max-width: min(400px, calc(100vw - 32px));
+  padding: var(--s-4) var(--s-5); border-radius: var(--r-lg);
+  background: var(--surface); border: 1px solid var(--line-strong); box-shadow: var(--shadow-2);
+  transform: translate(-50%, -20px); opacity: 0; pointer-events: none;
+  transition: transform var(--dur-mid) var(--ease-spring), opacity var(--dur-mid);
+}
+.achtoast.show { transform: translate(-50%, 0); opacity: 1; }
+.achtoast__icon { flex: none; width: 48px; height: 48px; border-radius: var(--r-full); display: grid; place-items: center; background: var(--surface-sunk); color: var(--ink-soft); }
+.achtoast__eyebrow { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin: 0; }
+.achtoast__name { font-family: var(--font-display); font-weight: 700; margin: 1px 0; }
+.achtoast__desc { font-size: var(--fs-sm); color: var(--ink-soft); margin: 0; }
+
+.achtoast--bronze .achtoast__icon { background: var(--ach-bronze); color: #fff; }
+.achtoast--silver .achtoast__icon { background: var(--ach-silver); color: #fff; }
+.achtoast--gold .achtoast__icon { background: var(--ach-gold); color: #fff; }
+.achtoast--platinum .achtoast__icon { background: linear-gradient(135deg, var(--brand), var(--c-ocean) 55%, var(--c-berry)); color: #fff; }
+.achtoast--gold { border-color: var(--ach-gold); }
+.achtoast--platinum { border-color: var(--brand-bright); }
+
 /* ---------- create flow ---------- */
 .steps { display: flex; gap: var(--s-2); margin-bottom: var(--s-5); flex-wrap: wrap; }
 .step { font-size: var(--fs-sm); font-weight: 700; color: var(--ink-faint); display: flex; align-items: center; gap: 6px; }

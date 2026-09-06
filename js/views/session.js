@@ -13,6 +13,7 @@ import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
 import { t, plural } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
+import { showAchievementUnlocks } from "../lib/achievement-toast.js";
 
 export async function renderSession(assignmentId, qs) {
   // Warms the cache store.getAssignment() reads from — needed even for a
@@ -362,7 +363,7 @@ function runSession(config) {
       scorePct: answered.length ? Math.round((correct / answered.length) * 100) : 0,
       items: answered,
     };
-    store.recordAttempt(attempt);
+    const newAchievements = store.recordAttempt(attempt);
 
     for (const it of answered) {
       const rec = review(store.state.srs[it.questionId], it.srsGrade || (it.correct ? "good" : "again"));
@@ -370,6 +371,7 @@ function runSession(config) {
     }
 
     store.clearSession(config.key);
+    showAchievementUnlocks(newAchievements);
     location.hash = `#/results/${attempt.id}`;
   }
 

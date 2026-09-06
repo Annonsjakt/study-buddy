@@ -13,6 +13,7 @@ import { renderEdit } from "./views/edit.js";
 import { renderSession, renderReview, renderPractice, renderNationalMix } from "./views/session.js";
 import { renderResults } from "./views/results.js";
 import { renderProgress } from "./views/progress.js";
+import { renderAchievements } from "./views/achievements.js";
 import { renderSettings } from "./views/settings.js";
 import { renderLogin } from "./views/login.js";
 import { renderParentHub, renderParentStudent } from "./views/parent-dashboard.js";
@@ -30,6 +31,7 @@ const routes = [
   { rx: /^\/session\/(.+)$/, view: (m, qs) => renderSession(m[1], qs) },
   { rx: /^\/results\/(.+)$/, view: (m) => renderResults(m[1]) },
   { rx: /^\/progress$/, view: () => renderProgress() },
+  { rx: /^\/achievements$/, view: () => renderAchievements() },
   { rx: /^\/settings$/, view: () => renderSettings() },
   { rx: /^\/login$/, view: () => renderLogin() },
   { rx: /^\/parent$/, view: () => renderParentHub() },
@@ -59,6 +61,7 @@ function navItems() {
     { href: "#/bibliotek", match: "/bibliotek", icon: ICONS.book, label: t("nav.library") },
     { href: "#/create", match: "/create", icon: ICONS.plus, label: t("nav.create") },
     { href: "#/progress", match: "/progress", icon: ICONS.chart, label: t("nav.progress") },
+    { href: "#/achievements", match: "/achievements", icon: ICONS.award, label: t("nav.achievements") },
   ];
   if (store.authed) items.push({ href: "#/parent", match: "/parent", icon: ICONS.users, label: t("nav.parent") });
   items.push({ href: "#/settings", match: "/settings", icon: ICONS.gear, label: t("nav.settings") });
@@ -108,6 +111,7 @@ function shell(contentNode) {
           el("div.topbar__nav-icons", {}, [
             el("a.iconbtn", { href: "#/bibliotek", "aria-label": t("nav.library"), title: t("nav.library") }, [icon(ICONS.book, 18)]),
             el("a.iconbtn", { href: "#/progress", "aria-label": t("nav.progress"), title: t("nav.progress") }, [icon(ICONS.chart, 18)]),
+            el("a.iconbtn", { href: "#/achievements", "aria-label": t("nav.achievements"), title: t("nav.achievements") }, [icon(ICONS.award, 18)]),
             store.authed && el("a.iconbtn", { href: "#/parent", "aria-label": t("nav.parent"), title: t("nav.parent") }, [icon(ICONS.users, 18)]),
             el("a.iconbtn", { href: "#/settings", "aria-label": t("nav.settings"), title: t("nav.settings") }, [icon(ICONS.gear, 18)]),
           ].filter(Boolean)),

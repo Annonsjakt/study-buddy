@@ -4,6 +4,7 @@
 import { store } from "../store.js";
 import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { masteryByTopic, masteryForAssignment, masteryForSubject, masteryProgress } from "../lib/mastery.js";
+import { ACHIEVEMENTS, achievementMetrics } from "../lib/achievements.js";
 import { t, plural, getLang } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 
@@ -359,7 +360,7 @@ export async function renderMenu() {
         grid,
       ]),
     ]),
-    el("aside.home__aside", {}, [examCard(), tipCard()]),
+    el("aside.home__aside", {}, [achievementsTeaser(), examCard(), tipCard()]),
   ]);
 
   return { title: t("menu.pageTitle"), node, cleanup: closeCardMenu };
@@ -464,6 +465,33 @@ function ring(v, color, extraClass) {
 function greeting() {
   const h = new Date().getHours();
   return h < 12 ? t("greeting.morning") : h < 18 ? t("greeting.afternoon") : t("greeting.evening");
+}
+
+/** Right-rail card: overall badge count plus a nudge toward whichever badge
+ *  is closest to unlocking — a concrete, achievable "next" rather than the
+ *  whole 20-badge board dumped in the sidebar. */
+function achievementsTeaser() {
+  const metrics = achievementMetrics({
+    attempts: store.attempts, streak: store.streak,
+    subjects: store.subjects, assignments: store.assignments,
+  });
+  const unlocked = store.unlockedAchievements;
+  const unlockedCount = ACHIEVEMENTS.filter((a) => unlocked[a.id]).length;
+
+  const next = ACHIEVEMENTS
+    .filter((a) => !unlocked[a.id])
+    .map((a) => ({ a, remaining: a.target - Math.min(metrics[a.track] ?? 0, a.target) }))
+    .sort((x, y) => x.remaining - y.remaining)[0];
+
+  return el("a.panel.achteaser", { href: "#/achievements" }, [
+    el("div.achteaser__top", {}, [
+      el("h3", {}, t("ach.teaserTitle")),
+      el("span.badge", {}, `${unlockedCount}/${ACHIEVEMENTS.length}`),
+    ]),
+    el("p.note", {}, next
+      ? t("ach.teaserNext", { desc: t(next.a.descKey, { n: next.a.target }) })
+      : t("ach.teaserAllDone")),
+  ]);
 }
 
 /** Right-rail card: a countdown to whatever exam the student is aiming at

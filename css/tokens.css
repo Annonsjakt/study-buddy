@@ -49,6 +49,16 @@
   --c-berry:       #C14A75;  --c-berry-ink:     #B0446A;  --c-berry-tint:     #FCE7EF;
   --c-sky:         #3E6BDB;  --c-sky-ink:       #3E67C5;  --c-sky-tint:       #E6EDFD;
 
+  /* --- achievement tiers ---
+     Bronze/silver/gold as three more flat swatches, same pattern as the
+     subject colors above. Platinum has no flat swatch — it's built from
+     brand/ocean/berry as a gradient (see .achbadge--platinum in app.css),
+     since "the best tier" earns more by reading as genuinely different from
+     one more solid color than by matching this pattern for its own sake. */
+  --ach-bronze:    #B5651D;  --ach-bronze-ink:  #8A4A15;  --ach-bronze-tint:  #F7E7D8;
+  --ach-silver:    #8A93A6;  --ach-silver-ink:  #5F6779;  --ach-silver-tint:  #EAECF1;
+  --ach-gold:      #C9971F;  --ach-gold-ink:    #8F6B15;  --ach-gold-tint:    #FBF0D6;
+
   /* --- typography --- */
   --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-body:    "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -155,6 +165,10 @@ html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decorat
   --c-berry:       #D580A0;  --c-berry-ink:     #C55074;  --c-berry-tint:     #351E29;
   --c-sky:         #6E92E8;  --c-sky-ink:       #4E76D6;  --c-sky-tint:       #1E2740;
 
+  --ach-bronze:    #D98F5D;  --ach-bronze-ink:  #E8A97A;  --ach-bronze-tint:  #3B2A17;
+  --ach-silver:    #AEB6C4;  --ach-silver-ink:  #C7CDD9;  --ach-silver-tint:  #262A33;
+  --ach-gold:      #E8C25A;  --ach-gold-ink:    #F0D488;  --ach-gold-tint:    #3B3016;
+
   --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.30);
   --shadow-2: 0 2px 6px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.45);
   --ring: 0 0 0 3px var(--canvas), 0 0 0 6px var(--brand-bright);
@@ -204,6 +218,10 @@ html[data-readmode] em, html[data-readmode] i { font-style: normal; text-decorat
     --c-tangerine:   #E39A5C;  --c-tangerine-ink: #C77A2F;  --c-tangerine-tint: #3B2A16;
     --c-berry:       #D580A0;  --c-berry-ink:     #C55074;  --c-berry-tint:     #351E29;
     --c-sky:         #6E92E8;  --c-sky-ink:       #4E76D6;  --c-sky-tint:       #1E2740;
+
+    --ach-bronze:    #D98F5D;  --ach-bronze-ink:  #E8A97A;  --ach-bronze-tint:  #3B2A17;
+    --ach-silver:    #AEB6C4;  --ach-silver-ink:  #C7CDD9;  --ach-silver-tint:  #262A33;
+    --ach-gold:      #E8C25A;  --ach-gold-ink:    #F0D488;  --ach-gold-tint:    #3B3016;
 
     --shadow-1: 0 1px 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.30);
     --shadow-2: 0 2px 6px rgba(0,0,0,.40), 0 14px 32px rgba(0,0,0,.45);

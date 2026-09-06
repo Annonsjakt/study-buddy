@@ -7,6 +7,7 @@ import { findQuestion as findQuestionPure, dueQuestions as dueQuestionsPure } fr
 import { PROXY_HEALTH_URL, AUTH_SIGNUP_URL, AUTH_LOGIN_URL, AUTH_LOGOUT_URL, AUTH_ME_URL, STATE_URL } from "./config.js";
 import { t, getLang } from "./lib/i18n.js";
 import { getCachedQuestionTranslation } from "./lib/library-content.js";
+import { ACHIEVEMENTS, achievementMetrics } from "./lib/achievements.js";
 
 // An already-imported library set has its (Swedish) content copied straight
 // into the student's own assignments array, so switching the app to English
@@ -85,6 +86,7 @@ function seedState() {
     sessions: {},                    // in-progress sessions, keyed by session key
     activity: { daysStudied: [] },   // streak is derived, never stored
     readNotifications: {},           // { [notificationId]: signature } — see topbarActions() in main.js
+    achievements: {},                // { [achievementId]: unlockedAtMs } — see checkAchievements()
   };
 }
 
@@ -135,6 +137,7 @@ function migrate(state) {
   s.attempts = s.attempts || [];
   s.assignments = s.assignments || [];
   s.readNotifications = s.readNotifications || {};
+  s.achievements = s.achievements || {};
   return s;
 }
 
@@ -174,6 +177,10 @@ class Store extends EventTarget {
       this.state = seedState();
     }
     this.save({ skipPush: true });
+    // Backfills badges for history that already qualifies (e.g. a returning
+    // user whose existing streak/attempts already clear a threshold), so
+    // this feature's rollout doesn't start every existing student at zero.
+    this.checkAchievements();
 
     try {
       const res = await fetch(PROXY_HEALTH_URL);
@@ -427,10 +434,37 @@ class Store extends EventTarget {
         s.activity.daysStudied.sort();
       }
     });
+    return this.checkAchievements();
   }
 
   setSrs(questionId, record) {
     this.update((s) => { s.srs[questionId] = record; });
+  }
+
+  // ---------- achievements ----------
+  get unlockedAchievements() { return this.state.achievements; }
+
+  /** Evaluate every achievement track against current state, permanently
+   *  recording (with a timestamp) any whose threshold is newly met. Returns
+   *  the newly-unlocked ones so a caller can celebrate them. Recorded ids are
+   *  never removed, so a badge stays earned even if the underlying metric
+   *  later dips — e.g. "subjects mastered" is a live measurement, not a
+   *  running total, and a bad week shouldn't take a trophy back. */
+  checkAchievements() {
+    const metrics = achievementMetrics({
+      attempts: this.state.attempts, streak: this.streak,
+      subjects: this.state.subjects, assignments: this.state.assignments,
+    });
+    const newly = [];
+    for (const def of ACHIEVEMENTS) {
+      if (this.state.achievements[def.id]) continue;
+      if ((metrics[def.track] ?? 0) >= def.target) {
+        this.state.achievements[def.id] = Date.now();
+        newly.push(def);
+      }
+    }
+    if (newly.length) this.save();
+    return newly;
   }
 
   // ---------- settings ----------
