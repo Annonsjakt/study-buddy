@@ -62,8 +62,8 @@ function badge(def, metrics, unlockedMap) {
   // their own name → show that instead of a generic "Milestone" four times.
   const tierLabel = def.track ? t(`ach.tier.${def.tier}`) : t(def.nameKey);
 
-  const shareBtn = isUnlocked ? el("button.iconbtn.iconbtn--sm.achbadge__share", {
-    type: "button", "aria-label": t("share.shareButton"), title: t("share.shareButton"),
+  const shareBtn = isUnlocked ? el("button.achbadge__share", {
+    type: "button", "aria-label": t("share.shareButton"),
     onclick: (e) => {
       e.stopPropagation();
       shareCard({
@@ -75,7 +75,7 @@ function badge(def, metrics, unlockedMap) {
         filename: "studybuddy-badge.png",
       });
     },
-  }, [icon(ICONS.share, 13)]) : null;
+  }, [icon(ICONS.share, 13), t("share.shareButton")]) : null;
 
   return el(`div.achbadge.achbadge--${def.tier}` + (isUnlocked ? ".achbadge--unlocked" : ""), {}, [
     el("div.achbadge__icon", {}, icon(ICONS[def.icon] || ICONS.award, 22)),

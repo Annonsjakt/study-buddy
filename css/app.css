@@ -1785,8 +1785,19 @@ kbd {
 .sharecard__close { position: absolute; top: var(--s-2); right: var(--s-2); }
 .sharecard__preview { width: 100%; border-radius: var(--r-md); margin: var(--s-3) 0; display: block; }
 .sharecard__actions { display: flex; gap: var(--s-3); justify-content: center; flex-wrap: wrap; }
-.achbadge__share { margin-left: auto; width: 26px; height: 26px; color: var(--ink-faint); }
-.achbadge__share:hover { color: var(--brand); }
+/* A fixed-dark pill regardless of theme, like .toast — a small "chip" of
+   chrome rather than a themed control, so it reads the same on every badge. */
+.achbadge__share {
+  margin-left: auto; flex: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border: none; border-radius: var(--r-full);
+  background: #232330; color: #fff;
+  font-family: var(--font-display); font-weight: 600; font-size: 12px;
+  cursor: pointer; box-shadow: var(--shadow-1);
+  transition: transform var(--dur-fast) var(--ease-spring), background var(--dur-fast);
+}
+.achbadge__share svg { flex: none; }
+.achbadge__share:hover { transform: translateY(-1px); background: #000; }
 
 @media print {
   .topbar, .hintfab, [data-noprint], .toast, .savebar, .achtoast, .popover, .sharecard-backdrop { display: none !important; }
