@@ -5,6 +5,7 @@ import { el, clear, icon, ICONS, toast, uid } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
 import { extractPdfText, extractZipText, readImageFile, fitText } from "../material.js";
 import { parseCards, cardsToDoc } from "../lib/import.js";
+import { parseSharedSet, importSharedSet } from "../lib/share-set.js";
 import { detectSections } from "../lib/split.js";
 import { homeButton } from "../components/nav.js";
 import { generateAssignment, ClaudeError } from "../claude.js";
@@ -104,9 +105,12 @@ export function renderCreate(prefill) {
     if (made) location.hash = "#/";
   }
 
-  /* ---- step 1: source ---- */
+  /* ---- step 1: source ----
+   * The two paths that work with no server (build it / import cards) lead;
+   * the AI-generated ones follow, marked when there's no server to run them. */
   function sourceStep() {
-    const opt = (key, iconPath, label, desc) => el("button.source-opt", {
+    const noServer = !store.hasKey();
+    const opt = (key, iconPath, label, desc, needsAi) => el("button.source-opt" + (needsAi && noServer ? ".source-opt--locked" : ""), {
       type: "button",
       onclick: () => {
         // Leaving the Nationellt prov source: drop any stale subject lock.
@@ -117,19 +121,23 @@ export function renderCreate(prefill) {
         }
         state.source = key; state.step = "input"; paint();
       },
-    }, [icon(iconPath, 26), label, el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, desc)]);
+    }, [
+      icon(iconPath, 26), label,
+      el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, desc),
+      needsAi && noServer ? el("span.source-opt__tag", {}, t("create.optNeedsServer")) : null,
+    ].filter(Boolean));
 
     return el("div.panel", {}, [
       el("p", { style: { marginBottom: "16px" } }, t("create.whereFrom")),
       el("div.source-grid", {}, [
-        opt("paste", ICONS.pencil, t("create.optPaste"), t("create.optPasteSub")),
-        opt("pdf", ICONS.fileText, t("create.optPdf"), t("create.optPdfSub")),
-        opt("photo", ICONS.camera, t("create.optPhoto"), t("create.optPhotoSub")),
-        opt("import", ICONS.clipboard, t("create.optImport"), t("create.optImportSub")),
-        opt("blank", ICONS.plus, t("create.optBlank"), t("create.optBlankSub")),
-        opt("nationalprov", ICONS.graduation, t("create.optNational"), t("create.optNationalSub")),
+        opt("blank", ICONS.plus, t("create.optBlank"), t("create.optBlankSub"), false),
+        opt("import", ICONS.clipboard, t("create.optImport"), t("create.optImportSub"), false),
+        opt("paste", ICONS.pencil, t("create.optPaste"), t("create.optPasteSub"), true),
+        opt("photo", ICONS.camera, t("create.optPhoto"), t("create.optPhotoSub"), true),
+        opt("pdf", ICONS.fileText, t("create.optPdf"), t("create.optPdfSub"), true),
+        opt("nationalprov", ICONS.graduation, t("create.optNational"), t("create.optNationalSub"), true),
       ]),
-      !store.hasKey() && el("p.note.note--warn", { style: { marginTop: "16px" } }, [
+      noServer && el("p.note.note--warn", { style: { marginTop: "16px" } }, [
         t("create.needKey"), el("a", { href: "#/settings" }, t("create.needKeyLink")),
         t("create.needKeyTail"),
       ]),
@@ -281,11 +289,23 @@ export function renderCreate(prefill) {
       });
       ta.value = state.material;
       const fileInput = el("input", {
-        type: "file", accept: ".csv,.tsv,.txt,text/csv,text/plain",
+        type: "file", accept: ".csv,.tsv,.txt,.json,text/csv,text/plain,application/json",
         onchange: async (e) => {
           const f = e.target.files[0];
           if (!f) return;
-          state.material = await f.text();
+          const text = await f.text();
+          // A friend's shared set (studybuddy .json) imports straight away —
+          // it's already questions, no parsing needed.
+          try {
+            const doc = parseSharedSet(text);
+            if (doc) {
+              const a = importSharedSet(doc);
+              toast(t("create.sharedSetAdded", { title: a.title }));
+              location.hash = `#/edit/${a.id}`;
+              return;
+            }
+          } catch (err) { toast(err.message); return; }
+          state.material = text;
           ta.value = state.material;
           refresh();
         },

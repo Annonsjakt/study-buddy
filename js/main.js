@@ -23,7 +23,10 @@ import { renderTeachback } from "./views/teachback.js";
 import { renderLibrary } from "./views/library.js";
 import { renderExamPrep } from "./views/exam-prep.js";
 import { renderSolve } from "./views/solve.js";
+import { renderReference } from "./views/reference.js";
+import { renderCalculator } from "./views/calculator.js";
 import { renderAchievements } from "./views/achievements.js";
+import { renderLeaderboard } from "./views/leaderboard.js";
 import { mountCommandPalette } from "./components/command-palette.js";
 import { maybeShowOnboarding } from "./components/onboarding.js";
 
@@ -46,8 +49,11 @@ const routes = [
   { rx: /^\/gallery$/, view: () => renderGallery() },
   { rx: /^\/library$/, view: () => renderLibrary() },
   { rx: /^\/solve$/, view: () => renderSolve() },
+  { rx: /^\/reference$/, view: () => renderReference() },
+  { rx: /^\/calculator$/, view: () => renderCalculator() },
   { rx: /^\/achievements$/, view: () => renderAchievements() },
-  { rx: /^\/print\/(.+)$/, view: (m) => renderPrint(m[1]) },
+  { rx: /^\/leaderboard$/, view: () => renderLeaderboard() },
+  { rx: /^\/print\/(.+)$/, view: (m, qs) => renderPrint(m[1], qs) },
   { rx: /^\/teachback\/(.+)$/, view: (m) => renderTeachback(m[1]) },
   { rx: /^\/login$/, view: () => renderLogin() },
   { rx: /^\/parent$/, view: () => renderParentHub() },
@@ -94,6 +100,15 @@ function navGroups() {
     { href: "#/progress", match: "/progress",  icon: ICONS.chart,     label: t("common.progress") },
     { href: "#/achievements", match: "/achievements", icon: ICONS.award, label: t("nav.achievements") },
   ];
+  // The leaderboard needs an account + the backend — only surface it once
+  // you're signed in, same as the parent view.
+  if (store.authed) {
+    track.push({ href: "#/leaderboard", match: "/leaderboard", icon: ICONS.podium, label: t("nav.leaderboard") });
+  }
+  const tools = [
+    { href: "#/reference",  match: "/reference",  icon: ICONS.sigma,      label: t("nav.formulas") },
+    { href: "#/calculator", match: "/calculator", icon: ICONS.calculator, label: t("nav.calculator") },
+  ];
   const account = [];
   if (store.authed) account.push({ href: "#/parent", match: "/parent", icon: ICONS.users, label: t("common.parent") });
   account.push({ href: "#/settings", match: "/settings", icon: ICONS.gear, label: t("common.settings") });
@@ -101,6 +116,7 @@ function navGroups() {
   return [
     { key: "learn",   label: t("nav.groupLearn"), items: learn },
     { key: "track",   label: t("nav.groupTrack"), items: track },
+    { key: "tools",   label: t("nav.groupTools"), items: tools },
     { key: "account", label: null,                items: account },
   ];
 }
@@ -212,10 +228,10 @@ function sidebarStreak(streak, atRisk) {
   ]);
 }
 
-const THEME_ICONS = { system: ICONS.monitor, light: ICONS.sun, dark: ICONS.moon };
-// Light / system / dark, left to right — independent of THEMES' own order
-// (which Settings' dropdown uses instead), just this widget's layout.
-const THEME_ORDER = ["light", "system", "dark"];
+const THEME_ICONS = { system: ICONS.monitor, light: ICONS.sun, paper: ICONS.fileText, dark: ICONS.moon };
+// Light / warm paper / system / dark, left to right — independent of THEMES'
+// own order, just this widget's layout.
+const THEME_ORDER = ["light", "paper", "system", "dark"];
 
 /** Segmented light/system/dark switcher for the sidebar footer. Self-painting
  *  so a click doesn't have to re-render the whole shell just to update itself.
