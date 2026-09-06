@@ -319,6 +319,16 @@ export const STRINGS = {
     "ach.teaserNext": "Next up: {desc}",
     "ach.teaserAllDone": "All badges collected — nice work.",
 
+    // ---- share card ----
+    "share.title": "Share it",
+    "share.shareButton": "Share",
+    "share.download": "Save image",
+    "share.badgeTag": "Achievement unlocked",
+    "share.gradeTag": "Estimated grade",
+    "share.scoreTag": "Score",
+    "share.rankTag": "This week's leaderboard",
+    "share.rankHeadline": "#{n}",
+
     // ---- progress page ----
     "progress.title": "Your progress",
     "progress.trendUp": "+{n}% since you started",
@@ -1003,6 +1013,16 @@ export const STRINGS = {
     "ach.teaserTitle": "Troféer",
     "ach.teaserNext": "Näst på tur: {desc}",
     "ach.teaserAllDone": "Alla troféer insamlade — bra jobbat.",
+
+    // ---- delningskort ----
+    "share.title": "Dela den",
+    "share.shareButton": "Dela",
+    "share.download": "Spara bild",
+    "share.badgeTag": "Utmärkelse upplåst",
+    "share.gradeTag": "Uppskattat betyg",
+    "share.scoreTag": "Resultat",
+    "share.rankTag": "Veckans topplista",
+    "share.rankHeadline": "#{n}",
 
     // ---- progress page ----
     "progress.title": "Dina framsteg",

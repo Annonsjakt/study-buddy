@@ -4,6 +4,7 @@
 import { store } from "../store.js";
 import { el, icon, ICONS } from "../lib/dom.js";
 import { ACHIEVEMENTS, achievementMetrics } from "../lib/achievements.js";
+import { shareCard, tierEmoji } from "../lib/share-card.js";
 import { t, getLang } from "../lib/i18n.js";
 
 export function renderAchievements() {
@@ -55,7 +56,20 @@ function badge(def, metrics, unlockedMap) {
       ].filter(Boolean)),
       el("p.achbadge__desc", {}, t(def.descKey, { n: def.target })),
       isUnlocked
-        ? el("p.achbadge__unlockdate", {}, t("ach.unlockedOn", { date: formatDate(unlockedMap[def.id]) }))
+        ? el("div", {}, [
+            el("p.achbadge__unlockdate", {}, t("ach.unlockedOn", { date: formatDate(unlockedMap[def.id]) })),
+            el("button.btn.btn--ghost.btn--sm", {
+              type: "button", style: { marginTop: "6px" },
+              onclick: () => shareCard({
+                tone: def.tier,
+                tag: t("share.badgeTag"),
+                emoji: tierEmoji(def.tier),
+                headline: `${t(`ach.tier.${def.tier}`)} · ${t(def.nameKey)}`,
+                caption: t(def.descKey, { n: def.target }),
+                filename: `studybuddy-${def.id}.png`,
+              }),
+            }, [icon(ICONS.share, 13), t("share.shareButton")]),
+          ])
         : el("div.achbadge__progress", {}, [
             el("div.achbadge__bar", {}, [el("i", { style: { width: `${pct}%` } })]),
             el("span.achbadge__fraction", {}, `${value}/${def.target}`),

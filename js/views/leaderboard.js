@@ -5,6 +5,7 @@
 import { store } from "../store.js";
 import { el, clear, toast, icon, ICONS } from "../lib/dom.js";
 import { FRIEND_INVITE_CODE_URL, FRIEND_REDEEM_URL, FRIEND_LEADERBOARD_URL, unfriendUrl } from "../config.js";
+import { shareCard, tierEmoji } from "../lib/share-card.js";
 import { t, plural } from "../lib/i18n.js";
 
 async function api(url, opts) {
@@ -107,6 +108,18 @@ export function renderLeaderboard() {
       },
     }, [icon(ICONS.close, 14)]) : null;
 
+    const shareBtn = entry.isMe ? el("button.iconbtn.iconbtn--sm", {
+      type: "button", "aria-label": t("share.shareButton"), title: t("share.shareButton"),
+      onclick: () => shareCard({
+        tone: tier || "brand",
+        emoji: tier ? tierEmoji(tier) : "📈",
+        tag: t("share.rankTag"),
+        headline: t("share.rankHeadline", { n: rank }),
+        caption: plural(entry.questionsThisWeek, "leaderboard.questionOne", "leaderboard.questionMany"),
+        filename: "studybuddy-rank.png",
+      }),
+    }, [icon(ICONS.share, 14)]) : null;
+
     return el("div.lbrow" + (entry.isMe ? ".lbrow--me" : ""), {}, [
       el("span.lbrank" + (tier ? `.lbrank--${tier}` : ""), {}, String(rank)),
       el("div.lbrow__who", {}, [
@@ -117,6 +130,7 @@ export function renderLeaderboard() {
         el("span.lbrow__streak", {}, [icon(ICONS.flame, 14), String(entry.streak)]),
         el("span.lbrow__questions", {}, plural(entry.questionsThisWeek, "leaderboard.questionOne", "leaderboard.questionMany")),
       ]),
+      shareBtn,
       removeBtn,
     ].filter(Boolean));
   }

@@ -36,6 +36,7 @@ const APP_SHELL = [
   "./js/lib/achievements.js",
   "./js/lib/achievement-toast.js",
   "./js/lib/onboarding.js",
+  "./js/lib/share-card.js",
   "./js/views/menu.js",
   "./js/views/create.js",
   "./js/views/edit.js",

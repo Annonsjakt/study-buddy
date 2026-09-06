@@ -9,6 +9,7 @@ import { celebrate, clearConfetti } from "../lib/confetti-helper.js";
 import { estimatedGrade, gradeRank } from "../lib/grade.js";
 import { tutorStream, ClaudeError } from "../claude.js";
 import { explainSystem } from "../prompts.js";
+import { shareCard } from "../lib/share-card.js";
 import { t, plural } from "../lib/i18n.js";
 
 export function renderResults(attemptId) {
@@ -89,6 +90,8 @@ export function renderResults(attemptId) {
     ].filter(Boolean)) : null,
 
     el("div", { style: { display: "flex", gap: "12px", justifyContent: "center", marginTop: "24px", flexWrap: "wrap" } }, [
+      el("button.btn.btn--ghost", { type: "button", onclick: () => shareCard(shareConfig(attempt, heading, score, great)) },
+        [icon(ICONS.share, 16), t("share.shareButton")]),
       retryHash(attempt, assignment) && el("a.btn.btn--ghost", { href: retryHash(attempt, assignment) },
         isReview ? t("results.reviewAgain") : t("results.tryAgain")),
       el("a.btn.btn--ghost", { href: "#/progress" }, t("results.seeProgress")),
@@ -225,6 +228,23 @@ function gradeReveal(attempt) {
     el("p.gradereveal__compare", { class: compareClass || null }, compare),
     el("p.gradereveal__caption", {}, t("progress.gradeTooltip", { letter: grade.letter })),
   ]);
+}
+
+/** A test's own grade reveal (if any) makes a better share than a bare
+ *  percentage — same reasoning gradeReveal() already uses to decide when
+ *  it applies. Grade tiers (low/mid/high) don't share names with the
+ *  achievement tiers share-card knows gradients for, so they're mapped
+ *  onto the closest-feeling one rather than adding a whole new palette. */
+function shareConfig(attempt, heading, score, great) {
+  if (attempt.wasTest && !attempt.isReview) {
+    const grade = estimatedGrade(score / 100);
+    const tone = { low: "bronze", mid: "brand", high: "gold" }[grade.tier] || "brand";
+    return { tone, emoji: "🎓", tag: t("share.gradeTag"), headline: grade.letter, caption: heading, filename: "studybuddy-grade.png" };
+  }
+  return {
+    tone: great ? "ok" : "brand", emoji: great ? "🎉" : "📚",
+    tag: t("share.scoreTag"), headline: `${score}%`, caption: heading, filename: "studybuddy-score.png",
+  };
 }
 
 function countLabel(attempt) {

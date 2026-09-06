@@ -977,6 +977,12 @@ kbd {
 .lbrow__streak { display: inline-flex; align-items: center; gap: 4px; color: var(--flame); font-weight: 700; font-size: var(--fs-sm); }
 .lbrow__questions { font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft); white-space: nowrap; }
 
+/* ---------- share card ---------- */
+.sharecard { text-align: center; position: relative; max-width: 380px; }
+.sharecard__close { position: absolute; top: var(--s-2); right: var(--s-2); }
+.sharecard__preview { width: 100%; border-radius: var(--r-md); margin: var(--s-3) 0; display: block; }
+.sharecard__actions { display: flex; gap: var(--s-3); justify-content: center; flex-wrap: wrap; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
   .session { grid-template-columns: 1fr; }
