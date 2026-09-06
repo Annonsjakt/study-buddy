@@ -57,7 +57,7 @@ function draw(ctx, { emoji, headline, caption, tag, tone = "brand" }) {
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, SIZE, SIZE);
 
-  const glow = ctx.createRadialGradient(SIZE / 2, SIZE * 0.4, 0, SIZE / 2, SIZE * 0.4, SIZE * 0.7);
+  const glow = ctx.createRadialGradient(SIZE / 2, SIZE * 0.45, 0, SIZE / 2, SIZE * 0.45, SIZE * 0.7);
   glow.addColorStop(0, "rgba(255,255,255,.16)");
   glow.addColorStop(1, "rgba(255,255,255,0)");
   ctx.fillStyle = glow;
@@ -68,44 +68,50 @@ function draw(ctx, { emoji, headline, caption, tag, tone = "brand" }) {
   ctx.fillStyle = "#fff";
 
   const cx = SIZE / 2;
-  const maxWidth = SIZE - 180;
+  const maxWidth = SIZE - 140;
+  const wordmarkY = 100;
 
-  ctx.font = "700 40px Arial, sans-serif";
+  ctx.font = "700 42px Arial, sans-serif";
   ctx.globalAlpha = 0.85;
-  ctx.fillText("StudyBuddy", cx, 100);
+  ctx.fillText("StudyBuddy", cx, wordmarkY);
   ctx.globalAlpha = 1;
 
-  // Everything below the wordmark flows top-down from here — each block's
-  // real height (however many lines it actually wrapped to) pushes the
-  // next one down, instead of every block assuming a fixed slot and risking
-  // an overlap the moment some text is longer than expected.
-  let y = 215;
-
+  // Measure every block first, at its real (bigger, this time) font — then
+  // center the whole group in the space below the wordmark. Flowing top-down
+  // from a fixed offset left a lot of dead space at the bottom whenever the
+  // text was short, which read as small and off-center; this fixes both by
+  // construction, however many lines anything actually wraps to.
+  const blocks = [];
   if (tag) {
-    ctx.font = "700 32px Arial, sans-serif";
-    ctx.globalAlpha = 0.75;
-    const lines = wrapLines(ctx, tag.toUpperCase(), maxWidth);
-    y = drawLines(ctx, lines, cx, y, 40) + 40;
-    ctx.globalAlpha = 1;
+    ctx.font = "700 36px Arial, sans-serif";
+    blocks.push({ lines: wrapLines(ctx, tag.toUpperCase(), maxWidth), font: ctx.font, lineHeight: 46, alpha: 0.75 });
   }
-
   if (emoji) {
-    ctx.font = "150px Arial, sans-serif";
-    ctx.fillText(emoji, cx, y + 85);
-    y += 210;
+    blocks.push({ emoji, font: "180px Arial, sans-serif", height: 210 });
   }
-
-  ctx.font = "800 108px Arial, sans-serif";
-  const headlineLines = wrapLines(ctx, headline, maxWidth);
-  y = drawLines(ctx, headlineLines, cx, y + 10, 114) + 50;
-
+  ctx.font = "800 130px Arial, sans-serif";
+  blocks.push({ lines: wrapLines(ctx, headline, maxWidth), font: ctx.font, lineHeight: 138, alpha: 1 });
   if (caption) {
-    ctx.font = "42px Arial, sans-serif";
-    ctx.globalAlpha = 0.88;
-    const capLines = wrapLines(ctx, caption, maxWidth - 60);
-    drawLines(ctx, capLines, cx, y, 54);
-    ctx.globalAlpha = 1;
+    ctx.font = "48px Arial, sans-serif";
+    blocks.push({ lines: wrapLines(ctx, caption, maxWidth - 60), font: ctx.font, lineHeight: 62, alpha: 0.9 });
   }
+
+  const gap = 44;
+  const heights = blocks.map((b) => b.emoji ? b.height : b.lines.length * b.lineHeight);
+  const totalHeight = heights.reduce((a, b) => a + b, 0) + gap * (blocks.length - 1);
+
+  const top = wordmarkY + 90;
+  const bottom = SIZE - 90;
+  let cursor = top + Math.max(0, (bottom - top - totalHeight) / 2);
+
+  blocks.forEach((b, i) => {
+    ctx.font = b.font;
+    ctx.globalAlpha = b.emoji ? 1 : b.alpha;
+    if (b.emoji) ctx.fillText(b.emoji, cx, cursor + heights[i] / 2);
+    else drawLines(ctx, b.lines, cx, cursor + b.lineHeight / 2, b.lineHeight);
+    ctx.globalAlpha = 1;
+    cursor += heights[i] + gap;
+  });
 }
 
 function clamp(s, max) {
@@ -123,7 +129,7 @@ export function shareCard({ emoji, headline, caption, tag, tone, filename = "stu
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
-  draw(canvas.getContext("2d"), { emoji, headline: clamp(headline, 40), caption: clamp(caption, 90), tag, tone });
+  draw(canvas.getContext("2d"), { emoji, headline: clamp(headline, 40), caption: clamp(caption, 70), tag, tone });
   canvas.toBlob((blob) => { if (blob) openModal(blob, filename); }, "image/png");
 }
 
