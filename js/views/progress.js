@@ -9,6 +9,7 @@ import { dueLabel } from "../lib/srs.js";
 import { localDayKey, recentDays, currentStreak } from "../lib/activity.js";
 import { t, plural } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
+import { hasCurriculum, loadCurriculum, curriculumCoverage } from "../lib/curriculum.js";
 
 export async function renderProgress() {
   // So a set imported back when the app was in Swedish shows its translated
@@ -61,6 +62,47 @@ export async function renderProgress() {
       ]);
     });
 
+  // ---- kursplan (Lgr22) coverage, for subjects we've mapped so far ----
+  const curriculumPanels = [];
+  for (const s of store.subjects) {
+    if (!hasCurriculum(s.name)) continue;
+    const doc = await loadCurriculum(s.name);
+    if (!doc) continue;
+    curriculumPanels.push({ subject: s, doc, areas: curriculumCoverage(s.name, tm) });
+  }
+
+  function curriculumAreaRow(area) {
+    const started = area.mastery != null;
+    const pct = started ? Math.round(area.mastery * 100) : 0;
+    const grade = started ? estimatedGrade(area.mastery) : null;
+    return el("div.meter", {}, [
+      el("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, area.name),
+      el("div.meter__track", {
+        role: "img",
+        "aria-label": `${area.name}: ${started ? pct + "%" : t("progress.curriculumNotStarted")}`,
+      }, [el("div.meter__fill", { style: { width: "0%" }, dataset: { w: pct } })]),
+      el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, started ? `${pct}%` : "–"),
+      started
+        ? el("span.gradepill", { class: `gradepill--${grade.tier}`, title: t("progress.gradeTooltip", { letter: grade.letter }) }, grade.letter)
+        : el("span.note", { style: { textAlign: "center" } }, "–"),
+    ]);
+  }
+
+  function curriculumPanel({ subject, doc, areas }) {
+    return el("section.panel.panel--full", {}, [
+      el("h3", { style: { marginBottom: "4px" } }, t("progress.curriculumTitle", { subject: subject.name })),
+      el("p.note", { style: { marginBottom: "12px" } }, t("progress.curriculumExplain")),
+      el("div", {}, areas.map(curriculumAreaRow)),
+      el("details", { style: { marginTop: "14px" } }, [
+        el("summary", {}, t("progress.curriculumKravSummary")),
+        el("div", { style: { marginTop: "10px", display: "grid", gap: "10px" } }, ["E", "C", "A"].map((letter) =>
+          el("p.note", {}, [el("strong", {}, t("progress.curriculumGradeLabel", { letter }) + ": "), doc.kunskapskrav[letter]]))),
+        el("p.note", { style: { marginTop: "10px", fontStyle: "italic" } },
+          t("progress.curriculumSource", { date: doc.fetchedAt })),
+      ]),
+    ]);
+  }
+
   // ---- due for review ----
   const dueItems = store.dueQuestions();
 
@@ -89,6 +131,8 @@ export async function renderProgress() {
       ])
         : el("p.note", {}, t("progress.noMasteryYet")),
     ]),
+
+    ...curriculumPanels.map(curriculumPanel),
 
     el("section.panel.panel--full", {}, [
       el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", marginBottom: "10px" } }, [

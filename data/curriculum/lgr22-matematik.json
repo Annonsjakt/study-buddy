@@ -1,0 +1,80 @@
+{
+  "subject": "Matematik",
+  "level": "grundskolan-7-9",
+  "sourceUrl": "https://syllabuswebb.skolverket.se/compulsorycw/jsp/subject.htm?subjectCode=GRGRMAT01&tos=gr",
+  "sourceNote": "Kursplanen i matematik (Lgr22), hämtad ordagrant ur källans HTML 2026-09-06. Kunskapskraven gäller slutet av årskurs 9.",
+  "fetchedAt": "2026-09-06",
+  "verified": false,
+  "contentAreas": [
+    {
+      "id": "tal",
+      "name": "Taluppfattning och tals användning",
+      "centralInnehall": [
+        "Reella tal och deras egenskaper samt talens användning i matematiska situationer.",
+        "Talsystemets utveckling från naturliga tal till reella tal.",
+        "Tal i potensform. Grundpotensform för att uttrycka små och stora tal samt användning av prefix.",
+        "Matematiska lagar och regler samt deras användning vid beräkningar med tal i bråk-, decimal- och potensform.",
+        "Metoder för beräkningar med tal i bråk- och decimalform vid överslagsräkning, huvudräkning och skriftlig beräkning. Användning av digitala verktyg vid beräkningar.",
+        "Rimlighetsbedömning vid uppskattningar och beräkningar."
+      ]
+    },
+    {
+      "id": "algebra",
+      "name": "Algebra",
+      "centralInnehall": [
+        "Matematiska likheter samt hur likhetstecknet används för att teckna ekvationer och funktioner.",
+        "Variablers användning i algebraiska uttryck, formler, ekvationer och funktioner.",
+        "Metoder för att lösa linjära ekvationer och enkla andragradsekvationer.",
+        "Mönster i talföljder och geometriska mönster samt hur de konstrueras, beskrivs och uttrycks generellt.",
+        "Programmering i visuell och textbaserad programmeringsmiljö. Hur algoritmer skapas, testas och förbättras vid programmering."
+      ]
+    },
+    {
+      "id": "geometri",
+      "name": "Geometri",
+      "centralInnehall": [
+        "Geometriska objekt samt deras egenskaper och inbördes relationer. Konstruktion av geometriska objekt, såväl med som utan digitala verktyg.",
+        "Metoder för beräkning av area, omkrets och volym hos geometriska objekt, samt enhetsbyten i samband med detta.",
+        "Geometriska satser och formler samt argumentation för deras giltighet.",
+        "Skala vid förminskning och förstoring av två- och tredimensionella objekt.",
+        "Likformighet och kongruens."
+      ]
+    },
+    {
+      "id": "sannolikhet-statistik",
+      "name": "Sannolikhet och statistik",
+      "centralInnehall": [
+        "Sannolikhet och metoder för att beräkna sannolikhet i olika situationer. Bedömningar av risker och chanser utifrån datorsimuleringar och statistiskt material.",
+        "Kombinatoriska principer och hur de kan användas i olika situationer.",
+        "Tabeller, diagram och grafer samt hur de tolkas och används för att beskriva resultat av egna och andras undersökningar, såväl med som utan digitala verktyg.",
+        "Lägesmått och spridningsmått samt hur de används för bedömning av resultat vid statistiska undersökningar."
+      ]
+    },
+    {
+      "id": "samband-forandring",
+      "name": "Samband och förändring",
+      "centralInnehall": [
+        "Proportionalitet och hur det används för att uttrycka skala, likformighet och förändring.",
+        "Härledda enheter, till exempel km/h och kr/kg.",
+        "Procent och förändringsfaktor för att uttrycka förändring samt beräkningar med procent i vardagliga situationer och inom olika ämnesområden.",
+        "Räta linjens ekvation och förändringstakt. Användning av räta linjens ekvation för att beskriva samband.",
+        "Funktioner och hur de används för att beskriva samband och förändring samt undersöka förändringstakt. Hur funktioner uttrycks i form av grafer, tabeller och funktionsuttryck."
+      ]
+    },
+    {
+      "id": "problemlosning",
+      "name": "Problemlösning",
+      "centralInnehall": [
+        "Strategier för att lösa matematiska problem i olika situationer och inom olika ämnesområden samt värdering av valda strategier och metoder.",
+        "Formulering av matematiska frågeställningar utifrån olika situationer och ämnesområden.",
+        "Enkla matematiska modeller och hur de kan användas i olika situationer."
+      ]
+    }
+  ],
+  "kunskapskrav": {
+    "atGrade": 9,
+    "E": "Eleven visar grundläggande kunskaper om matematiska begrepp samt använder och beskriver begrepp och samband mellan begrepp inom områdena taluppfattning och tals användning, algebra, geometri, sannolikhet och statistik samt samband och förändring med tillfredsställande säkerhet. Eleven väljer och använder i huvudsak fungerande matematiska metoder för att göra beräkningar och lösa rutinuppgifter inom områdena taluppfattning och tals användning, algebra, geometri, sannolikhet och statistik samt samband och förändring med tillfredsställande säkerhet. Eleven löser enkla problem. Eleven bidrar till något förslag på alternativt tillvägagångssätt. I samband med problemlösning bidrar eleven till att formulera enkla matematiska modeller som kan tillämpas i sammanhanget. Eleven värderar strategier och resultatens rimlighet på ett enkelt sätt. Eleven för och följer matematiska resonemang genom att framföra och bemöta påståenden med enkla matematiska argument. Eleven redogör för och samtalar om tillvägagångssätt på ett i huvudsak fungerande sätt och använder då symboler och andra matematiska uttrycksformer.",
+    "C": "Eleven visar goda kunskaper om matematiska begrepp samt använder och beskriver begrepp och samband mellan begrepp inom områdena taluppfattning och tals användning, algebra, geometri, sannolikhet och statistik samt samband och förändring med god säkerhet. Eleven väljer och använder ändamålsenliga matematiska metoder för att göra beräkningar och lösa rutinuppgifter inom områdena taluppfattning och tals användning, algebra, geometri, sannolikhet och statistik samt samband och förändring med god säkerhet. Eleven löser relativt komplexa problem. Eleven ger något förslag på alternativt tillvägagångssätt. I samband med problemlösning formulerar eleven enkla matematiska modeller som efter någon bearbetning kan tillämpas i sammanhanget. Eleven värderar strategier och resultatens rimlighet på ett utvecklat sätt. Eleven för och följer matematiska resonemang genom att framföra och bemöta påståenden med relativt väl underbyggda matematiska argument. Eleven redogör för och samtalar om tillvägagångssätt på ett ändamålsenligt sätt och använder då symboler och andra matematiska uttrycksformer.",
+    "A": "Eleven visar mycket goda kunskaper om matematiska begrepp samt använder och beskriver begrepp och samband mellan begrepp inom områdena taluppfattning och tals användning, algebra, geometri, sannolikhet och statistik samt samband och förändring med mycket god säkerhet. Eleven väljer och använder ändamålsenliga och effektiva matematiska metoder för att göra beräkningar och lösa rutinuppgifter inom områdena taluppfattning och tals användning, algebra, geometri, sannolikhet och statistik samt samband och förändring med mycket god säkerhet. Eleven löser komplexa problem. Eleven ger förslag på alternativa tillvägagångssätt. I samband med problemlösning formulerar eleven enkla matematiska modeller som kan tillämpas i sammanhanget. Eleven värderar strategier och resultatens rimlighet på ett välutvecklat sätt. Eleven för och följer matematiska resonemang genom att framföra och bemöta påståenden med väl underbyggda matematiska argument. Eleven redogör för och samtalar om tillvägagångssätt på ett ändamålsenligt och effektivt sätt och använder då symboler och andra matematiska uttrycksformer."
+  }
+}
