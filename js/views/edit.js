@@ -5,6 +5,8 @@ import { store } from "../store.js";
 import { el, icon, ICONS, toast } from "../lib/dom.js";
 import { questionEditor } from "../components/question-editor.js";
 import { t, plural } from "../lib/i18n.js";
+import { datePicker } from "../components/calendar.js";
+import { localDayKey } from "../lib/activity.js";
 
 export function renderEdit(assignmentId) {
   // Raw, not the English-overlay view: saving must not bake the display
@@ -36,6 +38,10 @@ export function renderEdit(assignmentId) {
     el("option", { value: "test" }, t("create.testOption")),
   ]);
   typeSel.value = draft.type;
+  const duePicker = datePicker({
+    value: draft.dueAt || "",
+    min: draft.dueAt && draft.dueAt < localDayKey() ? draft.dueAt : localDayKey(),
+  });
 
   const countNote = el("p.note");
   const editor = questionEditor(draft, {
@@ -53,6 +59,7 @@ export function renderEdit(assignmentId) {
       title,
       type: typeSel.value,
       subjectId: subject.id,
+      dueAt: duePicker.getValue() || null,
       questions,
     });
     toast(t("edit.saved"));
@@ -70,7 +77,10 @@ export function renderEdit(assignmentId) {
         el("label.field", {}, [el("span", {}, t("create.setTitleLabel")), titleInput]),
         el("label.field", {}, [el("span", {}, t("create.subjectLabel")), subjectInput]),
       ]),
-      el("label.field", { style: { maxWidth: "260px", marginBottom: "0" } }, [el("span", {}, t("create.typeLabel")), typeSel]),
+      el("div", { style: { display: "flex", gap: "12px", flexWrap: "wrap" } }, [
+        el("label.field", { style: { maxWidth: "260px", marginBottom: "0" } }, [el("span", {}, t("create.typeLabel")), typeSel]),
+        el("label.field", { style: { maxWidth: "320px", marginBottom: "0" } }, [el("span", {}, t("edit.dueDate")), duePicker.el]),
+      ]),
       el("datalist", { id: "subject-list" }, store.subjects.map((s) => el("option", { value: s.name }))),
       countNote,
     ]),

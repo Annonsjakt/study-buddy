@@ -68,7 +68,8 @@ const DEFAULT_SUBJECTS = ["Science", "History", "Math", "English", "Geography"];
 
 export const REVIEW_ID = "__review__";
 export const PRACTICE_ID = "__practice__";
-// Per-subject, unlike the two above — several subjects can each have their
+export const WEAK_ID = "__weak__";
+// Per-subject, unlike the ones above — several subjects can each have their
 // own in-progress "mix all years" session at once.
 export const NATIONAL_MIX_PREFIX = "__npmix__";
 export const nationalMixId = (subjectId) => `${NATIONAL_MIX_PREFIX}${subjectId}`;
@@ -79,6 +80,11 @@ export const nationalMixId = (subjectId) => `${NATIONAL_MIX_PREFIX}${subjectId}`
 // make the streak itself meaningless.
 const FREEZE_MILESTONE_DAYS = 7;
 const MAX_STREAK_FREEZES = 2;
+
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+// How long an overdue deadline lingers before it clears itself, so a missed
+// due date stays visible for a while but old ones don't pile up forever.
+export const DUE_GRACE_DAYS = 7;
 
 function seedState() {
   return {
@@ -189,6 +195,7 @@ class Store extends EventTarget {
     } else {
       this.state = seedState();
     }
+    this._sweepStaleDueDates();
     this.save({ skipPush: true });
     // A day (or more) may have passed since this device last opened the
     // app — bridge any gap a freeze can cover before anything reads the
@@ -369,6 +376,7 @@ class Store extends EventTarget {
       title: doc.title || t("store.untitled"),
       sourceSummary: doc.sourceSummary || "",
       createdAt: Date.now(),
+      dueAt: DAY_RE.test(doc.dueAt || "") ? doc.dueAt : null,
       tutorStyle: doc.tutorStyle || "adaptive",
       topics: doc.topics || [...new Set((doc.questions || []).map((q) => q.topic).filter(Boolean))],
       questions: (doc.questions || []).map((q) => ({
@@ -398,6 +406,34 @@ class Store extends EventTarget {
         a.topics = [...new Set(patch.questions.map((q) => q.topic).filter(Boolean))];
       }
     });
+  }
+
+  // ---------- due dates ----------
+  /** dayKey is "YYYY-MM-DD", or null to clear. Rejects anything else. */
+  setDueDate(id, dayKey) {
+    const value = dayKey && DAY_RE.test(dayKey) ? dayKey : null;
+    if (dayKey && !value) return false;
+    this.update((s) => {
+      const a = s.assignments.find((x) => x.id === id);
+      if (a) a.dueAt = value;
+    });
+    return true;
+  }
+
+  /** Sets with a deadline, soonest first. Stale ones were swept at init. */
+  upcomingDue() {
+    return this.state.assignments
+      .filter((a) => !!a.dueAt)
+      .sort((x, y) => x.dueAt.localeCompare(y.dueAt));
+  }
+
+  /** A deadline that passed more than DUE_GRACE_DAYS ago clears itself, so the
+   *  Upcoming list shows what still matters rather than every date ever set. */
+  _sweepStaleDueDates() {
+    const cutoff = addDays(localDayKey(), -DUE_GRACE_DAYS);
+    for (const a of this.state.assignments) {
+      if (a.dueAt && a.dueAt < cutoff) a.dueAt = null;
+    }
   }
 
   /** Copy a set. The copy gets fresh question ids so it keeps its own

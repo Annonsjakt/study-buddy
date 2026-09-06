@@ -3,10 +3,12 @@
 
 import { store } from "../store.js";
 import { el, append, clear, icon, ICONS, toast } from "../lib/dom.js";
-import { masteryByTopic, masteryForAssignment, masteryForSubject, masteryProgress } from "../lib/mastery.js";
+import { masteryByTopic, masteryForAssignment, masteryForSubject, masteryProgress, weakSpotQuestions } from "../lib/mastery.js";
 import { ACHIEVEMENTS, achievementMetrics } from "../lib/achievements.js";
 import { t, plural, getLang } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
+import { localDayKey } from "../lib/activity.js";
+import { datePicker, monthCalendar } from "../components/calendar.js";
 
 // Module-level so the choices survive a re-render (e.g. after deleting a set).
 let tab = "assignment";
@@ -201,6 +203,9 @@ export async function renderMenu() {
       onclick: (e) => { e.stopPropagation(); openCardMenu(e.currentTarget, a); },
     }, [icon(ICONS.dots, 18)]);
 
+    const dueDays = a.dueAt ? daysUntil(a.dueAt) : null;
+    const overdue = dueDays != null && dueDays < 0;
+
     return el("div.acard", {
       role: "button", tabindex: "0",
       style: { "--subject": color.solid, "--subject-ink": color.ink, "--subject-tint": color.tint },
@@ -214,6 +219,10 @@ export async function renderMenu() {
       el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", paddingRight: "28px" } }, [
         el("span.acard__tag", {}, subjectDisplayName(subject?.name) || t("sets.generalSubject")),
         open && el("span.acard__tag.acard__tag--open", {}, t("sets.inProgress")),
+        a.dueAt && el("span", {
+          class: "acard__tag acard__tag--due" + (overdue ? " acard__tag--overdue" : ""),
+          title: t("due.dueOn", { date: a.dueAt }),
+        }, dueRelativeLabel(dueDays)),
       ].filter(Boolean)),
       el("div.acard__title", {}, a.title),
       el("div.acard__meta", {}, [
@@ -265,6 +274,7 @@ export async function renderMenu() {
       item(ICONS.clock, t("cardmenu.examMode"), () => { location.hash = `#/session/${a.id}?exam=1`; }),
       item(ICONS.pencil, t("cardmenu.rename"), () => rename(a)),
       item(ICONS.chart, t("cardmenu.editQuestions"), () => { location.hash = `#/edit/${a.id}`; }),
+      item(ICONS.calendar, t("cardmenu.setDue"), () => openDueDialog(a)),
       item(ICONS.copy, t("cardmenu.duplicate"), () => {
         const copy = store.duplicateAssignment(a.id);
         if (copy) toast(t("cardmenu.copiedAs", { title: copy.title }));
@@ -292,11 +302,53 @@ export async function renderMenu() {
     }, 0);
   }
 
-  function escClose(e) { if (e.key === "Escape") closeCardMenu(); }
+  function escClose(e) { if (e.key === "Escape") { closeCardMenu(); closeDueDialog(); } }
 
   function closeCardMenu() {
     document.querySelectorAll(".cardmenu").forEach((m) => m.remove());
     document.removeEventListener("keydown", escClose);
+  }
+
+  /* ---------------- due date dialog ---------------- */
+
+  let dueDialog = null;
+  function closeDueDialog() { dueDialog?.remove(); dueDialog = null; }
+
+  function openDueDialog(a) {
+    closeDueDialog();
+    const picker = datePicker({ value: a.dueAt || "", min: localDayKey() });
+
+    function save() {
+      const v = picker.getValue();
+      if (v) store.setDueDate(a.id, v);
+      toast(t(v ? "due.saved" : "due.cleared"));
+      closeDueDialog();
+    }
+    function clearDate() {
+      store.setDueDate(a.id, null);
+      toast(t("due.cleared"));
+      closeDueDialog();
+    }
+
+    dueDialog = el("div.modal", {
+      role: "dialog", "aria-modal": "true", "aria-label": t("due.title"),
+      onclick: (e) => { if (e.target === dueDialog) closeDueDialog(); },
+    }, [
+      el("div.modal__card", {}, [
+        el("h3", { style: { marginBottom: "6px" } }, t("due.title")),
+        el("p.note", { style: { marginBottom: "14px" } }, t("due.body", { title: a.title })),
+        picker.el,
+        el("div", { style: { display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "14px" } }, [
+          el("button.btn.btn--sm", { type: "button", onclick: save }, t("due.save")),
+          a.dueAt ? el("button.btn.btn--ghost.btn--sm", {
+            type: "button", style: { color: "var(--retry-ink)" }, onclick: clearDate,
+          }, t("due.clear")) : null,
+          el("button.btn.btn--ghost.btn--sm", { type: "button", onclick: closeDueDialog }, t("common.cancel")),
+        ].filter(Boolean)),
+      ]),
+    ]);
+    document.body.appendChild(dueDialog);
+    document.addEventListener("keydown", escClose);
   }
 
   function rename(a) {
@@ -360,10 +412,10 @@ export async function renderMenu() {
         grid,
       ]),
     ]),
-    el("aside.home__aside", {}, [achievementsTeaser(), examCard(), tipCard()]),
+    el("aside.home__aside", {}, [achievementsTeaser(), upcomingPanel(), examCard(), tipCard()].filter(Boolean)),
   ]);
 
-  return { title: t("menu.pageTitle"), node, cleanup: closeCardMenu };
+  return { title: t("menu.pageTitle"), node, cleanup: () => { closeCardMenu(); closeDueDialog(); } };
 }
 
 /** The top of the dashboard: how strong you are overall, your streak, and
@@ -437,6 +489,17 @@ function todayStrip() {
       el("span", {}, [
         el("strong", {}, t("today.continue")),
         el("span.tile__sub", {}, t("today.progress", { title: open.title, n: answered, total: open.order.length })),
+      ]),
+    ]));
+  }
+
+  const weak = weakSpotQuestions(store.assignments, store.attempts).length;
+  if (weak) {
+    tiles.push(el("a.tile", { href: "#/practice-weak" }, [
+      el("span.tile__icon", {}, icon(ICONS.target, 18)),
+      el("span", {}, [
+        el("strong", {}, t("session.weakTitle")),
+        el("span.tile__sub", {}, plural(weak, "today.weakOne", "today.weakMany")),
       ]),
     ]));
   }
@@ -572,6 +635,96 @@ function formatExamDate(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   const locale = getLang() === "sv" ? "sv-SE" : "en-GB";
   return d.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
+}
+
+/** "Today" / "Tomorrow" / "in 3 days" / "Overdue by 2 days" — for a set's
+ *  own due date, distinct from examCard's simpler countdownLabel() since a
+ *  missed deadline here is worth calling out by how many days, not just "past". */
+function dueRelativeLabel(days) {
+  if (days === 0) return t("due.today");
+  if (days === 1) return t("due.tomorrow");
+  if (days > 1) return t("due.inDays", { n: days });
+  return plural(-days, "due.overdueOne", "due.overdueMany");
+}
+
+const UPCOMING_COLLAPSED = 4;
+
+/** Right-rail card: every set with a deadline, soonest first, plus a small
+ *  calendar with a dot on each due day. Null (no card at all) once nothing
+ *  has a deadline set — same collapse-to-one-column behaviour the rail
+ *  already gives achievementsTeaser/examCard when they have nothing to say. */
+function upcomingPanel() {
+  const items = store.upcomingDue();
+  if (!items.length) return null;
+
+  const marks = new Map();
+  for (const a of items) {
+    const m = marks.get(a.dueAt) || { ids: [], titles: [] };
+    m.ids.push(a.id); m.titles.push(a.title);
+    marks.set(a.dueAt, m);
+  }
+  const onPick = (mark) => { location.hash = `#/session/${mark.ids[0]}`; };
+
+  const shown = items.length > UPCOMING_COLLAPSED ? items.slice(0, UPCOMING_COLLAPSED) : items;
+
+  return el("section.panel", {}, [
+    el("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", marginBottom: "var(--s-3)" } }, [
+      el("h3", {}, [icon(ICONS.calendar, 16), " ", t("due.upcoming")]),
+      items.length > UPCOMING_COLLAPSED
+        ? el("a.linkbtn", { href: "#/calendar" }, t("due.viewAll", { n: items.length }))
+        : null,
+    ].filter(Boolean)),
+    monthCalendar({ marks, onPick }).el,
+    el("div.upcoming__list", {}, shown.map((a) => upcomingRow(a))),
+  ]);
+}
+
+function upcomingRow(a) {
+  const days = daysUntil(a.dueAt);
+  const overdue = days < 0;
+  const soon = days >= 0 && days <= 1;
+  const color = store.subjectColor(a.subjectId);
+  return el("a", {
+    href: `#/session/${a.id}`,
+    class: "upcoming__row" + (overdue ? " is-overdue" : soon ? " is-soon" : ""),
+    style: { "--subject": color.solid },
+  }, [
+    el("span.upcoming__dot"),
+    el("span.upcoming__main", {}, [
+      el("strong", {}, a.title),
+      el("span.upcoming__meta", {}, dueRelativeLabel(days)),
+    ]),
+    el("span.upcoming__go", {}, icon(ICONS.play, 14)),
+  ]);
+}
+
+/** The full #/calendar page: same month calendar + full list as the rail's
+ *  copy, just uncollapsed. */
+export function renderCalendarPage() {
+  const items = store.upcomingDue();
+  const marks = new Map();
+  for (const a of items) {
+    const m = marks.get(a.dueAt) || { ids: [], titles: [] };
+    m.ids.push(a.id); m.titles.push(a.title);
+    marks.set(a.dueAt, m);
+  }
+  const onPick = (mark) => { location.hash = `#/session/${mark.ids[0]}`; };
+
+  return {
+    title: t("due.calendarTitle"),
+    node: el("div", {}, [
+      el("div", { style: { display: "flex", alignItems: "center", gap: "12px", marginBottom: "16px" } }, [
+        el("a.iconbtn", { href: "#/", "aria-label": "Back" }, [icon(ICONS.back, 18)]),
+        el("h1", {}, t("due.calendarTitle")),
+      ]),
+      el("div.panel.calendarpage", {}, [
+        monthCalendar({ marks, onPick }).el,
+        items.length
+          ? el("div.upcoming__list", { style: { marginTop: "var(--s-4)" } }, items.map((a) => upcomingRow(a)))
+          : el("p.note", { style: { marginTop: "var(--s-3)" } }, t("due.noneUpcoming")),
+      ]),
+    ]),
+  };
 }
 
 const TIP_COUNT = 7;

@@ -5,12 +5,13 @@
 // and a targeted practice run identically — and it's what gets saved so you
 // can resume.
 
-import { store, REVIEW_ID, PRACTICE_ID, NATIONAL_MIX_PREFIX, nationalMixId } from "../store.js";
+import { store, REVIEW_ID, PRACTICE_ID, WEAK_ID, NATIONAL_MIX_PREFIX, nationalMixId } from "../store.js";
 import { el, clear, icon, ICONS, uid, toast } from "../lib/dom.js";
 import { announce } from "../lib/a11y.js";
 import { renderQuestion } from "../components/questions.js";
 import { TutorChat } from "../components/tutor-chat.js";
 import { review } from "../lib/srs.js";
+import { weakSpotQuestions } from "../lib/mastery.js";
 import { t, plural } from "../lib/i18n.js";
 import { preloadQuestionTranslations, subjectDisplayName } from "../lib/library-content.js";
 import { showAchievementUnlocks } from "../lib/achievement-toast.js";
@@ -111,6 +112,36 @@ export async function renderPractice(attemptId) {
     retryHash: `#/practice/${attemptId}`,
     questionIds: ids,
     // Practice is where the tutoring happens after a test, so never lock it.
+    forceTutor: true,
+  });
+}
+
+/** Drill whatever topics you keep getting wrong, across every set. Reuses
+ *  the same recency-weighted topic mastery Progress already shows — nothing
+ *  new to track, just a session built from its weakest end. */
+export async function renderWeakPractice() {
+  await preloadQuestionTranslations(store.assignments.map((a) => a.id));
+  const weak = weakSpotQuestions(store.assignments, store.attempts);
+
+  if (!weak.length) {
+    return {
+      title: t("session.weakTitle"),
+      node: el("div.empty", {}, [
+        icon(ICONS.check, 26),
+        el("h2", {}, t("session.noWeakTitle")),
+        el("p", {}, t("session.noWeakBody")),
+        el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
+      ]),
+    };
+  }
+
+  return runSession({
+    key: WEAK_ID,
+    assignmentId: WEAK_ID,
+    title: t("session.weakTitle"),
+    type: "assignment",
+    retryHash: "#/practice-weak",
+    questionIds: weak.map((w) => w.question.id),
     forceTutor: true,
   });
 }
@@ -539,6 +570,7 @@ function shuffled(arr) {
 function badgeLabel(config) {
   if (config.assignmentId === REVIEW_ID) return t("session.badgeReview");
   if (config.assignmentId === PRACTICE_ID) return t("session.badgePractice");
+  if (config.assignmentId === WEAK_ID) return t("session.badgeWeak");
   if (config.assignmentId?.startsWith?.(NATIONAL_MIX_PREFIX)) return t("session.nationalTest");
   if (config.examMode) return t("session.badgeExamMode");
   return config.type === "test" ? t("session.badgeTest") : t("session.badgeAssignment");

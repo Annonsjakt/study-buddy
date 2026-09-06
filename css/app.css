@@ -691,6 +691,93 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .meter { display: grid; grid-template-columns: 120px 1fr 44px 30px; align-items: center; gap: var(--s-3); padding: var(--s-2) 0; }
 .panel summary { cursor: pointer; font-weight: 600; }
 .panel summary::marker { color: var(--ink-faint); }
+
+/* Dedicated #/calendar page — capped so the month grid doesn't stretch
+   across a wide screen. */
+.calendarpage { max-width: 460px; }
+
+/* ---------- upcoming deadlines ---------- */
+.upcoming__list { display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-3); }
+.upcoming__row {
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: 8px var(--s-3); border-radius: var(--r-md);
+  background: var(--surface); border: 1px solid var(--line);
+  text-decoration: none; color: inherit;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+}
+.upcoming__row:hover { border-color: var(--brand); }
+.upcoming__row.is-soon { border-color: var(--retry); }
+.upcoming__row.is-overdue { border-color: var(--retry); background: var(--retry-tint); }
+.upcoming__dot {
+  width: 8px; height: 8px; flex: none; border-radius: var(--r-full);
+  background: var(--subject, var(--brand));
+}
+.upcoming__main { flex: 1; min-width: 0; }
+.upcoming__main strong {
+  display: block; font-family: var(--font-display); font-weight: 600; font-size: var(--fs-sm);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.upcoming__meta { display: block; font-size: 12px; color: var(--ink-soft); }
+.upcoming__row.is-soon .upcoming__meta,
+.upcoming__row.is-overdue .upcoming__meta { color: var(--retry-ink); }
+.upcoming__go { flex: none; color: var(--ink-faint); display: grid; place-items: center; }
+.upcoming__row:hover .upcoming__go { color: var(--brand); }
+
+.acard__tag--due { background: var(--surface-sunk); color: var(--ink-soft); }
+.acard__tag--overdue { background: var(--retry-tint); color: var(--retry-ink); }
+
+/* ---------- calendar (js/components/calendar.js) ---------- */
+.cal__nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-2); }
+.cal__month {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--fs-sm);
+  text-transform: capitalize; letter-spacing: .01em;
+}
+.cal__navbtn {
+  width: 30px; height: 30px; flex: none; border-radius: var(--r-sm);
+  border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink-soft); cursor: pointer; font-size: 18px; line-height: 1;
+  display: grid; place-items: center;
+}
+.cal__navbtn:hover { background: var(--surface-sunk); color: var(--ink); }
+.cal__week, .cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal__week { margin-bottom: 4px; }
+.cal__wd {
+  text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .03em; color: var(--ink-faint); padding: 4px 0;
+}
+.cal__grid { gap: 2px; }
+.cal__cell {
+  position: relative; aspect-ratio: 1; min-height: 34px;
+  display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  background: none; font: inherit; font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
+  color: var(--ink); cursor: default;
+}
+button.cal__cell { cursor: pointer; }
+button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
+.cal__cell.is-outside { color: var(--ink-faint); }
+.cal__cell.is-today { font-weight: 700; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.cal__cell.is-selected { background: var(--brand); color: #fff; font-weight: 700; box-shadow: none; }
+.cal__cell:disabled { color: var(--ink-faint); opacity: .4; }
+.cal__cell:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+.cal__dot {
+  position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: var(--r-full); background: var(--brand);
+}
+/* More than one deadline that day — a wider pill hints "there's a few". */
+.cal__dot--multi { width: 12px; }
+.cal__cell.is-marked { color: var(--brand-ink); font-weight: 700; }
+.cal--mini .cal__cell.is-marked:hover { background: var(--brand-tint); }
+
+.datepick { display: block; }
+.datepick__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--s-3); }
+.datepick__chip {
+  font-size: var(--fs-sm); font-weight: 600; font-family: var(--font-display);
+  border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink-soft); padding: 5px var(--s-3); border-radius: var(--r-full);
+  cursor: pointer; transition: transform var(--dur-fast) var(--ease-spring), border-color var(--dur-fast);
+}
+.datepick__chip:hover { transform: translateY(-1px); border-color: var(--brand); color: var(--ink); }
 .meter__track { height: 10px; border-radius: var(--r-full); background: var(--surface-sunk); overflow: hidden; }
 .meter__fill { height: 100%; border-radius: inherit; background: var(--subject, var(--brand)); transition: width var(--dur-slow) var(--ease-out); }
 .gradepill {

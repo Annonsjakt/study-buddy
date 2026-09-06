@@ -7,11 +7,11 @@ import { getTheme, setTheme } from "./lib/theme.js";
 import { openPopover, closePopover } from "./lib/popover.js";
 import { maybeShowOnboarding } from "./lib/onboarding.js";
 import { t, plural, LANGS, getLang, setLang, applyLang } from "./lib/i18n.js";
-import { renderMenu } from "./views/menu.js";
+import { renderMenu, renderCalendarPage } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
 import { renderSolve } from "./views/solve.js";
 import { renderEdit } from "./views/edit.js";
-import { renderSession, renderReview, renderPractice, renderNationalMix } from "./views/session.js";
+import { renderSession, renderReview, renderPractice, renderWeakPractice, renderNationalMix } from "./views/session.js";
 import { renderResults } from "./views/results.js";
 import { renderProgress } from "./views/progress.js";
 import { renderAchievements } from "./views/achievements.js";
@@ -30,6 +30,8 @@ const routes = [
   { rx: /^\/edit\/(.+)$/, view: (m) => renderEdit(m[1]) },
   { rx: /^\/review$/, view: () => renderReview() },
   { rx: /^\/practice\/(.+)$/, view: (m) => renderPractice(m[1]) },
+  { rx: /^\/practice-weak$/, view: () => renderWeakPractice() },
+  { rx: /^\/calendar$/, view: () => renderCalendarPage() },
   { rx: /^\/session\/(.+)$/, view: (m, qs) => renderSession(m[1], qs) },
   { rx: /^\/results\/(.+)$/, view: (m) => renderResults(m[1]) },
   { rx: /^\/progress$/, view: () => renderProgress() },

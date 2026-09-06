@@ -79,6 +79,29 @@ export function masteryProgress(attempts) {
   return { startPct: startSum / n, nowPct: nowSum / n, topics: n };
 }
 
+// Every question whose topic is below `threshold` mastery, across every set
+// (or a subset the caller already filtered, e.g. to one subject) — weakest
+// topic first. Feeds the "practise weak spots" session (js/views/session.js).
+export function weakSpotQuestions(assignments, attempts, { threshold = 0.6, limit = 20 } = {}) {
+  const tm = masteryByTopic(attempts);
+  const seen = new Set();
+  const out = [];
+
+  for (const a of assignments) {
+    for (const q of a.questions || []) {
+      const m = tm[q.topic];
+      // Untouched topics have unknown mastery, not weak mastery — skip them.
+      if (m == null || m >= threshold) continue;
+      if (seen.has(q.id)) continue;
+      seen.add(q.id);
+      out.push({ assignment: a, question: q, mastery: m });
+    }
+  }
+
+  out.sort((x, y) => x.mastery - y.mastery);
+  return out.slice(0, limit);
+}
+
 // Snapshot before, apply one attempt, return {topic: {before, after}}.
 // Only the topics this attempt actually covered — a Rome test shouldn't
 // report on your photosynthesis topics just because they exist.
