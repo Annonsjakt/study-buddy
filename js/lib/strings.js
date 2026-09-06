@@ -424,6 +424,18 @@ export const STRINGS = {
     "solve.practiceMore": "Create practice questions on {subject}",
     "solve.unreadable": "I couldn't quite make out a problem in that photo — try a clearer shot, closer up and well lit.",
 
+    // ---- first-run onboarding ----
+    "ob.skip": "Skip",
+    "ob.sceneCapture": "Snap a photo of any problem",
+    "ob.sceneSolving": "Getting your answer…",
+    "ob.sceneAnswer": "Get a clear explanation instantly",
+    "ob.sceneProgress": "Mastery and streak build automatically",
+    "ob.demoStep": "Subtract 5, then divide by 2.",
+    "ob.ctaTitle": "Ready to try it yourself?",
+    "ob.ctaBody": "Take a real photo of your homework and get your first answer in seconds.",
+    "ob.ctaPrimary": "Take a photo now",
+    "ob.ctaSecondary": "Skip to dashboard",
+
     // ---- edit set ----
     "edit.title": "Edit set",
     "edit.pageTitle": "Edit — {title}",
@@ -1066,6 +1078,18 @@ export const STRINGS = {
     "solve.another": "Lös en till",
     "solve.practiceMore": "Skapa övningsfrågor i {subject}",
     "solve.unreadable": "Jag kunde inte riktigt läsa av någon uppgift i den bilden — prova en tydligare bild, tagen lite närmre och i bättre ljus.",
+
+    // ---- first-run onboarding ----
+    "ob.skip": "Hoppa över",
+    "ob.sceneCapture": "Ta en bild på valfri uppgift",
+    "ob.sceneSolving": "Hämtar ditt svar…",
+    "ob.sceneAnswer": "Få en tydlig förklaring direkt",
+    "ob.sceneProgress": "Nivå och studiesvit byggs upp automatiskt",
+    "ob.demoStep": "Subtrahera 5, dividera sedan med 2.",
+    "ob.ctaTitle": "Redo att testa själv?",
+    "ob.ctaBody": "Ta en riktig bild på dina läxor och få ditt första svar på några sekunder.",
+    "ob.ctaPrimary": "Ta en bild nu",
+    "ob.ctaSecondary": "Hoppa till översikten",
 
     // ---- edit set ----
     "edit.title": "Redigera set",

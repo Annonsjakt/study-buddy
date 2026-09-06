@@ -5,6 +5,7 @@ import { el, append, clear, mount, icon, ICONS, toast } from "./lib/dom.js";
 import { announce, focusHeading } from "./lib/a11y.js";
 import { getTheme, setTheme } from "./lib/theme.js";
 import { openPopover, closePopover } from "./lib/popover.js";
+import { maybeShowOnboarding } from "./lib/onboarding.js";
 import { t, plural, LANGS, getLang, setLang, applyLang } from "./lib/i18n.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
@@ -398,6 +399,7 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
 
 store.init().then(() => {
   render();
+  maybeShowOnboarding();
   // After first paint, keep menu/progress fresh when the store changes.
   store.addEventListener("change", () => {
     const h = location.hash.replace(/^#/, "");
