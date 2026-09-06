@@ -299,7 +299,11 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 }
 .dash__value {
   font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl);
-  line-height: 1.15; letter-spacing: -.01em; white-space: nowrap;
+  line-height: 1.15; letter-spacing: -.01em;
+  /* No white-space: nowrap here on purpose — the hero's empty-state value is
+     the phrase "Start studying", not a number, and forcing that onto one
+     line was overflowing the card. A bare number/percentage never contains
+     a space, so it never wraps anyway. */
 }
 .dash__card--hero .dash__value { font-size: 2.25rem; }
 .dash__valuerow { display: flex; align-items: baseline; gap: var(--s-3); flex-wrap: wrap; }
