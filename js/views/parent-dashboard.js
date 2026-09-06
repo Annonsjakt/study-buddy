@@ -3,9 +3,20 @@
 // read-only — reusing the exact same pure mastery/SRS/streak functions
 // #/progress runs for the signed-in user, just against a fetched blob.
 
-import { store } from "../store.js";
+import { store, PALETTE } from "../store.js";
 import { el, clear, toast, icon, ICONS } from "../lib/dom.js";
 import { masteryByTopic, masteryForSubject } from "../lib/mastery.js";
+
+// The blob here is the STUDENT's own state, fetched read-only — store's own
+// subjectColor() looks up the signed-in PARENT's local subjects and would
+// silently resolve every one of the student's subjects to the same
+// fallback color. Each subject record already carries its own color name
+// (assigned once by the student's own ensureSubject()), so that's read
+// directly instead.
+function colorFor(colorName) {
+  const p = PALETTE.find((c) => c.name === colorName) || PALETTE[0];
+  return { solid: `var(--c-${p.name})`, ink: `var(--c-${p.name}-ink)`, tint: `var(--c-${p.name}-tint)` };
+}
 import { dueQuestions } from "../lib/library.js";
 import { currentStreak } from "../lib/activity.js";
 import {
@@ -262,10 +273,14 @@ export async function renderParentStudent(studentUserId) {
     .sort((a, b) => a.m - b.m)
     .map(({ s, m }) => {
       const pct = Math.round(m * 100);
+      const color = colorFor(s.color);
       return el("div.meter", {}, [
-        el("span", {}, subjectDisplayName(s.name)),
+        el("span", { style: { display: "flex", alignItems: "center", gap: "6px", minWidth: "0" } }, [
+          el("span.subject-dot", { style: { "--subject": color.solid } }),
+          el("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, subjectDisplayName(s.name)),
+        ]),
         el("div.meter__track", { role: "img", "aria-label": `${subjectDisplayName(s.name)}: ${pct}% mastery` },
-          [el("div.meter__fill", { style: { width: `${pct}%` } })]),
+          [el("div.meter__fill", { style: { width: `${pct}%`, "--subject": color.solid } })]),
         el("span.tabular", { style: { textAlign: "right", fontWeight: 700 } }, `${pct}%`),
       ]);
     });

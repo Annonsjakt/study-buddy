@@ -2,10 +2,24 @@
 // i stället för att lista allt på en enda lång sida. Fungerar utan
 // API-nyckel — allt innehåll är statiska filer.
 
-import { store } from "../store.js";
+import { store, PALETTE } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { loadLibraryIndex, loadLibraryTranslations, isImported, importSet } from "../data/library.js";
 import { t, plural, getLang } from "../lib/i18n.js";
+
+// Library subjects are curriculum-defined (Matematik, Kemi, ...), a
+// different namespace from the student's own store.subjects — there's no
+// per-student color assignment for them yet, since nobody's added them to
+// their own library. A stable hash of the subject's own id (shared by every
+// student — "ak7-matematik" never changes) gives each one a consistent
+// color while browsing, without inventing a second color-assignment scheme
+// that would need to agree with ensureSubject()'s.
+function colorForSubjectId(id) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  const p = PALETTE[Math.abs(hash) % PALETTE.length];
+  return { solid: `var(--c-${p.name})`, ink: `var(--c-${p.name}-ink)`, tint: `var(--c-${p.name}-tint)` };
+}
 
 // The library's actual course content (subject names, descriptions, question
 // sets) is Swedish-curriculum material. In English mode it's shown through
@@ -118,7 +132,10 @@ export async function renderLibrary() {
       const subject = index.subjects.find((s) => s.id === subjId);
       const level = index.levels.find((l) => l.id === subject?.level);
       return el("section.panel", { style: { marginBottom: "20px" } }, [
-        el("p.note", { style: { marginBottom: "8px" } }, [levelLabel(level), subjName(subject)].filter(Boolean).join(" · ")),
+        el("p.note", { style: { display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" } }, [
+          el("span.subject-dot", { style: { "--subject": colorForSubjectId(subjId).solid } }),
+          [levelLabel(level), subjName(subject)].filter(Boolean).join(" · "),
+        ]),
         el("div.libgrid", {}, sets.map(setCard)),
       ]);
     });
@@ -148,7 +165,11 @@ export async function renderLibrary() {
     return el("div.panel", {}, [
       el("p", { style: { marginBottom: "16px" } }, t("library.subjectIntro", { level: levelLabel(level) })),
       el("div.source-grid", {}, subjects.map((subject) =>
-        el("button.source-opt", { type: "button", onclick: () => { state.subject = subject.id; paint(); } }, [
+        el("button.source-opt.source-opt--subject", {
+          type: "button",
+          style: { "--subject": colorForSubjectId(subject.id).solid },
+          onclick: () => { state.subject = subject.id; paint(); },
+        }, [
           icon(ICONS.book, 26), subjName(subject),
           el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subjDesc(subject)),
         ]))),
@@ -178,7 +199,10 @@ export async function renderLibrary() {
       el("section.panel", { style: { marginBottom: "24px" } }, [
         el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "6px" } }, [
           el("div", {}, [
-            el("h3", {}, subjName(subject)),
+            el("h3", { style: { display: "flex", alignItems: "center", gap: "8px" } }, [
+              el("span.subject-dot", { style: { "--subject": colorForSubjectId(subject.id).solid } }),
+              subjName(subject),
+            ]),
             el("p.note", { style: { marginTop: "4px" } }, subjDesc(subject)),
           ]),
           missing.length ? addAllBtn : el("span.note", {}, t("library.allAdded")),

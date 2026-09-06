@@ -255,6 +255,12 @@ h1:focus-visible, h2:focus-visible {
 .chip[aria-pressed="true"] { color: #fff; background: var(--subject-ink, var(--brand)); border-color: transparent; }
 .chip[aria-pressed="true"] .chip__dot { background: rgba(255,255,255,.85); }
 
+/* Same small color-identity marker as .chip__dot, wherever a subject name
+   shows up as plain text rather than inside a chip — mastery meters, library
+   headings — so "this subject = this color" reads consistently everywhere,
+   not just on the dashboard's filter chips. */
+.subject-dot { width: 8px; height: 8px; border-radius: var(--r-full); background: var(--subject, var(--ink-faint)); flex: none; }
+
 /* ---------- dashboard hero ---------- */
 .dash { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: var(--s-4); margin-bottom: var(--s-4); }
 /* Narrow: the hero keeps the full width, the two stat cards share a row. */
@@ -774,6 +780,14 @@ a.dash__card:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
 .source-opt:hover { transform: translateY(-2px); border-color: var(--brand); }
 .source-opt span { display: block; margin-bottom: var(--s-2); }
 .source-opt svg { display: block; margin: 0 auto var(--s-2); color: var(--brand); }
+
+/* Library's subject picker only — every subject otherwise looked identical
+   (same brand-blue book icon), which read as flat. Create's own source
+   picker (Paste/PDF/Photo/...) uses plain .source-opt and stays brand-blue,
+   since those aren't subjects at all. */
+.source-opt--subject { border-color: var(--subject, var(--line-strong)); }
+.source-opt--subject svg { color: var(--subject, var(--brand)); }
+.source-opt--subject:hover { border-color: var(--subject, var(--brand)); }
 
 .field { display: block; margin-bottom: var(--s-4); }
 .field > span { display: block; font-weight: 700; font-size: var(--fs-sm); margin-bottom: var(--s-2); }

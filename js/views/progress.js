@@ -43,7 +43,10 @@ export async function renderProgress() {
       const pct = Math.round(m * 100);
       const grade = estimatedGrade(m);
       return el("div.meter", {}, [
-        el("span", {}, subjectDisplayName(s.name)),
+        el("span", { style: { display: "flex", alignItems: "center", gap: "6px", minWidth: "0" } }, [
+          el("span.subject-dot", { style: { "--subject": color.solid } }),
+          el("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, subjectDisplayName(s.name)),
+        ]),
         el("div.meter__track", {
           role: "img", "aria-label": `${subjectDisplayName(s.name)}: ${pct}% mastery`,
         }, [el("div.meter__fill", { style: { width: "0%", "--subject": color.solid }, dataset: { w: pct } })]),
