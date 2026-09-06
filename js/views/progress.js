@@ -20,7 +20,7 @@ export async function renderProgress() {
 
   const progress = attemptsCount ? masteryProgress(store.attempts) : null;
   const trend = progress ? Math.round((progress.nowPct - progress.startPct) * 100) : null;
-  const trendBadge = trend > 0 ? el("span.dash__trend", {}, t("dash.trendUp", { n: trend })) : null;
+  const trendBadge = trend > 0 ? el("span.dash__trend", {}, t("progress.trendUp", { n: trend })) : null;
 
   // ---- streak strip: last 14 local days ----
   const studied = new Set(store.state.activity.daysStudied);

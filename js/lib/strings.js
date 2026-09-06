@@ -72,7 +72,7 @@ export const STRINGS = {
     "dash.startStudying": "Start studying",
     "dash.heroHintEmpty": "Finish a session and your level shows up here.",
     "dash.heroHint": "{topics} tracked · {sessions} done",
-    "dash.trendUp": "+{n}% since you started",
+    "dash.trendUp": "+{n}% so far",
     "dash.topic": "1 topic",
     "dash.topics": "{n} topics",
     "dash.session": "1 session",
@@ -290,6 +290,7 @@ export const STRINGS = {
 
     // ---- progress page ----
     "progress.title": "Your progress",
+    "progress.trendUp": "+{n}% since you started",
     "progress.pageTitle": "Progress",
     "progress.studyStreak": "Study streak",
     "progress.studiedDays": "1 day studied",
@@ -690,7 +691,7 @@ export const STRINGS = {
     "dash.startStudying": "Börja plugga",
     "dash.heroHintEmpty": "Slutför ett pass så dyker din nivå upp här.",
     "dash.heroHint": "{topics} spårade · {sessions} klara",
-    "dash.trendUp": "+{n}% sedan du började",
+    "dash.trendUp": "+{n}% hittills",
     "dash.topic": "1 område",
     "dash.topics": "{n} områden",
     "dash.session": "1 pass",
@@ -908,6 +909,7 @@ export const STRINGS = {
 
     // ---- progress page ----
     "progress.title": "Dina framsteg",
+    "progress.trendUp": "+{n}% sedan du började",
     "progress.pageTitle": "Framsteg",
     "progress.studyStreak": "Studiestreak",
     "progress.studiedDays": "1 dag pluggad",
