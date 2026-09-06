@@ -64,7 +64,7 @@ function badge(def, metrics, unlockedMap) {
                 tone: def.tier,
                 tag: t("share.badgeTag"),
                 emoji: tierEmoji(def.tier),
-                headline: `${t(`ach.tier.${def.tier}`)} · ${t(def.nameKey)}`,
+                headline: t(`ach.tier.${def.tier}`),
                 caption: t(def.descKey, { n: def.target }),
                 filename: `studybuddy-${def.id}.png`,
               }),

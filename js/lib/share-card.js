@@ -25,7 +25,9 @@ export function tierEmoji(tier) {
   return { bronze: "🥉", silver: "🥈", gold: "🥇", platinum: "💎" }[tier] || "🏅";
 }
 
-function wrapCenteredText(ctx, text, cx, y, maxWidth, lineHeight) {
+// Splits `text` into lines that fit `maxWidth` at ctx's CURRENT font — call
+// this before drawing to know how tall a block will actually be.
+function wrapLines(ctx, text, maxWidth) {
   const words = String(text).split(" ");
   const lines = [];
   let line = "";
@@ -35,8 +37,17 @@ function wrapCenteredText(ctx, text, cx, y, maxWidth, lineHeight) {
     else line = test;
   }
   if (line) lines.push(line);
-  const startY = y - ((lines.length - 1) * lineHeight) / 2;
-  lines.forEach((l, i) => ctx.fillText(l, cx, startY + i * lineHeight));
+  return lines;
+}
+
+// Draws `lines` centered on `cx`, starting at `y` (the vertical center of
+// the first line), and returns the y position just past the last line — so
+// the next block can flow directly beneath whatever this one actually
+// needed, rather than assuming a fixed line count and risking an overlap
+// when the text is longer than expected.
+function drawLines(ctx, lines, cx, y, lineHeight) {
+  lines.forEach((l, i) => ctx.fillText(l, cx, y + i * lineHeight));
+  return y + (lines.length - 1) * lineHeight + lineHeight / 2;
 }
 
 function draw(ctx, { emoji, headline, caption, tag, tone = "brand" }) {
@@ -56,41 +67,63 @@ function draw(ctx, { emoji, headline, caption, tag, tone = "brand" }) {
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#fff";
 
-  ctx.font = "700 42px Arial, sans-serif";
+  const cx = SIZE / 2;
+  const maxWidth = SIZE - 180;
+
+  ctx.font = "700 40px Arial, sans-serif";
   ctx.globalAlpha = 0.85;
-  ctx.fillText("StudyBuddy", SIZE / 2, 110);
+  ctx.fillText("StudyBuddy", cx, 100);
   ctx.globalAlpha = 1;
+
+  // Everything below the wordmark flows top-down from here — each block's
+  // real height (however many lines it actually wrapped to) pushes the
+  // next one down, instead of every block assuming a fixed slot and risking
+  // an overlap the moment some text is longer than expected.
+  let y = 215;
 
   if (tag) {
     ctx.font = "700 32px Arial, sans-serif";
     ctx.globalAlpha = 0.75;
-    wrapCenteredText(ctx, tag.toUpperCase(), SIZE / 2, SIZE * 0.31, SIZE - 200, 42);
+    const lines = wrapLines(ctx, tag.toUpperCase(), maxWidth);
+    y = drawLines(ctx, lines, cx, y, 40) + 40;
     ctx.globalAlpha = 1;
   }
 
   if (emoji) {
-    ctx.font = "170px Arial, sans-serif";
-    ctx.fillText(emoji, SIZE / 2, SIZE * 0.47);
+    ctx.font = "150px Arial, sans-serif";
+    ctx.fillText(emoji, cx, y + 85);
+    y += 210;
   }
 
-  ctx.font = "800 116px Arial, sans-serif";
-  wrapCenteredText(ctx, headline, SIZE / 2, SIZE * 0.65, SIZE - 140, 124);
+  ctx.font = "800 108px Arial, sans-serif";
+  const headlineLines = wrapLines(ctx, headline, maxWidth);
+  y = drawLines(ctx, headlineLines, cx, y + 10, 114) + 50;
 
   if (caption) {
     ctx.font = "42px Arial, sans-serif";
     ctx.globalAlpha = 0.88;
-    wrapCenteredText(ctx, caption, SIZE / 2, SIZE * 0.81, SIZE - 220, 54);
+    const capLines = wrapLines(ctx, caption, maxWidth - 60);
+    drawLines(ctx, capLines, cx, y, 54);
     ctx.globalAlpha = 1;
   }
 }
 
+function clamp(s, max) {
+  if (!s || s.length <= max) return s;
+  return `${s.slice(0, max - 1).trimEnd()}…`;
+}
+
 /** Builds the card and opens the share/download modal. `filename` should be
- *  a plain .png name — no path, nothing user-supplied goes into it. */
+ *  a plain .png name — no path, nothing user-supplied goes into it.
+ *  headline/caption are clamped defensively — the layout flows to fit
+ *  whatever actually wraps, but an assignment title or similar free-text
+ *  field could in principle be much longer than anything this card was
+ *  designed around. */
 export function shareCard({ emoji, headline, caption, tag, tone, filename = "studybuddy.png" }) {
   const canvas = document.createElement("canvas");
   canvas.width = SIZE;
   canvas.height = SIZE;
-  draw(canvas.getContext("2d"), { emoji, headline, caption, tag, tone });
+  draw(canvas.getContext("2d"), { emoji, headline: clamp(headline, 40), caption: clamp(caption, 90), tag, tone });
   canvas.toBlob((blob) => { if (blob) openModal(blob, filename); }, "image/png");
 }
 
