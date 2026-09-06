@@ -22,3 +22,7 @@ export const ASSIGN_URL = `${SERVER_ORIGIN}/api/assigned`;
 export const studentStateUrl = (studentUserId) => `${SERVER_ORIGIN}/api/parent/students/${studentUserId}/state`;
 export const unlinkUrl = (linkId) => `${SERVER_ORIGIN}/api/links/${linkId}`;
 export const clearAssignedUrl = (id) => `${SERVER_ORIGIN}/api/assigned/${id}`;
+export const FRIEND_INVITE_CODE_URL = `${SERVER_ORIGIN}/api/friends/invite-code`;
+export const FRIEND_REDEEM_URL = `${SERVER_ORIGIN}/api/friends/redeem`;
+export const FRIEND_LEADERBOARD_URL = `${SERVER_ORIGIN}/api/friends/leaderboard`;
+export const unfriendUrl = (linkId) => `${SERVER_ORIGIN}/api/friends/${linkId}`;

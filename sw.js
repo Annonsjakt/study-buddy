@@ -43,6 +43,7 @@ const APP_SHELL = [
   "./js/views/results.js",
   "./js/views/progress.js",
   "./js/views/achievements.js",
+  "./js/views/leaderboard.js",
   "./js/views/settings.js",
   "./js/components/questions.js",
   "./js/components/question-editor.js",

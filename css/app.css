@@ -950,6 +950,33 @@ kbd {
 .onboard__cta p { margin-bottom: var(--s-4); }
 .onboard__cta-actions { display: flex; gap: var(--s-3); justify-content: center; flex-wrap: wrap; }
 
+/* ---------- friend leaderboard ---------- */
+.lbrows { display: flex; flex-direction: column; gap: var(--s-2); }
+.lbrow {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
+  background: var(--surface); border: 1px solid var(--line);
+}
+.lbrow--me { border-color: var(--brand); background: var(--brand-tint); }
+
+/* Same gold/silver/bronze tier colors as the achievements badges — one
+   "ranked tier" visual language for the whole app, not two. */
+.lbrank {
+  flex: none; width: 28px; height: 28px; border-radius: var(--r-full);
+  display: grid; place-items: center; font-weight: 700; font-family: var(--font-display);
+  background: var(--surface-sunk); color: var(--ink-soft); font-size: var(--fs-sm);
+}
+.lbrank--gold { background: var(--ach-gold); color: #fff; }
+.lbrank--silver { background: var(--ach-silver); color: #fff; }
+.lbrank--bronze { background: var(--ach-bronze); color: #fff; }
+
+.lbrow__who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lbrow__handle { font-weight: 700; font-family: var(--font-display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lbrow__stats { display: flex; align-items: center; gap: var(--s-4); flex: none; }
+.lbrow__streak { display: inline-flex; align-items: center; gap: 4px; color: var(--flame); font-weight: 700; font-size: var(--fs-sm); }
+.lbrow__questions { font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft); white-space: nowrap; }
+
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
   .session { grid-template-columns: 1fr; }
