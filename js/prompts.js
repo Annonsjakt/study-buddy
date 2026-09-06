@@ -100,12 +100,34 @@ ${lines.join("\n")}${unique.length ? `
 They have been finding these topics hard: ${unique.join(", ")}. If this question connects to one of them, say so and build on it.` : ""}`;
 }
 
-function answerForRef(q) {
+export function answerForRef(q) {
   if (q.kind === "mc" && Array.isArray(q.choices)) {
     const i = typeof q.answer === "number" ? q.answer : q.answerIndex;
     return `${q.choices[i]} (option ${String.fromCharCode(65 + i)})`;
   }
   return typeof q.answer === "string" ? q.answer : JSON.stringify(q.answer ?? "");
+}
+
+/**
+ * Post-session explainer, for a question the student already got wrong and
+ * has finished the session on. Unlike tutorSystem's Socratic hint-ladder —
+ * built for withholding the answer WHILE the student is still working the
+ * question — the point here is the opposite: the session is over, they
+ * already know they missed it, and holding back now would just be
+ * unhelpful. Explain directly, then answer whatever they ask.
+ */
+export function explainSystem({ assignment, question }) {
+  const choicesLine = question.kind === "mc" && Array.isArray(question.choices)
+    ? `Choices: ${question.choices.map((c, i) => `${String.fromCharCode(65 + i)}) ${c}`).join("   ")}\n`
+    : "";
+
+  return `You are StudyBuddy, a warm K-12 tutor. The student just finished a session and got ONE question wrong. They're asking about it now, afterward — the session is over, so explain directly and clearly. This is not the moment to withhold the answer or turn it into a guessing game; that phase already happened.
+
+The assignment is "${assignment.title}" (${assignment.type}). The question was:
+"${question.prompt}"
+${choicesLine}The correct answer: ${answerForRef(question)}
+
+First, explain clearly why that's the correct answer — a short paragraph, or a few numbered steps if the question is multi-step. Then answer whatever specific follow-up the student asks next. Use $...$ / $$...$$ for math. Address the student as "you". Keep it focused — a few sentences is usually enough.${aiLangInstruction()}`;
 }
 
 /** Used when a set predates stored openers. No API call, no repetition. */

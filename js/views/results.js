@@ -3,9 +3,12 @@
 import { store } from "../store.js";
 import { el, icon, ICONS } from "../lib/dom.js";
 import { renderRich } from "../lib/rich.js";
+import { markdown } from "../lib/markdown.js";
 import { deltaFromAttempt } from "../lib/mastery.js";
 import { celebrate, clearConfetti } from "../lib/confetti-helper.js";
 import { estimatedGrade, gradeRank } from "../lib/grade.js";
+import { tutorStream, ClaudeError } from "../claude.js";
+import { explainSystem } from "../prompts.js";
 import { t, plural } from "../lib/i18n.js";
 
 export function renderResults(attemptId) {
@@ -23,8 +26,13 @@ export function renderResults(attemptId) {
   const deltas = deltaFromAttempt(before, attempt);
 
   // Look questions up across the whole library — a review session mixes sets.
+  // Kept as {assignment, question} pairs, not just the question, because a
+  // mixed review's wrong answers can each belong to a different assignment —
+  // the explainer needs the right one per question, not just the top-level
+  // assignment this attempt itself was run against.
   const wrong = (attempt.items || []).filter((i) => !i.correct);
-  const wrongQ = wrong.map((i) => store.findQuestion(i.questionId)?.question).filter(Boolean);
+  const wrongQ = wrong.map((i) => store.findQuestion(i.questionId)).filter(Boolean);
+  const explainerAborts = [];
 
   const R = 74, C = 2 * Math.PI * R;
   const ringWrap = el("div.scorering");
@@ -76,9 +84,8 @@ export function renderResults(attemptId) {
           plural(wrongQ.length, "results.practiseOne", "results.practiseMany")]),
       ]),
       attempt.wasTest ? el("p.note", { style: { marginBottom: "8px" } }, t("results.tutorSatOut")) : null,
-      el("div.delta-list", {}, wrongQ.map((q) => el("div.delta", {}, [
-        el("span", { html: renderRich(q.prompt.length > 90 ? q.prompt.slice(0, 90) + "…" : q.prompt) }),
-      ]))),
+      el("div.wronglist", {}, wrongQ.map(({ assignment: qAssignment, question }) =>
+        wrongCard(qAssignment, question, explainerAborts))),
     ].filter(Boolean)) : null,
 
     el("div", { style: { display: "flex", gap: "12px", justifyContent: "center", marginTop: "24px", flexWrap: "wrap" } }, [
@@ -93,7 +100,96 @@ export function renderResults(attemptId) {
     node.querySelectorAll(".delta__bar i").forEach((i) => { i.style.width = `${i.dataset.w}%`; });
   });
 
-  return { title: t("results.pageTitle"), node, cleanup: clearConfetti };
+  return {
+    title: t("results.pageTitle"), node,
+    cleanup: () => { clearConfetti(); for (const c of explainerAborts) { try { c.abort(); } catch {} } },
+  };
+}
+
+/** One wrong answer, expandable into: the correct answer, any explanation/
+ *  steps already stored on the question (free — no API call), and an
+ *  "ask why" mini-chat for a specific follow-up. Unlike the live in-session
+ *  tutor, this explains directly rather than holding the answer back — the
+ *  session is already over. */
+function wrongCard(assignment, question, aborts) {
+  const messages = [];   // Anthropic-format follow-up history, this card only
+  let open = false, busy = false;
+
+  const toggleBtn = el("button.linkbtn.wrongcard__toggle", { type: "button" }, t("results.askWhy"));
+  const logEl = el("div.explainer__log");
+  const input = el("input.explainer__input", { type: "text", placeholder: t("results.explainPlaceholder"), "aria-label": t("results.askWhy") });
+  const sendBtn = el("button.iconbtn", { type: "submit", "aria-label": t("results.send") }, [icon(ICONS.arrow, 16)]);
+  const form = el("form.explainer__form", { onsubmit: (e) => { e.preventDefault(); submit(); } }, [input, sendBtn]);
+  const panel = el("div.explainer", { hidden: true });
+
+  function correctAnswerText() {
+    if (question.kind === "mc" && Array.isArray(question.choices)) return question.choices[question.answer];
+    return question.answer;
+  }
+
+  function appendMsg(who, text) {
+    const node = el(`div.msg.${who}`);
+    node.innerHTML = who === "me" ? escapeHtml(text) : markdown(text);
+    logEl.appendChild(node);
+    logEl.scrollTop = logEl.scrollHeight;
+    return node;
+  }
+
+  async function submit() {
+    const text = input.value.trim();
+    if (!text || busy || !assignment) return;
+    input.value = "";
+    appendMsg("me", text);
+    messages.push({ role: "user", content: text });
+    busy = true; sendBtn.disabled = true;
+    const bubble = appendMsg("ai", "");
+    bubble.innerHTML = `<span class="typing"><span></span><span></span><span></span></span>`;
+
+    const controller = new AbortController();
+    aborts.push(controller);
+    let acc = "";
+    try {
+      const system = explainSystem({ assignment, question });
+      for await (const chunk of tutorStream({ system, messages, signal: controller.signal })) {
+        acc += chunk;
+        bubble.innerHTML = markdown(acc);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      messages.push({ role: "assistant", content: acc || "…" });
+    } catch (e) {
+      bubble.innerHTML = markdown(`_${e instanceof ClaudeError ? e.message : t("tutor.snag")}_`);
+      messages.pop();
+    }
+    busy = false; sendBtn.disabled = false;
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    open = !open;
+    panel.hidden = !open;
+    toggleBtn.textContent = open ? t("results.hideWhy") : t("results.askWhy");
+    if (open && !panel.dataset.filled) {
+      panel.dataset.filled = "1";
+      const baseline = [
+        el("p.explainer__answer", {}, [el("strong", {}, t("results.correctAnswerLabel")), " ", el("span", { html: renderRich(correctAnswerText()) })]),
+      ];
+      if (question.kind === "mc" && question.explanation) {
+        baseline.push(el("p", { html: renderRich(question.explanation) }));
+      } else if (question.kind === "worked" && question.steps?.length) {
+        baseline.push(el("ol.solve-steps", {}, question.steps.map((s) => el("li", { html: renderRich(s) }))));
+      }
+      panel.append(...baseline, logEl, assignment && store.hasKey() ? form : el("p.note", {}, t("results.explainNeedsLive")));
+    }
+  });
+
+  return el("div.wrongcard", {}, [
+    el("div.wrongcard__prompt", { html: renderRich(question.prompt) }),
+    toggleBtn,
+    panel,
+  ]);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 /** For a real exam-conditions run (a "Prov"-type set, or any exam-mode
