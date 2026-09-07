@@ -83,7 +83,6 @@ function badge(def, metrics, unlockedMap) {
       el("div.achbadge__top", {}, [
         el("span.achbadge__tiername", {}, tierLabel),
         isUnlocked ? el("span.achbadge__check", {}, icon(ICONS.check, 12)) : null,
-        shareBtn,
       ].filter(Boolean)),
       el("p.achbadge__desc", {}, t(def.descKey, { n: def.target })),
       isUnlocked
@@ -95,7 +94,8 @@ function badge(def, metrics, unlockedMap) {
             el("span.achbadge__fraction", {}, `${value}/${def.target}`),
           ]),
     ]),
-  ]);
+    shareBtn,
+  ].filter(Boolean));
 }
 
 function formatDate(ts) {

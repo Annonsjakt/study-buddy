@@ -1611,6 +1611,7 @@ kbd {
 .achgroup__title { display: flex; align-items: center; gap: var(--s-2); margin-bottom: var(--s-4); color: var(--ink-soft); font-size: var(--fs-md); }
 .achrow { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s-3); }
 .achbadge {
+  position: relative;
   display: flex; gap: var(--s-3); align-items: flex-start;
   padding: var(--s-4); border-radius: var(--r-md);
   background: var(--surface); border: 1px solid var(--line);
@@ -1622,6 +1623,7 @@ kbd {
   background: var(--surface-sunk); color: var(--ink-faint); border: 1px solid var(--line-strong);
 }
 .achbadge__body { min-width: 0; }
+.achbadge:has(.achbadge__share) { padding-bottom: 40px; }
 .achbadge__top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
 .achbadge__tiername { font-weight: 700; font-size: var(--fs-sm); color: var(--ink-faint); text-transform: uppercase; letter-spacing: .03em; }
 .achbadge__check { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: var(--r-full); background: var(--ok); color: #fff; }
@@ -1796,7 +1798,7 @@ kbd {
 /* A fixed-dark pill regardless of theme, like .toast — a small "chip" of
    chrome rather than a themed control, so it reads the same on every badge. */
 .achbadge__share {
-  margin-left: auto; flex: none;
+  position: absolute; right: var(--s-3); bottom: var(--s-3);
   display: inline-flex; align-items: center; gap: 6px;
   padding: 5px 12px; border: none; border-radius: var(--r-full);
   background: #232330; color: #fff;
