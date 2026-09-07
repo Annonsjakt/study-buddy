@@ -286,13 +286,14 @@ function escHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-/** "3 back in a day or two · 2 back again shortly" — the same `·`-joined
- *  idiom the elapsed-time line uses. Empty when there's nothing to break down. */
+/** "3 questions back in a day or two · 2 questions back again shortly" — the
+ *  same `·`-joined idiom the elapsed-time line uses. Empty when there's
+ *  nothing to break down. */
 function bucketLine(s) {
   const p = [];
-  if (s.relearn) p.push(t("results.srsRelearn", { n: s.relearn }));
-  if (s.soon) p.push(t("results.srsSoon", { n: s.soon }));
-  if (s.later) p.push(t("results.srsLater", { n: s.later }));
+  if (s.relearn) p.push(plural(s.relearn, "results.srsRelearnOne", "results.srsRelearn"));
+  if (s.soon) p.push(plural(s.soon, "results.srsSoonOne", "results.srsSoon"));
+  if (s.later) p.push(plural(s.later, "results.srsLaterOne", "results.srsLater"));
   return p.join("  ·  ");
 }
 
