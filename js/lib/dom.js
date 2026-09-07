@@ -163,4 +163,5 @@ export const ICONS = {
   calendarCheck: "M8 2v4 M16 2v4 M3 10h18 M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z M9 15l2 2 4-4",
   podium: "M4 21V12h5v9H4 M9.5 21V7h5v14h-5 M15 21v-6h5v6h-5",
   share: "M12 3v13 M8 7l4-4 4 4 M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7",
+  type: "M4 7V4h16v3 M9 20h6 M12 4v16",
 };
