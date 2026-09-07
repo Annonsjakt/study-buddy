@@ -487,7 +487,7 @@ function homeRail() {
 }
 
 function calendarPanel() {
-  const content = deadlineRailContent({ collapsible: true });
+  const content = deadlineRailContent({ collapsible: true, forceCalendar: true });
   if (!content) return null;
   return el("section.home-panel.home-panel--cal", {}, [
     el("div.home-panel__label", {}, [
