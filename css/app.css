@@ -1622,7 +1622,7 @@ kbd {
   background: var(--surface-sunk); color: var(--ink-faint); border: 1px solid var(--line-strong);
 }
 .achbadge__body { min-width: 0; }
-.achbadge__top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.achbadge__top { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; flex-wrap: wrap; }
 .achbadge__tiername { font-weight: 700; font-size: var(--fs-sm); color: var(--ink-faint); text-transform: uppercase; letter-spacing: .03em; }
 .achbadge__check { display: grid; place-items: center; flex: none; width: 18px; height: 18px; border-radius: var(--r-full); background: var(--ok); color: #fff; }
 .achbadge__desc { font-size: var(--fs-sm); color: var(--ink-soft); line-height: 1.4; margin: 0 0 var(--s-2); }
