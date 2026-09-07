@@ -1131,6 +1131,186 @@
     "lib-rel1-konflikter": {
       "title": "Religion in conflicts and global contexts",
       "summary": "Religion as a marker of identity in conflicts, religious peace work, freedom of religion as a human right, and religion and migration."
+    },
+    "lib-fr7-greetings": {
+      "title": "Greetings and school phrases",
+      "summary": "Basic greetings, polite phrases, and words for the classroom and everyday school life."
+    },
+    "lib-fr7-family": {
+      "title": "Family and numbers",
+      "summary": "Family words, possessive pronouns, and the numbers 0–60."
+    },
+    "lib-fr7-present": {
+      "title": "Grammar: present tense of -er verbs",
+      "summary": "Present-tense conjugation of regular -er verbs, plus the irregular verbs être and avoir."
+    },
+    "lib-fr7-articles": {
+      "title": "Articles and gender",
+      "summary": "Definite and indefinite articles, gender (masculine/feminine), and the plural of nouns."
+    },
+    "lib-fr7-reading": {
+      "title": "Reading comprehension: an introduction",
+      "summary": "A short text where a person introduces themselves and their family, with questions about details and context."
+    },
+    "lib-fr8-food": {
+      "title": "Vocabulary: food and drink",
+      "summary": "Words for food, drink, and meals, plus how to order and talk about what you like."
+    },
+    "lib-fr8-time": {
+      "title": "Telling time and days of the week",
+      "summary": "How to tell the time, days of the week and months, plus how to talk about a schedule."
+    },
+    "lib-fr8-verbs": {
+      "title": "Grammar: irregular verbs in the present tense",
+      "summary": "The common irregular verbs aller, faire, vouloir and pouvoir in the present tense, plus aller + infinitive for the future."
+    },
+    "lib-fr8-adjectives": {
+      "title": "Adjectives and descriptions",
+      "summary": "How adjectives agree in gender and number, and where adjectives are placed in a sentence."
+    },
+    "lib-fr8-reading": {
+      "title": "Reading comprehension: a message to a friend",
+      "summary": "A text message about weekend plans, with questions about details, times, and feelings."
+    },
+    "lib-fr9-travel": {
+      "title": "Vocabulary: travel and weather",
+      "summary": "Words for travel, means of transport, and talking about the weather."
+    },
+    "lib-fr9-past": {
+      "title": "Grammar: passé composé",
+      "summary": "How the passé composé is formed with avoir or être, and the most common past participle forms."
+    },
+    "lib-fr9-questions": {
+      "title": "Questions and negation",
+      "summary": "Question words, how questions are formed, and how to make a sentence negative with ne...pas."
+    },
+    "lib-fr9-dailylife": {
+      "title": "Comparisons and daily life",
+      "summary": "Comparing things (plus/moins que, aussi... que) and reflexive verbs for a typical day."
+    },
+    "lib-fr9-reading": {
+      "title": "Reading comprehension: a longer text",
+      "summary": "A connected text about a trip, with questions that require linking several parts of the text together."
+    },
+    "lib-de7-greetings": {
+      "title": "Greetings and school phrases",
+      "summary": "Basic greetings, polite phrases, and words for the classroom and everyday school life."
+    },
+    "lib-de7-family": {
+      "title": "Family and numbers",
+      "summary": "Family words, possessive pronouns, and the numbers 0–100."
+    },
+    "lib-de7-present": {
+      "title": "Grammar: present tense of regular verbs",
+      "summary": "Present tense conjugation of regular verbs, plus the irregular verbs sein and haben."
+    },
+    "lib-de7-articles": {
+      "title": "Articles and gender",
+      "summary": "The three definite articles der/die/das, the indefinite article, and the plural of nouns."
+    },
+    "lib-de7-reading": {
+      "title": "Reading comprehension: an introduction",
+      "summary": "A short text where a person introduces themselves and their family, with questions about details and context."
+    },
+    "lib-de8-food": {
+      "title": "Vocabulary: food and drink",
+      "summary": "Words for food, drink, and meals, plus how to order and talk about what you like."
+    },
+    "lib-de8-time": {
+      "title": "Telling time and days of the week",
+      "summary": "Telling the time, days of the week, and months, plus how to talk about a schedule."
+    },
+    "lib-de8-verbs": {
+      "title": "Grammar: modal verbs and strong verbs",
+      "summary": "The modal verbs können, müssen, and wollen, plus strong verbs that change their stem vowel (fahren, sehen)."
+    },
+    "lib-de8-accusative": {
+      "title": "Grammar: accusative case",
+      "summary": "The accusative form of the definite and indefinite article, plus personal pronouns in the accusative."
+    },
+    "lib-de8-reading": {
+      "title": "Reading comprehension: a message to a friend",
+      "summary": "A text message about weekend plans, with questions about details, times, and feelings."
+    },
+    "lib-de9-travel": {
+      "title": "Vocabulary: travel and weather",
+      "summary": "Words for travel, modes of transport, and talking about the weather."
+    },
+    "lib-de9-perfect": {
+      "title": "Grammar: perfect tense",
+      "summary": "How the perfect tense is formed with haben or sein, and the most common participle forms."
+    },
+    "lib-de9-wordorder": {
+      "title": "Word order and subordinate clauses",
+      "summary": "The verb's position in main and subordinate clauses, and the conjunctions weil and dass."
+    },
+    "lib-de9-dailylife": {
+      "title": "Comparisons and daily life",
+      "summary": "Comparative and superlative adjectives, and reflexive verbs for daily routines."
+    },
+    "lib-de9-reading": {
+      "title": "Reading comprehension: a longer text",
+      "summary": "A continuous text about a trip, with questions that require connecting multiple parts of the text."
+    },
+    "lib-sp7-greetings": {
+      "title": "Greetings and school phrases",
+      "summary": "Basic greetings, polite phrases, and words for the classroom and school life."
+    },
+    "lib-sp7-family": {
+      "title": "Family and numbers",
+      "summary": "Family words, possession with possessive pronouns, and the numbers 0–100."
+    },
+    "lib-sp7-present": {
+      "title": "Grammar: present tense of regular verbs",
+      "summary": "Present tense conjugation of -ar, -er, and -ir verbs, plus the irregular verbs ser and estar."
+    },
+    "lib-sp7-articles": {
+      "title": "Articles and gender",
+      "summary": "Definite and indefinite articles, gender (masculine/feminine), and the plural of nouns."
+    },
+    "lib-sp7-reading": {
+      "title": "Reading comprehension: an introduction",
+      "summary": "A short text where a person introduces themselves and their family, with questions about details and context."
+    },
+    "lib-sp8-food": {
+      "title": "Vocabulary: food and drink",
+      "summary": "Words for food, drink, and meals, plus how to order and talk about what you like."
+    },
+    "lib-sp8-time": {
+      "title": "Telling time and days of the week",
+      "summary": "Telling time, days of the week and months, and how to talk about a schedule."
+    },
+    "lib-sp8-verbs": {
+      "title": "Grammar: irregular verbs in the present tense",
+      "summary": "The common irregular verbs ir, tener, querer and hacer in the present tense."
+    },
+    "lib-sp8-adjectives": {
+      "title": "Adjectives and descriptions",
+      "summary": "How adjectives agree in gender and number, and where adjectives are placed in a sentence."
+    },
+    "lib-sp8-reading": {
+      "title": "Reading comprehension: a message to a friend",
+      "summary": "A text message about weekend plans, with questions about details, times, and feelings."
+    },
+    "lib-sp9-travel": {
+      "title": "Vocabulary: travel and weather",
+      "summary": "Words for travel, means of transport, and talking about the weather."
+    },
+    "lib-sp9-past": {
+      "title": "Grammar: past tense (pretérito)",
+      "summary": "The basics of the pretérito (past tense) for regular -ar, -er, and -ir verbs, plus the common irregular verbs ser/ir and hacer."
+    },
+    "lib-sp9-questions": {
+      "title": "Questions and negation",
+      "summary": "Question words, how questions are formed, and how to make a sentence negative."
+    },
+    "lib-sp9-dailylife": {
+      "title": "Comparisons and daily life",
+      "summary": "Comparing things (más/menos que, tan... como) and vocabulary for a typical day."
+    },
+    "lib-sp9-reading": {
+      "title": "Reading comprehension: a longer text",
+      "summary": "A connected text about a trip, with questions that require linking together several parts of the text."
     }
   }
 }
