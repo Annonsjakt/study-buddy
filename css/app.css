@@ -1320,6 +1320,14 @@ button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
    prepare the material), just clearly marked as not ready to generate. */
 .source-opt--locked { border-style: dashed; border-color: var(--line); opacity: .82; }
 .source-opt--locked svg { opacity: .7; }
+
+/* Library's subject picker only — every subject otherwise looked identical
+   (same brand-blue book icon), which read as flat. Same colour-accent idiom
+   .acard already uses (a solid stripe, not a full-saturation border all
+   round), so it matches how subjects look everywhere else in the app. */
+.source-opt--subject { border-left: 6px solid var(--subject, var(--line-strong)); }
+.source-opt--subject svg { color: var(--subject, var(--brand)); }
+.source-opt--subject:hover { border-color: var(--subject, var(--brand)); }
 .source-opt__tag {
   display: inline-block; margin-top: var(--s-2); font-size: 11px; font-weight: 700;
   color: var(--ink-faint); background: var(--surface-sunk);
