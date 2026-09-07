@@ -175,7 +175,7 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith((async () => {
     try {
-      const fresh = await fetch(request);
+      const fresh = await fetch(request, { cache: "no-store" });
       if (fresh && fresh.ok) {
         const cache = await caches.open(CACHE);
         cache.put(request, fresh.clone());
