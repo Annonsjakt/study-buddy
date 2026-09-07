@@ -124,7 +124,7 @@ export function renderCreate(prefill) {
     }, [
       icon(iconPath, 26), label,
       el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, desc),
-      needsAi && noServer ? el("span.source-opt__tag", {}, t("create.optNeedsServer")) : null,
+      needsAi && noServer ? el("span.source-opt__tag", {}, [icon(ICONS.lock, 11), t("create.optNeedsServer")]) : null,
     ].filter(Boolean));
 
     return el("div.panel", {}, [

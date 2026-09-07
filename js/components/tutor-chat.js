@@ -30,8 +30,9 @@ async function loadScripted() {
 }
 
 export class TutorChat {
-  constructor({ locked = false, hintBudget = Infinity } = {}) {
+  constructor({ locked = false, hintBudget = Infinity, onClose = null } = {}) {
     this.locked = locked;
+    this.onClose = onClose;
     // In a test the tutor can be given a small hint allowance instead of being
     // shut off entirely. hintBudget counts student questions, not tutor lines.
     this.hintBudget = hintBudget;
@@ -112,13 +113,22 @@ export class TutorChat {
 
     this.subEl = el("div.tutor__sub", {}, this._subText());
 
+    // Mobile-only: the tutor becomes a slide-up sheet with no other way to
+    // dismiss it once open (the toggle that opened it scrolls away with the
+    // question). Self-contained so it works regardless of who opened it.
+    const closeBtn = el("button.iconbtn.iconbtn--sm.tutor__close", {
+      type: "button", "aria-label": t("common.close"), title: t("common.close"),
+      onclick: () => { this.el.classList.remove("is-open"); this.onClose?.(); },
+    }, [icon(ICONS.close, 16)]);
+
     this.el = el("div.tutor.card", {}, [
       el("div.tutor__head", {}, [
         this.mascotEl,
-        el("div", {}, [
+        el("div", { style: { flex: "1", minWidth: "0" } }, [
           el("div.tutor__title", {}, t("tutor.name")),
           this.subEl,
         ]),
+        closeBtn,
       ]),
       this.logEl,
       this.formEl,

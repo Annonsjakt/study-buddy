@@ -201,7 +201,10 @@ function runSession(config) {
   let tutorSilent = testMode && hintBudget === 0;
   let leftTestMode = false;
 
-  const tutor = new TutorChat({ locked: tutorSilent, hintBudget });
+  const tutor = new TutorChat({
+    locked: tutorSilent, hintBudget,
+    onClose: () => { hintFab.textContent = t("session.needHint"); },
+  });
 
   const fill = el("div.progressbar__fill");
   const label = el("div.progress-label");
@@ -673,10 +676,13 @@ function runSession(config) {
   document.addEventListener("keydown", onKeyDown);
 
   // A one-time nudge that the shortcuts exist at all — the button carries it
-  // from then on. Shown once ever, per browser.
+  // from then on. Shown once ever, per browser, and only where a keyboard is
+  // plausible: a touch-only phone has no "?" to press, and the tip's own
+  // toast has nowhere safe to sit on a small screen without covering content.
   let tipTimer = null;
   try {
-    if (!localStorage.getItem(TIP_SEEN_KEY)) {
+    const hasKeyboard = window.matchMedia("(pointer: fine)").matches;
+    if (hasKeyboard && !localStorage.getItem(TIP_SEEN_KEY)) {
       localStorage.setItem(TIP_SEEN_KEY, "1");
       tipTimer = setTimeout(() => toast(t("session.shortcutTip")), 1200);
     }
@@ -787,6 +793,7 @@ function runSession(config) {
     el("div.session", {}, [
       el("div", {}, [
         stage,
+        hintFab,
         el("div.nav-row", {}, [
           exitBtn,
           el("div", { style: { display: "flex", gap: "10px" } }, [skipBtn, nextBtn]),
@@ -794,7 +801,6 @@ function runSession(config) {
       ]),
       tutor.el,
     ]),
-    hintFab,
   ].filter(Boolean));
 
   return {

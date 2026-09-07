@@ -1317,9 +1317,13 @@ button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
 .source-opt:hover { transform: translateY(-2px); border-color: var(--brand); }
 .source-opt svg { display: block; margin: 0 auto var(--s-2); }
 /* An AI-generated source with no server to run it — still openable (you can
-   prepare the material), just clearly marked as not ready to generate. */
-.source-opt--locked { border-style: dashed; border-color: var(--line); opacity: .82; }
+   prepare the material), just clearly marked as not ready to generate. Dimmed
+   enough to read as "not now" at a glance, and the hover stays neutral
+   (no brand-blue invitation) so it doesn't compete with the sources that
+   actually work right now. */
+.source-opt--locked { border-style: dashed; border-color: var(--line); opacity: .6; }
 .source-opt--locked svg { opacity: .7; }
+.source-opt--locked:hover { transform: none; border-color: var(--line-strong); }
 
 /* Library's subject picker only — every subject otherwise looked identical
    (same brand-blue book icon), which read as flat. Same colour-accent idiom
@@ -1329,11 +1333,11 @@ button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
 .source-opt--subject svg { color: var(--subject, var(--brand)); }
 .source-opt--subject:hover { border-color: var(--subject, var(--brand)); }
 .source-opt__tag {
-  display: inline-block; margin-top: var(--s-2); font-size: 11px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 4px; margin-top: var(--s-2); font-size: 11px; font-weight: 700;
   color: var(--ink-faint); background: var(--surface-sunk);
   padding: 2px 8px; border-radius: var(--r-full);
 }
-.source-opt__tag::before { content: "🔌 "; }
+.source-opt__tag svg { margin: 0; flex: none; }
 
 /* Subject field: text input + one-tap chips for the subjects that exist. */
 .subjectfield { display: flex; flex-direction: column; gap: var(--s-2); }
@@ -1512,18 +1516,22 @@ kbd {
   }
   .tutor.is-open { transform: translateY(0); }
 
+  /* In normal document flow, right above .nav-row — not fixed, so it can
+     never land on top of the Skip/Next buttons regardless of how tall the
+     question above it is. Closing the open sheet is the tutor panel's own
+     job (.tutor__close), since this button scrolls away with the question. */
   .hintfab {
-    display: block; position: fixed; z-index: 71;
-    left: 50%; bottom: var(--s-4); transform: translateX(-50%);
+    display: block; margin: 0 auto var(--s-4); width: max-content;
     font-family: var(--font-display); font-weight: 600; font-size: var(--fs-sm);
     padding: var(--s-3) var(--s-5); border-radius: var(--r-full);
     border: none; background: var(--brand); color: #fff;
-    box-shadow: var(--shadow-2); cursor: pointer;
+    box-shadow: var(--shadow-1); cursor: pointer;
   }
-  .tutor.is-open ~ .hintfab { bottom: calc(min(70vh, 520px) + var(--s-3)); }
 
-  /* Keep the last controls clear of the floating button. */
-  .nav-row { margin-bottom: var(--s-8); }
+  .tutor__close { display: inline-flex; margin-left: auto; }
+}
+@media (min-width: 861px) {
+  .tutor__close { display: none; }
 }
 @media (max-width: 540px) {
   .content { padding: var(--s-5) var(--s-3) var(--s-7); }

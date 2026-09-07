@@ -90,24 +90,46 @@ export async function renderLibrary() {
   }
 
   /* ---- search across the whole library, wherever you are ---- */
+  // Ranked, not just filtered: a query that names a subject exactly (e.g.
+  // "franska") should surface that subject's own sets before a set from an
+  // unrelated subject that merely mentions the word in passing (a history
+  // set describing "den franska revolutionen"). Rank per set by where the
+  // match landed, then sort each subject's whole section by its best match —
+  // exact subject/level name first, then title, then description last.
+  function matchRank(s, subject, level, q) {
+    const subj = (subjName(subject) || "").toLowerCase();
+    const lvl = (lvlLabel(level) || "").toLowerCase();
+    const title = (setTitle(s) || "").toLowerCase();
+    const summary = (setSummary(s) || "").toLowerCase();
+    if (subj.includes(q) || lvl.includes(q)) return 0;
+    if (title.includes(q)) return 1;
+    if (summary.includes(q)) return 2;
+    return 3;
+  }
+
   function searchResults(q) {
-    const matches = index.sets.filter((s) => {
+    const matches = [];
+    for (const s of index.sets) {
       const subject = index.subjects.find((sub) => sub.id === s.subject);
       const level = index.levels.find((l) => l.id === subject?.level);
-      return [setTitle(s), setSummary(s), subjName(subject), lvlLabel(level)].filter(Boolean).join(" ").toLowerCase().includes(q);
-    });
+      const rank = matchRank(s, subject, level, q);
+      if (rank < 3) matches.push({ s, rank });
+    }
 
     if (!matches.length) {
       return el("div.panel", {}, [el("p.note", {}, t("lib.noHits", { q: state.query.trim() }))]);
     }
 
     const bySubject = new Map();
-    for (const s of matches) {
-      if (!bySubject.has(s.subject)) bySubject.set(s.subject, []);
-      bySubject.get(s.subject).push(s);
+    for (const { s, rank } of matches) {
+      if (!bySubject.has(s.subject)) bySubject.set(s.subject, { sets: [], rank });
+      const group = bySubject.get(s.subject);
+      group.sets.push(s);
+      group.rank = Math.min(group.rank, rank);
     }
+    const ordered = [...bySubject.entries()].sort((a, b) => a[1].rank - b[1].rank);
 
-    const sections = [...bySubject.entries()].map(([subjId, sets]) => {
+    const sections = ordered.map(([subjId, { sets }]) => {
       const subject = index.subjects.find((s) => s.id === subjId);
       const level = index.levels.find((l) => l.id === subject?.level);
       const siblings = index.subjects.filter((s) => s.level === subject?.level);
