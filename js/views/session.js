@@ -177,6 +177,13 @@ function runSession(config) {
 
   if (!state.order.length) return notFound(t("session.goneQuestions"));
   sessionActive = true;   // cleared in cleanup()
+
+  // The one screen a student spends almost the whole session looking at
+  // shouldn't be colour-neutral when the app already has a colour for
+  // exactly this subject. Review/practice/weak-spot and mixed sessions pull
+  // from more than one subject at once, so they stay neutral on purpose.
+  const sessionAssignment = store.getAssignment(config.assignmentId);
+  const subjectColor = sessionAssignment ? store.subjectColor(sessionAssignment.subjectId) : null;
   state.cursor = Math.min(state.cursor, state.order.length - 1);
   state.skipped = state.skipped || [];
   state.choiceOrder = state.choiceOrder || {};
@@ -773,7 +780,9 @@ function runSession(config) {
   }
   window.addEventListener("sb:langsession", onLangSession);
 
-  const node = el("div", {}, [
+  const node = el("div" + (subjectColor ? ".session-page--tinted" : ""), {
+    style: subjectColor ? { "--subject": subjectColor.solid, "--subject-tint": subjectColor.tint } : {},
+  }, [
     homeButton({ confirm: true }),
     el("div.session__head", {}, [
       headH2,

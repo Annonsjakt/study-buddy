@@ -507,6 +507,10 @@ export const STRINGS = {
     "boot.failedBody": "Something went wrong loading your saved data. Your data is probably still on this device.",
     "boot.reload": "Try reloading",
     "boot.downloadData": "Download your saved data",
+    "set.feedback": "Feedback",
+    "set.feedbackBody": "Found a bug, or something that could be better? A short message goes a long way.",
+    "set.feedbackLink": "Send feedback",
+
     "set.roadmap": "Roadmap",
     "set.roadVoice": "Voice chat — talk through problems out loud",
     "set.roadAccounts": "Accounts & sync — use StudyBuddy on any device",
@@ -1658,6 +1662,10 @@ export const STRINGS = {
     "boot.failedBody": "Något gick fel när dina sparade data skulle läsas in. Dina data finns förmodligen kvar på den här enheten.",
     "boot.reload": "Försök ladda om",
     "boot.downloadData": "Ladda ner dina sparade data",
+    "set.feedback": "Feedback",
+    "set.feedbackBody": "Hittat en bugg, eller något som kunde vara bättre? Ett kort meddelande gör stor skillnad.",
+    "set.feedbackLink": "Skicka feedback",
+
     "set.roadmap": "Kommande",
     "set.roadVoice": "Röstchatt — prata igenom uppgifter högt",
     "set.roadAccounts": "Konton & synk — använd StudyBuddy på alla enheter",

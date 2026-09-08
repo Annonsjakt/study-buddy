@@ -874,6 +874,14 @@ button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
 .choice.is-correct .choice__key { background: var(--ok); color: #fff; }
 .choice.is-wrong .choice__key { background: var(--retry); color: #fff; }
 
+/* The question screen, tinted to the assignment's own subject colour — the
+   one screen a student stares at for most of a session, so it shouldn't be
+   the flattest one. Right/wrong feedback stays green/amber regardless —
+   correctness is a separate signal from "whose subject this is". */
+.session-page--tinted .progressbar__fill { background: linear-gradient(90deg, var(--subject-tint), var(--subject)); }
+.session-page--tinted .choice:hover { border-color: var(--subject); }
+.session-page--tinted .choice[aria-pressed="true"] { border-color: var(--subject); background: var(--subject-tint); }
+
 .answerbox {
   width: 100%; font: inherit; padding: var(--s-3) var(--s-4);
   border-radius: var(--r-md); border: 2px solid var(--line-strong);

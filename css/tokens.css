@@ -51,8 +51,12 @@
   --ach-silver:    #8B93A1;  --ach-silver-ink:  #5F6774;  --ach-silver-tint:  #EEF0F3;
   --ach-gold:      #C79A2E;  --ach-gold-ink:    #8F6D14;  --ach-gold-tint:    #F8EFD6;
 
-  /* --- typography --- */
-  --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  /* --- typography ---
+     Display gets its own face — rounder and friendlier for headings and
+     subject names — while body stays Inter everywhere else (buttons,
+     inputs, paragraphs, the tutor chat) since that's tuned for density and
+     legibility, not personality. */
+  --font-display: "Fredoka", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-body:    "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
   --fs-xxl: 2rem;      /* 32 */
   --fs-xl:  1.5rem;    /* 24 */

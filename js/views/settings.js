@@ -207,6 +207,15 @@ export function renderSettings() {
 
     dataSection(),
 
+    el("section.panel", {}, [
+      el("h3", {}, t("set.feedback")),
+      el("p.note", {}, t("set.feedbackBody")),
+      el("a.btn.btn--ghost", {
+        href: "mailto:liamohrn0911@gmail.com?subject=" + encodeURIComponent("StudyBuddy feedback"),
+        style: { marginTop: "10px" },
+      }, [icon(ICONS.pencil, 16), t("set.feedbackLink")]),
+    ]),
+
     el("section.roadmapbox", {}, [
       el("h3", {}, t("set.roadmap")),
       el("ul.roadmap", {}, [
