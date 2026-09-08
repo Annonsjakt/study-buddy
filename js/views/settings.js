@@ -5,7 +5,7 @@ import { store } from "../store.js";
 import { el, clear, toast, icon, ICONS, downloadText } from "../lib/dom.js";
 import { localDayKey } from "../lib/activity.js";
 import { PRESETS, DEFAULT_PRESET } from "../claude.js";
-import { getFont, setFont, getTextSize, setTextSize } from "../lib/typeface.js";
+import { getFont, setFont, getTextSize, setTextSize, getDyslexiaMode, setDyslexiaMode } from "../lib/typeface.js";
 import { t, plural } from "../lib/i18n.js";
 import { homeButton } from "../components/nav.js";
 import { confirmDialog } from "../components/confirm-dialog.js";
@@ -25,6 +25,20 @@ export function renderSettings() {
   ]);
   fontSel.value = getFont();
   fontSel.addEventListener("change", () => { setFont(fontSel.value); toast(t("set.saved")); });
+
+  // One switch that reaches for font + size together, rather than asking a
+  // student to piece together the right combination themselves.
+  const dyslexiaSel = el("select", { "aria-label": t("set.dyslexiaMode") }, [
+    opt("off", t("set.dyslexiaOff")),
+    opt("on", t("set.dyslexiaOn")),
+  ]);
+  dyslexiaSel.value = getDyslexiaMode() ? "on" : "off";
+  dyslexiaSel.addEventListener("change", () => {
+    const on = dyslexiaSel.value === "on";
+    setDyslexiaMode(on);
+    if (on) { fontSel.value = getFont(); sizeSel.value = getTextSize(); }
+    toast(t("set.saved"));
+  });
 
   const sizeSel = el("select", { "aria-label": t("set.textSize") }, [
     opt("s", t("set.textSizeS")),
@@ -167,6 +181,7 @@ export function renderSettings() {
       el("h3", {}, t("set.lookFeel")),
       el("p.note", {}, t("set.appearanceElsewhere")),
       el("div.settings__fields", {}, [
+        noted("set.dyslexiaMode", dyslexiaSel, "set.dyslexiaNote"),
         noted("set.sound", soundSel, "set.soundNote"),
         noted("set.dailyGoal", goalInput, "set.dailyGoalNote"),
         noted("set.font", fontSel),

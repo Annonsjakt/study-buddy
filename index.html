@@ -33,9 +33,11 @@
         root.setAttribute("data-font", f === "hyperlegible" ? "hyperlegible" : "system");
         var sz = localStorage.getItem("studybuddy.textSize");
         root.setAttribute("data-textsize", ["s", "m", "l"].indexOf(sz) >= 0 ? sz : "m");
+        root.setAttribute("data-dyslexia", localStorage.getItem("studybuddy.dyslexia") === "1" ? "1" : "0");
       } catch (e) {
         root.setAttribute("data-font", "system");
         root.setAttribute("data-textsize", "m");
+        root.setAttribute("data-dyslexia", "0");
       }
       try {
         var supported = ["en", "sv"];
