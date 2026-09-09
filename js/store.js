@@ -91,6 +91,7 @@ export const WEAK_ID = "__weak__";
 // own in-progress "mix all years" session at once.
 export const NATIONAL_MIX_PREFIX = "__npmix__";
 export const nationalMixId = (subjectId) => `${NATIONAL_MIX_PREFIX}${subjectId}`;
+export const HP_MOCK_ID = "__hpmock__";
 
 function seedState() {
   return {
@@ -103,6 +104,7 @@ function seedState() {
       font: "system",      // "system" | "hyperlegible"
       textSize: "m",       // "s" | "m" | "l"
       voice: false,        // read tutor replies aloud (speechSynthesis)
+      hpDate: null,        // "YYYY-MM-DD" of the user's Högskoleprov sitting, or null
     },
     subjects: DEFAULT_SUBJECTS.map((name, i) => ({
       id: uid(), name, color: PALETTE[i % PALETTE.length].name,
@@ -975,6 +977,15 @@ class Store extends EventTarget {
   // ---------- settings ----------
   get settings() { return this.state.settings; }
   setSettings(patch) { this.update((s) => Object.assign(s.settings, patch)); }
+  /** The user's Högskoleprov sitting date — drives the #/hp countdown, the
+   *  dated plan and the ≤7-day reminder. Rejects anything that isn't a real
+   *  "YYYY-MM-DD" (or null, to clear it) instead of silently storing junk. */
+  setHpDate(dayKey) {
+    const value = dayKey && DAY_RE.test(dayKey) ? dayKey : null;
+    if (dayKey && !value) return false;
+    this.setSettings({ hpDate: value });
+    return true;
+  }
   /** Whether live mode is available — i.e. the backend proxy is reachable
    *  and has a Claude key configured. Was "did the user paste a key" before
    *  the key moved server-side; callers didn't need to change. */

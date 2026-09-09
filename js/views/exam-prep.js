@@ -10,6 +10,7 @@ import { t, plural, daysUntil, getLang } from "../lib/i18n.js";
 import { localDayKey, addDays } from "../lib/activity.js";
 import { homeButton } from "../components/nav.js";
 import { countdownLabel } from "../lib/date-phrases.js";
+import { isHpSetId } from "../lib/hp.js";
 import {
   masteryByTopic, masteryForSubject, masteryForAssignment, weakSpotQuestions,
 } from "../lib/mastery.js";
@@ -248,9 +249,21 @@ export function renderExamPrep(subjectId) {
  *  first (soonest), then weakest mastery, then name. */
 function renderLanding() {
   const tm = masteryByTopic(store.attempts);
-  const withSets = store.subjects.filter((s) => store.assignments.some((a) => a.subjectId === s.id));
+  // Högskoleprovet has its own hub (#/hp) with its own scoring — keep its
+  // subjects out of the school-test picker.
+  const hasHp = store.assignments.some((a) => isHpSetId(a.id));
+  const withSets = store.subjects.filter((s) =>
+    store.assignments.some((a) => a.subjectId === s.id && !isHpSetId(a.id)));
 
-  if (!withSets.length) {
+  const hpCard = hasHp
+    ? el("a.exam-prep__pick-card", { href: "#/hp", style: { "--subject": "var(--brand)" } }, [
+        el("span.exam-prep__pick-name", {}, t("hp.pageTitle")),
+        el("span.exam-prep__pick-when", {}, t("hp.pickHint")),
+        icon(ICONS.arrow, 16),
+      ])
+    : null;
+
+  if (!withSets.length && !hpCard) {
     return {
       title: t("exam.pageTitle"),
       node: el("div.exam-prep", {}, [
@@ -277,7 +290,9 @@ function renderLanding() {
       homeButton(),
       el("h1", {}, t("exam.pageTitle")),
       el("p.note", { style: { marginTop: "-4px" } }, t("exam.landingSub")),
-      el("div.exam-prep__pick", {}, rows.map(({ s, test, m }) => {
+      el("div.exam-prep__pick", {}, [
+        hpCard,
+        ...rows.map(({ s, test, m }) => {
         const color = store.subjectColor(s.id);
         return el("a.exam-prep__pick-card", {
           href: `#/exam-prep/${s.id}`,
@@ -288,7 +303,8 @@ function renderLanding() {
           el("span.exam-prep__pick-pct", {}, m == null ? "" : `${Math.round(m * 100)}%`),
           icon(ICONS.arrow, 16),
         ].filter(Boolean));
-      })),
+      }),
+      ].filter(Boolean)),
     ]),
   };
 }
