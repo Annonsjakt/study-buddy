@@ -31,6 +31,9 @@ export function setToDoc(a) {
       explanation: q.explanation,
       steps: q.steps,
       opener: q.opener,
+      variant: q.variant,
+      stimulus: q.stimulus,
+      figure: q.figure,
     })),
   };
 }

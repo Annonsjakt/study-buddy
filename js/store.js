@@ -714,6 +714,9 @@ class Store extends EventTarget {
         explanation: q.explanation || undefined,
         steps: q.steps || undefined,
         opener: q.opener || undefined,
+        variant: q.variant || undefined,
+        stimulus: q.stimulus || undefined,
+        figure: q.figure || undefined,
       })),
     };
     this.state.assignments.unshift(a);
