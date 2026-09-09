@@ -153,6 +153,15 @@ export const ICONS = {
   sigma: "M18 7V4H6l6 8-6 8h12v-3",
   download: "M12 3v12 M8 11l4 4 4-4 M4 21h16",
 
+  /* --- library subject icons (biologi/kemi/fysik/geografi/historia/
+     moderna språk) — sigma above already covers matematik. --- */
+  leaf: "M4 21c8 0 13-5 13-13V5h-3C7 5 5 12 5 21Z M5 21c0-5 2-8 5-10",
+  flask: "M9 2h6 M10 2v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-3.5L14 8V2 M8.5 14h7",
+  atom: "M10.5 12a1.5 1.5 0 1 0 3 0 1.5 1.5 0 1 0-3 0 M2 12a10 4 0 1 0 20 0 10 4 0 1 0-20 0 M8 12a4 10 0 1 0 8 0 4 10 0 1 0-8 0",
+  globe: "M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0 M3 12h18 M12 3c2.5 2.5 3.5 6 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-6-3.5-9s1-6.5 3.5-9Z",
+  landmark: "M3 22h18 M6 18v-9 M10 18v-9 M14 18v-9 M18 18v-9 M4 9l8-6 8 6 M4 9h16",
+  message: "M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z",
+
   /* --- achievement track / milestone icons --- */
   trophy: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6 M18 9h1.5a2.5 2.5 0 0 0 0-5H18 M4 22h16 M10 14.7V17c0 .6-.5 1-1 1.2C7.9 18.8 7 20.2 7 22 M14 14.7V17c0 .6.5 1 1 1.2 1.1.6 2 2 2 4.8 M6 2h12v7a6 6 0 0 1-12 0V2Z",
   layers: "M12 3 2 8l10 5 10-5-10-5Z M2 13l10 5 10-5 M2 18l10 5 10-5",

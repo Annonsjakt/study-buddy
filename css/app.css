@@ -189,8 +189,7 @@ a.streakbadge:hover {
   .topbar__inner { justify-content: flex-end; padding-top: var(--s-4); padding-right: var(--s-6); }
   .topbar .brand,
   .topbar .streakbadge,
-  .topbar .langbtn,
-  .topbar .topmenu { display: none; }
+  .topbar .langbtn { display: none; }
 }
 
 .topbar {
@@ -212,11 +211,30 @@ a.streakbadge:hover {
 .brand img { width: 30px; height: 30px; }
 .topbar__spacer { flex: 1; }
 
-/* Top-bar ⋮ menu — the full nav on mobile (the topbar itself is hidden by the
-   sidebar's media query on desktop). */
-.topmenu { display: inline-flex; position: relative; }
+/* Bottom tab bar — mobile's primary nav (see js/main.js tabBar()). Fixed,
+   thumb-reachable, always visible — the sidebar covers this ground on
+   desktop, where this is hidden (see the min-width:900px block above). */
+.tabbar {
+  display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 25;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tabbar__item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 8px 0 7px; border: none; background: none; font: inherit; cursor: pointer;
+  color: var(--ink-faint); text-decoration: none;
+}
+.tabbar__item svg { flex: none; }
+.tabbar__item span { font-size: 10.5px; font-weight: 600; }
+.tabbar__item.is-active { color: var(--brand-ink); }
+.tabbar__more { position: relative; flex: 1; display: flex; }
+
+/* The "Meny" tab's popover — the full nav, opened upward from the bottom
+   bar instead of downward from a topbar icon. */
 .topmenu__list {
-  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  position: absolute; right: 8px; bottom: calc(100% + 10px); z-index: 30;
   min-width: 190px; padding: 6px;
   background: var(--surface); border: 1px solid var(--line-strong);
   border-radius: var(--r-md); box-shadow: var(--shadow-2);
@@ -237,18 +255,30 @@ a.streakbadge:hover {
 }
 .topmenu__list > .topmenu__group:first-child { margin-top: 2px; }
 .topmenu__div { height: 1px; margin: 6px 10px; background: var(--line); }
-/* Theme switcher tucked in the ⋮ menu's footer — the sidebar carries it on
-   desktop, but there's no sidebar on mobile. */
+/* Theme switcher tucked in the "Meny" popover's footer — the sidebar
+   carries it on desktop, but there's no sidebar on mobile. */
 .topmenu__foot { padding: 2px 10px 6px; }
 .topmenu__foot .topmenu__group { margin: 4px 0 6px; }
 .topmenu__foot .sidebar__theme { width: 100%; }
+
+@media (max-width: 899.98px) {
+  /* Room for the fixed tab bar so page content — and anything else that
+     floats at the bottom, like the solve-screen hint — never sits under it. */
+  .content { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0)); }
+}
+/* The sidebar covers this ground on desktop — placed after .tabbar's own
+   base rule (not inside the earlier min-width:900px block) so this actually
+   wins the cascade instead of being overridden by it. */
+@media (min-width: 900px) {
+  .tabbar { display: none; }
+}
 
 @media (max-width: 560px) {
   .topbar__inner { gap: var(--s-2); padding-left: var(--s-3); padding-right: var(--s-3); }
   .topbar__inner .brand { font-size: var(--fs-md); }
   .topbar__inner .brand img { width: 26px; height: 26px; }
-  /* Bell + account + ⋮ need the room; the streak already shows in the
-     "Idag" panel and the language toggle stays. */
+  /* Bell + account need the room; the streak already shows in the "Idag"
+     panel and the language toggle stays. */
   .topbar__inner > .streakbadge { display: none; }
 }
 
@@ -1682,6 +1712,37 @@ kbd {
   box-shadow: 0 0 0 3px var(--surface), 0 0 14px rgba(58, 106, 224, .38);
 }
 .achbadge--unlocked.achbadge--platinum .achbadge__tiername { color: var(--brand-ink); }
+
+/* Locked tiered badges hint at their eventual colour — full tint waits for
+   .achbadge--unlocked above — so brons/silver/guld/platina read as a visible
+   ladder of destinations even before the first one's earned, not four
+   identical grey circles. Only the icon ring + tier name shift; the card's
+   own background stays neutral so an unlocked badge still visibly pops out
+   from the row. */
+.achbadge--bronze:not(.achbadge--unlocked) .achbadge__icon {
+  background: color-mix(in srgb, var(--ach-bronze) 16%, var(--surface-sunk));
+  border-color: color-mix(in srgb, var(--ach-bronze) 45%, var(--line-strong));
+  color: color-mix(in srgb, var(--ach-bronze-ink) 60%, var(--ink-faint));
+}
+.achbadge--bronze:not(.achbadge--unlocked) .achbadge__tiername { color: color-mix(in srgb, var(--ach-bronze-ink) 70%, var(--ink-faint)); }
+.achbadge--silver:not(.achbadge--unlocked) .achbadge__icon {
+  background: color-mix(in srgb, var(--ach-silver) 16%, var(--surface-sunk));
+  border-color: color-mix(in srgb, var(--ach-silver) 45%, var(--line-strong));
+  color: color-mix(in srgb, var(--ach-silver-ink) 60%, var(--ink-faint));
+}
+.achbadge--silver:not(.achbadge--unlocked) .achbadge__tiername { color: color-mix(in srgb, var(--ach-silver-ink) 70%, var(--ink-faint)); }
+.achbadge--gold:not(.achbadge--unlocked) .achbadge__icon {
+  background: color-mix(in srgb, var(--ach-gold) 16%, var(--surface-sunk));
+  border-color: color-mix(in srgb, var(--ach-gold) 45%, var(--line-strong));
+  color: color-mix(in srgb, var(--ach-gold-ink) 60%, var(--ink-faint));
+}
+.achbadge--gold:not(.achbadge--unlocked) .achbadge__tiername { color: color-mix(in srgb, var(--ach-gold-ink) 70%, var(--ink-faint)); }
+.achbadge--platinum:not(.achbadge--unlocked) .achbadge__icon {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 14%, var(--surface-sunk)), color-mix(in srgb, var(--c-berry) 14%, var(--surface-sunk)));
+  border-color: color-mix(in srgb, var(--brand) 40%, var(--line-strong));
+  color: color-mix(in srgb, var(--brand-ink) 55%, var(--ink-faint));
+}
+.achbadge--platinum:not(.achbadge--unlocked) .achbadge__tiername { color: color-mix(in srgb, var(--brand-ink) 65%, var(--ink-faint)); }
 
 /* Milestones — the one-off badges carried over from the old set. Neutral
    brand colour when earned, no tier ladder. */

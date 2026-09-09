@@ -8,6 +8,27 @@ import { t, plural, getLang } from "../lib/i18n.js";
 import { homeButton } from "../components/nav.js";
 import { loadLibraryIndex, loadLibraryTranslations, isImported, importSet } from "../data/library.js";
 
+/** One icon per subject family instead of a book repeated 30-odd times —
+ *  color already tells cards apart, the icon should too. Matched against
+ *  `subject.name`, the library's untranslated Swedish field (stable across
+ *  UI language), stripping a trailing gymnasiet course number first
+ *  ("Matematik 2" -> "Matematik"). Custom/unrecognised subjects (anything a
+ *  student types themselves in Create) fall back to the book. */
+function subjectIcon(name) {
+  const n = (name || "").replace(/\s*\d+\w*$/, "").trim().toLowerCase();
+  if (/^matemat/.test(n)) return ICONS.sigma;
+  if (/^biolog/.test(n)) return ICONS.leaf;
+  if (/^kemi/.test(n)) return ICONS.flask;
+  if (/^(fysik|naturkunskap)/.test(n)) return ICONS.atom;
+  if (/^geografi/.test(n)) return ICONS.globe;
+  if (/^histori/.test(n)) return ICONS.landmark;
+  if (/^samhällskunskap/.test(n)) return ICONS.users;
+  if (/^religionskunskap/.test(n)) return ICONS.flame;
+  if (/^svenska/.test(n)) return ICONS.pencil;
+  if (/^(engelska|franska|spanska|tyska)/.test(n)) return ICONS.message;
+  return ICONS.book;
+}
+
 export async function renderLibrary() {
   let index, tr;
   try {
@@ -173,7 +194,7 @@ export async function renderLibrary() {
           type: "button", onclick: () => { state.subject = subject.id; paint(); },
           style: { "--subject": color.solid },
         }, [
-          icon(ICONS.book, 26), subjName(subject),
+          icon(subjectIcon(subject.name), 26), subjName(subject),
           el("div.note", { style: { fontWeight: "400", marginTop: "4px" } }, subjDesc(subject)),
         ]);
       })),
