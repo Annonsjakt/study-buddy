@@ -52,8 +52,8 @@
   --ach-gold:      #C79A2E;  --ach-gold-ink:    #8F6D14;  --ach-gold-tint:    #F8EFD6;
 
   /* --- typography --- */
-  --font-display: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --font-body:    "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-body:    "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
   --fs-xxl: 2rem;      /* 32 */
   --fs-xl:  1.5rem;    /* 24 */
   --fs-lg:  1.25rem;   /* 20 */
