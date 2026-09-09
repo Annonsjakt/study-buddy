@@ -36,7 +36,8 @@ export function renderSettings() {
   dyslexiaSel.addEventListener("change", () => {
     const on = dyslexiaSel.value === "on";
     setDyslexiaMode(on);
-    if (on) { fontSel.value = getFont(); sizeSel.value = getTextSize(); }
+    fontSel.value = getFont();
+    sizeSel.value = getTextSize();
     toast(t("set.saved"));
   });
 

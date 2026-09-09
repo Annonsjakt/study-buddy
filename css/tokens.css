@@ -100,8 +100,9 @@
    spacing that actually has evidence behind it — looser line height, a
    little letter- and word-spacing, and no justified text (the app doesn't
    justify anywhere, but this keeps it that way on purpose). Turning the
-   mode on also switches font to Hyperlegible and size to Large once, in
-   settings.js — this block only carries the spacing those two don't. */
+   mode on also switches font to Hyperlegible and size to Large (restored
+   on the way back off), in js/lib/typeface.js — this block only carries
+   the spacing those two don't. */
 :root[data-dyslexia="1"] body {
   line-height: 1.85;
   letter-spacing: 0.01em;
