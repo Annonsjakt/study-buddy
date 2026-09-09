@@ -837,10 +837,6 @@ export const STRINGS = {
     "set.pomodoro50": "50 minutes",
     "set.pomodoroNote": "Shows a countdown in a study session and chimes gently when the time's up.",
 
-    "set.dyslexiaMode": "Dyslexia-friendly mode",
-    "set.dyslexiaOn": "On",
-    "set.dyslexiaOff": "Off",
-    "set.dyslexiaNote": "Switches to Hyperlegible at a larger size and adds extra line and letter spacing — the combination with the clearest research support. Turning it off keeps whatever typeface and size you land on; only the extra spacing goes away.",
 
     "set.font": "Typeface",
     "set.fontSystem": "Default",
@@ -2066,10 +2062,6 @@ export const STRINGS = {
     "set.pomodoro50": "50 minuter",
     "set.pomodoroNote": "Visar en nedräkning under ett pluggpass och plingar mjukt när tiden är ute.",
 
-    "set.dyslexiaMode": "Dyslexivänligt läge",
-    "set.dyslexiaOn": "På",
-    "set.dyslexiaOff": "Av",
-    "set.dyslexiaNote": "Byter till Hyperlegible i en större storlek och lägger till extra rad- och bokstavsavstånd — kombinationen med tydligast forskningsstöd. Stänger du av det behåller du typsnitt och storlek du landat på, bara det extra avståndet försvinner.",
 
     "set.font": "Typsnitt",
     "set.fontSystem": "Standard",
