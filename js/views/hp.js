@@ -41,7 +41,7 @@ function hpSetCard(entry, tr, refresh) {
   const summary = tr.sets[entry.id]?.summary || entry.summary;
   const count = plural(entry.count, "common.questionOne", "common.questionMany");
 
-  const addBtn = el("button.btn.btn--sm", {
+  const addBtn = added ? null : el("button.btn.btn--sm", {
     type: "button",
     onclick: async (e) => {
       e.currentTarget.disabled = true;
@@ -55,6 +55,23 @@ function hpSetCard(entry, tr, refresh) {
     },
   }, [icon(ICONS.plus, 16), t("lib.add")]);
 
+  const studyBtn = added
+    ? el("a.btn.btn--sm", { href: `#/session/${entry.id}` }, [icon(ICONS.play, 16), t("lib.study")])
+    : null;
+
+  const examBtn = added
+    ? el("button.btn.btn--ghost.btn--sm", {
+        type: "button", title: t("lib.examTip"),
+        onclick: () => { location.hash = `#/session/${entry.id}?exam=1`; },
+      }, [icon(ICONS.clock, 16), t("lib.exam")])
+    : null;
+
+  const printBtn = added
+    ? el("a.iconbtn.iconbtn--sm", {
+        href: `#/print/${entry.id}`, "aria-label": t("print.worksheet"), title: t("print.worksheet"),
+      }, [icon(ICONS.fileText, 16)])
+    : null;
+
   return el("div.libcard" + (added ? ".libcard--added" : ""), {}, [
     el("div", {}, [
       el("div.libcard__title", {}, title),
@@ -64,18 +81,21 @@ function hpSetCard(entry, tr, refresh) {
       added
         ? el("span.libcard__added", {}, [icon(ICONS.check, 14), t("hp.addedTag"), el("span.libcard__count", {}, ` · ${count}`)])
         : el("span.note", {}, count),
-      added ? null : addBtn,
+      added
+        ? el("div", { style: { display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" } }, [studyBtn, examBtn, printBtn].filter(Boolean))
+        : addBtn,
     ].filter(Boolean)),
   ]);
 }
 
-/** The delprov picker: full intro panel when nothing's added yet, or a
- *  compact "add more" panel (missing sets only) once the hub has content. */
-function hpAddPanel(index, tr, refresh, { onlyMissing = false } = {}) {
+/** The delprov picker/manager. Always shows every delprov set — added ones
+ *  with their study/exam/print actions, missing ones with an add button —
+ *  the same "everything in one grid" pattern as the library's own setList().
+ *  `hasAny` just switches the intro copy: the full "get started" framing
+ *  before anything's added, or a compact heading once the hub has content. */
+function hpAddPanel(index, tr, refresh, { hasAny = false } = {}) {
   const all = hpSetOrder(index);
   const missing = all.filter((s) => !isHpImported(s.id));
-  if (onlyMissing && !missing.length) return null;
-  const shown = onlyMissing ? missing : all;
 
   const addAllBtn = missing.length
     ? el("button.btn.btn--sm", {
@@ -91,12 +111,12 @@ function hpAddPanel(index, tr, refresh, { onlyMissing = false } = {}) {
     : el("span.note", {}, t("hp.allAdded"));
 
   return el("section.panel", {}, [
-    el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px", flexWrap: "wrap", marginBottom: onlyMissing ? "10px" : "6px" } }, [
-      el("h3", {}, t(onlyMissing ? "hp.moreTitle" : "hp.addTitle")),
+    el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px", flexWrap: "wrap", marginBottom: hasAny ? "10px" : "6px" } }, [
+      el("h3", {}, t(hasAny ? "hp.moreTitle" : "hp.addTitle")),
       addAllBtn,
     ]),
-    onlyMissing ? null : el("p.note", { style: { marginBottom: "14px" } }, t("hp.addIntro")),
-    el("div.libgrid", {}, shown.map((s) => hpSetCard(s, tr, refresh))),
+    hasAny ? null : el("p.note", { style: { marginBottom: "14px" } }, t("hp.addIntro")),
+    el("div.libgrid", {}, all.map((s) => hpSetCard(s, tr, refresh))),
   ].filter(Boolean));
 }
 
@@ -339,11 +359,8 @@ export async function renderHp() {
         : null,
     ].filter(Boolean)));
 
-    /* ---- add more delprov ---- */
-    if (index) {
-      const more = hpAddPanel(index, tr, paint, { onlyMissing: true });
-      if (more) bodyEl.appendChild(more);
-    }
+    /* ---- manage delprov ---- */
+    if (index) bodyEl.appendChild(hpAddPanel(index, tr, paint, { hasAny: true }));
   }
 
   paint();
