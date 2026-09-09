@@ -94,13 +94,13 @@ a.streakbadge:hover {
   display: flex; align-items: center; gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg);
   color: var(--ink); text-decoration: none;
-  padding: 0 var(--s-2); margin-bottom: 12px;
+  padding: 0 var(--s-2); margin-bottom: var(--s-5);
 }
 .sidebar__brand img { width: 28px; height: 28px; }
-.sidebar__nav { display: flex; flex-direction: column; gap: 0; flex: 1; }
+.sidebar__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .sidebar__link {
   display: flex; align-items: center; gap: var(--s-3);
-  padding: 4px var(--s-3); border-radius: var(--r-md);
+  padding: 9px var(--s-3); border-radius: var(--r-md);
   color: var(--ink-soft); text-decoration: none; font-weight: 600; font-size: var(--fs-sm);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
@@ -109,18 +109,18 @@ a.streakbadge:hover {
 .sidebar__link.is-active { background: var(--brand-tint); color: var(--brand-ink); }
 .sidebar__link.is-active svg { color: var(--brand-ink); }
 .sidebar__group {
-  margin: 8px var(--s-3) 2px; font-size: 10px; font-weight: 700;
+  margin: var(--s-4) var(--s-3) 4px; font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint);
 }
 .sidebar__nav > .sidebar__group:first-child { margin-top: 0; }
-.sidebar__div { height: 1px; margin: 6px var(--s-3) 2px; background: var(--line); }
-.sidebar__foot { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.sidebar__div { height: 1px; margin: var(--s-3) var(--s-3) var(--s-2); background: var(--line); }
+.sidebar__foot { display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-4); }
 
 /* Fuller streak row (icon + the day count in words) — sidebar only, the
    topbar keeps the compact .streakbadge pill. */
 .sidebar__streak {
   display: flex; align-items: center; gap: var(--s-3);
-  padding: 8px var(--s-3); border-radius: var(--r-md);
+  padding: var(--s-3); border-radius: var(--r-md);
   background: var(--surface-sunk); color: var(--ink);
   font-size: var(--fs-sm); font-weight: 700; text-decoration: none;
   transition: background var(--dur-fast);
@@ -128,7 +128,7 @@ a.streakbadge:hover {
 .sidebar__streak:hover { background: var(--line); }
 /* The flame disc breathes a warm glow — an ember, not a whole-button halo. */
 .sidebar__streak-icon {
-  width: 28px; height: 28px; flex: none; border-radius: var(--r-full);
+  width: 32px; height: 32px; flex: none; border-radius: var(--r-full);
   display: grid; place-items: center; color: var(--retry); background: var(--retry-tint);
   --glow: var(--retry);
   box-shadow: 0 0 8px 0 color-mix(in srgb, var(--glow) 40%, transparent);
@@ -151,7 +151,7 @@ a.streakbadge:hover {
 /* Segmented light/system/dark switcher, sidebar footer. */
 .sidebar__theme { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-full); background: var(--surface-sunk); }
 .sidebar__theme-btn {
-  flex: 1; display: grid; place-items: center; height: 26px; font: inherit;
+  flex: 1; display: grid; place-items: center; height: 30px; font: inherit;
   border: none; border-radius: var(--r-full); background: transparent; color: var(--ink-faint);
   cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast);
 }
@@ -162,7 +162,7 @@ a.streakbadge:hover {
    look as .sidebar__theme, sized for flags rather than icon glyphs. */
 .sidebar__lang { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-md); background: var(--surface-sunk); }
 .sidebar__lang-btn {
-  flex: 1; display: grid; place-items: center; padding: 6px 0;
+  flex: 1; display: grid; place-items: center; padding: var(--s-2) 0;
   border: none; border-radius: var(--r-sm); background: transparent;
   cursor: pointer; transition: background var(--dur-fast), box-shadow var(--dur-fast);
 }
@@ -175,9 +175,13 @@ a.streakbadge:hover {
     display: flex; flex-direction: column; flex: none;
     width: 236px; position: sticky; top: 0; align-self: flex-start;
     height: 100vh; overflow-y: auto;
-    padding: 12px var(--s-3);
+    scrollbar-width: none;       /* Firefox */
+    padding: var(--s-5) var(--s-3);
     background: var(--surface); border-right: 1px solid var(--line);
   }
+  /* Still scrolls (wheel/trackpad/keyboard) if the nav ever outgrows the
+     viewport — just without a visible track/thumb cluttering the rail. */
+  .sidebar::-webkit-scrollbar { display: none; }
   /* Topbar stays on desktop but collapses to just the bell + account pair,
      floating top-right over the content — the sidebar carries brand/nav/
      streak/language, so everything else in the topbar is hidden here. */
