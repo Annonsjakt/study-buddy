@@ -8,7 +8,7 @@
 // among Swedish/Biology/etc., it's a separate track with its own hub, so its
 // own "add a delprov" panel lives on this page (see js/data/hp-content.js).
 
-import { store } from "../store.js";
+import { store, PALETTE } from "../store.js";
 import { el, clear, icon, ICONS, toast } from "../lib/dom.js";
 import { t, plural, daysUntil, getLang, sentenceCase } from "../lib/i18n.js";
 import { homeButton } from "../components/nav.js";
@@ -35,8 +35,19 @@ function hpSetOrder(index) {
   );
 }
 
+/** One colour per delprov, cycling the app's shared palette by position —
+ *  same trick library.js uses for subjects with no colour of their own yet,
+ *  so the picker reads as scannable groups instead of one flat grey list. */
+function hpDelprovColor(delprov) {
+  const idx = Math.max(0, DELPROV_ORDER.indexOf(delprov));
+  const p = PALETTE[idx % PALETTE.length];
+  return { solid: `var(--c-${p.name})`, ink: `var(--c-${p.name}-ink)`, tint: `var(--c-${p.name}-tint)` };
+}
+
 function hpSetCard(entry, tr, refresh) {
   const added = isHpImported(entry.id);
+  const dp = delprovCodeOf(entry.subject);
+  const color = hpDelprovColor(dp);
   const title = tr.sets[entry.id]?.title || entry.title;
   const summary = tr.sets[entry.id]?.summary || entry.summary;
   const count = plural(entry.count, "common.questionOne", "common.questionMany");
@@ -72,8 +83,11 @@ function hpSetCard(entry, tr, refresh) {
       }, [icon(ICONS.fileText, 16)])
     : null;
 
-  return el("div.libcard" + (added ? ".libcard--added" : ""), {}, [
+  return el("div.libcard" + (added ? ".libcard--added" : ""), {
+    style: { "--subject": color.solid, "--subject-tint": color.tint, "--subject-ink": color.ink, borderLeftColor: color.solid },
+  }, [
     el("div", {}, [
+      el("span.acard__tag", { style: { marginBottom: "6px" } }, t(`hp.delprov.${dp}`)),
       el("div.libcard__title", {}, title),
       el("p.note", { style: { margin: "4px 0 0" } }, summary),
     ]),
