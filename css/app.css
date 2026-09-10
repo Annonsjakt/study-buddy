@@ -94,7 +94,7 @@ a.streakbadge:hover {
   display: flex; align-items: center; gap: var(--s-2);
   font-family: var(--font-display); font-weight: 700; font-size: var(--fs-lg);
   color: var(--ink); text-decoration: none;
-  padding: 0 var(--s-2); margin-bottom: var(--s-5);
+  padding: 0 var(--s-2); margin-bottom: var(--s-4);
 }
 .sidebar__brand img { width: 28px; height: 28px; }
 .sidebar__nav { display: flex; flex-direction: column; gap: 2px; flex: 1; }
@@ -109,12 +109,12 @@ a.streakbadge:hover {
 .sidebar__link.is-active { background: var(--brand-tint); color: var(--brand-ink); }
 .sidebar__link.is-active svg { color: var(--brand-ink); }
 .sidebar__group {
-  margin: var(--s-4) var(--s-3) 4px; font-size: 10px; font-weight: 700;
+  margin: var(--s-3) var(--s-3) 4px; font-size: 10px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .06em; color: var(--ink-faint);
 }
 .sidebar__nav > .sidebar__group:first-child { margin-top: 0; }
 .sidebar__div { height: 1px; margin: var(--s-3) var(--s-3) var(--s-2); background: var(--line); }
-.sidebar__foot { display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-4); }
+.sidebar__foot { display: flex; flex-direction: column; gap: var(--s-2); margin-top: var(--s-3); }
 
 /* Fuller streak row (icon + the day count in words) — sidebar only, the
    topbar keeps the compact .streakbadge pill. */
