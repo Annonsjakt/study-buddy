@@ -525,6 +525,14 @@ function shell(contentNode) {
   ]);
 }
 
+// The site-chat widget lives outside #app (see components/site-chat.js) so
+// it can't tell from its own DOM position when a session is on screen — this
+// body class is the signal, kept in sync on every render() so its "hide
+// during a session" CSS rule always reflects the current view.
+function syncSessionClass() {
+  document.body.classList.toggle("session-active", isSessionActive());
+}
+
 async function render({ chromeOnly = false } = {}) {
   // chromeOnly: re-run the shell (nav labels, sidebar) around the view that's
   // already mounted, without rebuilding the view itself. Used on a language
@@ -533,6 +541,7 @@ async function render({ chromeOnly = false } = {}) {
   // would needlessly wipe the tutor thread and bounce the scroll.
   if (chromeOnly) {
     if (currentViewNode) mount(app, shell(currentViewNode));
+    syncSessionClass();
     return;
   }
 
@@ -551,6 +560,7 @@ async function render({ chromeOnly = false } = {}) {
     currentCleanup = result?.cleanup || null;
     currentViewNode = node;
     mount(app, shell(node));
+    syncSessionClass();
 
     const title = result?.title || "StudyBuddy";
     document.title = result?.title ? `${result.title} · StudyBuddy` : "StudyBuddy";
@@ -570,6 +580,7 @@ async function render({ chromeOnly = false } = {}) {
       el("p", {}, String(e?.message || e)),
       el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
     ])));
+    syncSessionClass();
     announce(t("common.somethingWrongShort"));
   }
 }

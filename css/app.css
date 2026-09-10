@@ -1164,6 +1164,11 @@ button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
 @media (max-width: 480px) {
   .sitechat__panel { right: var(--s-3); left: var(--s-3); width: auto; }
 }
+/* A running session has its own bottom action row (Skip/Next/Finish) in the
+   same corner the widget floats in — hide it there rather than fight for
+   the same few pixels. body.session-active is kept in sync by main.js. */
+body.session-active .sitechat__fab,
+body.session-active .sitechat__panel { display: none; }
 
 /* ---------- results ---------- */
 .results { text-align: center; max-width: 560px; margin: 0 auto; }

@@ -29,6 +29,15 @@ function subjectIcon(name) {
   return ICONS.book;
 }
 
+/** One icon per grade level, in the same spirit as subjectIcon() — a rough
+ *  "further along" progression rather than anything precise. Unknown level
+ *  ids (a future addition to the index) fall back to the graduation cap
+ *  every level used before this. */
+function levelIcon(id) {
+  return ({ ak7: ICONS.book, ak8: ICONS.compass, ak9: ICONS.flag, gymnasiet: ICONS.graduation })[id]
+    || ICONS.graduation;
+}
+
 export async function renderLibrary() {
   let index, tr;
   try {
@@ -177,7 +186,7 @@ export async function renderLibrary() {
       el("p", { style: { marginBottom: "16px" } }, t("lib.intro")),
       el("div.source-grid", {}, levels.map((lvl) =>
         el("button.source-opt", { type: "button", onclick: () => { state.level = lvl.id; paint(); } }, [
-          icon(ICONS.graduation, 26), lvlLabel(lvl),
+          icon(levelIcon(lvl.id), 26), lvlLabel(lvl),
         ]))),
     ]);
   }
