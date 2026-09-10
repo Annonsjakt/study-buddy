@@ -110,6 +110,8 @@ function hpSetCard(entry, tr, refresh) {
 function hpAddPanel(index, tr, refresh, { hasAny = false } = {}) {
   const all = hpSetOrder(index);
   const missing = all.filter((s) => !isHpImported(s.id));
+  const verbal = all.filter((s) => partOf(delprovCodeOf(s.subject)) === "verbal");
+  const kvant = all.filter((s) => partOf(delprovCodeOf(s.subject)) === "kvant");
 
   const addAllBtn = missing.length
     ? el("button.btn.btn--sm", {
@@ -124,13 +126,19 @@ function hpAddPanel(index, tr, refresh, { hasAny = false } = {}) {
       }, [icon(ICONS.plus, 16), t("lib.addAll", { n: missing.length })])
     : el("span.note", {}, t("hp.allAdded"));
 
+  const group = (labelKey, sets) => sets.length ? [
+    el("h4.settings__sub", {}, t(labelKey)),
+    el("div.libgrid", {}, sets.map((s) => hpSetCard(s, tr, refresh))),
+  ] : [];
+
   return el("section.panel", {}, [
     el("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "start", gap: "12px", flexWrap: "wrap", marginBottom: hasAny ? "10px" : "6px" } }, [
       el("h3", {}, t(hasAny ? "hp.moreTitle" : "hp.addTitle")),
       addAllBtn,
     ]),
     hasAny ? null : el("p.note", { style: { marginBottom: "14px" } }, t("hp.addIntro")),
-    el("div.libgrid", {}, all.map((s) => hpSetCard(s, tr, refresh))),
+    ...group("hp.verbal", verbal),
+    ...group("hp.kvant", kvant),
   ].filter(Boolean));
 }
 
