@@ -105,11 +105,6 @@ function navGroups() {
     { href: "#/progress", match: "/progress",  icon: ICONS.chart,     label: t("common.progress") },
     { href: "#/achievements", match: "/achievements", icon: ICONS.award, label: t("nav.achievements") },
   ];
-  // The leaderboard needs an account + the backend, but stays in the nav
-  // either way — renderLeaderboard() already explains what's missing and
-  // how to fix it (sign in, or "no server" if there isn't one to sign into)
-  // rather than the feature just being invisible until it works.
-  track.push({ href: "#/leaderboard", match: "/leaderboard", icon: ICONS.podium, label: t("nav.leaderboard") });
   const tools = [
     { href: "#/reference",  match: "/reference",  icon: ICONS.sigma,      label: t("nav.formulas") },
     { href: "#/calculator", match: "/calculator", icon: ICONS.calculator, label: t("nav.calculator") },
@@ -451,6 +446,15 @@ function openNotificationPanel(anchor) {
 function shellActions() {
   const hasUnread = buildNotifications().some((n) => !n.read);
 
+  // A plain nav link, not a popover — same corner as the bell/account pair
+  // rather than a row of its own in the sidebar. renderLeaderboard() already
+  // explains what's missing (sign in, or "no server") when it isn't usable
+  // yet, so this stays a normal link rather than a locked/disabled state.
+  const leaderboardBtn = el("a.iconbtn.topbar__leaderboard" + (navActive("/leaderboard") ? ".is-active" : ""), {
+    href: "#/leaderboard", "aria-label": t("nav.leaderboard"), title: t("nav.leaderboard"),
+    "aria-current": navActive("/leaderboard") ? "page" : null,
+  }, [icon(ICONS.podium, 18)]);
+
   const bellBtn = el("button.iconbtn.topbar__bell", {
     type: "button", "aria-label": t("topbar.notifications"), "aria-haspopup": "dialog", title: t("topbar.notifications"),
     onclick: (e) => { e.stopPropagation(); openNotificationPanel(e.currentTarget); },
@@ -475,7 +479,7 @@ function shellActions() {
     },
   }, [icon(ICONS.user, 18)]);
 
-  return el("div.topbar__actions", {}, [bellBtn, profileBtn]);
+  return el("div.topbar__actions", {}, [leaderboardBtn, bellBtn, profileBtn]);
 }
 
 function shell(contentNode) {
