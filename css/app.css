@@ -174,7 +174,7 @@ a.streakbadge:hover {
      the nav outgrows the viewport — just without a visible track/thumb. */
   .sidebar__brand { flex: none; }
   .sidebar__scroll {
-    flex: 1; min-height: 0; overflow-y: auto;
+    flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
     scrollbar-width: none;       /* Firefox */
     display: flex; flex-direction: column;
   }
