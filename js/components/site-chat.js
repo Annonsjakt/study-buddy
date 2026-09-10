@@ -32,20 +32,18 @@ export function mountSiteChat() {
   const inputEl = el("input.sitechat__input", {
     type: "text", placeholder: t("sitechat.ask"), "aria-label": t("sitechat.askAria"),
   });
-  const formEl = el("form.sitechat__form", { onsubmit: (e) => { e.preventDefault(); submit(); } }, [
-    inputEl,
-    el("button.iconbtn", { type: "submit", "aria-label": t("sitechat.send"), style: { color: "var(--brand)" } }, [icon(ICONS.arrow, 18)]),
-  ]);
+  const sendBtn = el("button.iconbtn", { type: "submit", "aria-label": t("sitechat.send"), style: { color: "var(--brand)" } }, [icon(ICONS.arrow, 18)]);
+  const formEl = el("form.sitechat__form", { onsubmit: (e) => { e.preventDefault(); submit(); } }, [inputEl, sendBtn]);
 
   const mascotEl = mascot("idle", 32);
+  const titleEl = el("div.sitechat__title", {}, t("sitechat.title"));
+  const subEl = el("div.sitechat__sub", {}, t("sitechat.sub"));
+  const closeBtn = el("button.iconbtn.iconbtn--sm", { type: "button", "aria-label": t("common.close"), onclick: close }, [icon(ICONS.close, 16)]);
   const panel = el("div.sitechat__panel", { role: "dialog", "aria-modal": "false", "aria-label": t("sitechat.title"), hidden: true }, [
     el("div.sitechat__head", {}, [
       mascotEl,
-      el("div", { style: { flex: "1", minWidth: "0" } }, [
-        el("div.sitechat__title", {}, t("sitechat.title")),
-        el("div.sitechat__sub", {}, t("sitechat.sub")),
-      ]),
-      el("button.iconbtn.iconbtn--sm", { type: "button", "aria-label": t("common.close"), onclick: close }, [icon(ICONS.close, 16)]),
+      el("div", { style: { flex: "1", minWidth: "0" } }, [titleEl, subEl]),
+      closeBtn,
     ]),
     logEl,
     formEl,
@@ -54,6 +52,23 @@ export function mountSiteChat() {
   fab.addEventListener("click", () => (opened ? close() : open()));
 
   document.body.append(fab, panel);
+
+  // The widget lives outside #app, so the router's language-switch re-render
+  // never touches it — refresh its own static strings on the same event.
+  window.addEventListener("sb:langchange", () => {
+    fab.setAttribute("aria-label", t("sitechat.fabLabel"));
+    panel.setAttribute("aria-label", t("sitechat.title"));
+    titleEl.textContent = t("sitechat.title");
+    subEl.textContent = t("sitechat.sub");
+    closeBtn.setAttribute("aria-label", t("common.close"));
+    logEl.setAttribute("aria-label", t("sitechat.convAria"));
+    inputEl.placeholder = t("sitechat.ask");
+    inputEl.setAttribute("aria-label", t("sitechat.askAria"));
+    sendBtn.setAttribute("aria-label", t("sitechat.send"));
+    // Only the default (no real reply yet) content is safe to re-paint —
+    // an actual conversation stays in whatever language it was held in.
+    if (!messages.length) store.hasKey() ? paintIntro() : paintDormant();
+  });
 
   function paintDormant() {
     clear(logEl);
