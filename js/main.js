@@ -29,6 +29,7 @@ import { renderCalculator } from "./views/calculator.js";
 import { renderAchievements } from "./views/achievements.js";
 import { renderLeaderboard } from "./views/leaderboard.js";
 import { mountCommandPalette } from "./components/command-palette.js";
+import { mountSiteChat } from "./components/site-chat.js";
 import { maybeShowOnboarding } from "./components/onboarding.js";
 
 const app = document.getElementById("app");
@@ -626,6 +627,7 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
 }
 
 mountCommandPalette();
+mountSiteChat();
 
 store.init().then(() => {
   applyLang();
