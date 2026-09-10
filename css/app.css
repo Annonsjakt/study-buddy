@@ -313,6 +313,24 @@ a.streakbadge:hover {
   padding: var(--s-6) var(--s-4) var(--s-8);
 }
 
+/* Bottom of every page — About/Terms/Privacy, deliberately not in the main
+   nav. Shares .content's max-width by living inside it. */
+.sitefooter {
+  margin-top: var(--s-8); padding-top: var(--s-5); border-top: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-3);
+  font-size: var(--fs-sm); color: var(--ink-faint);
+}
+.sitefooter__brand {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-family: var(--font-display); font-weight: 700; color: var(--ink-soft);
+}
+.sitefooter__brand img { width: 20px; height: 20px; }
+.sitefooter__links { display: flex; flex-wrap: wrap; gap: var(--s-4); }
+.sitefooter__links a { color: var(--ink-faint); text-decoration: none; }
+.sitefooter__links a:hover { color: var(--ink-soft); text-decoration: underline; }
+.sitefooter__copy { width: 100%; font-size: 12px; order: 3; }
+@media (min-width: 620px) { .sitefooter__copy { width: auto; order: 0; } }
+
 /* ---------- buttons ---------- */
 .btn {
   font-family: var(--font-display); font-weight: 600; font-size: var(--fs-md);

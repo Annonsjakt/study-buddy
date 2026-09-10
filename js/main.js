@@ -28,6 +28,7 @@ import { renderReference } from "./views/reference.js";
 import { renderCalculator } from "./views/calculator.js";
 import { renderAchievements } from "./views/achievements.js";
 import { renderLeaderboard } from "./views/leaderboard.js";
+import { renderAbout, renderTerms, renderPrivacy } from "./views/legal.js";
 import { mountCommandPalette } from "./components/command-palette.js";
 import { mountSiteChat } from "./components/site-chat.js";
 import { maybeShowOnboarding } from "./components/onboarding.js";
@@ -63,6 +64,9 @@ const routes = [
   { rx: /^\/parent$/, view: () => renderParentHub() },
   { rx: /^\/parent\/(.+)$/, view: (m) => renderParentStudent(m[1]) },
   { rx: /^\/national\/mix\/(.+)$/, view: (m, qs) => renderNationalMix(m[1], qs) },
+  { rx: /^\/about$/, view: () => renderAbout() },
+  { rx: /^\/terms$/, view: () => renderTerms() },
+  { rx: /^\/privacy$/, view: () => renderPrivacy() },
 ];
 
 let currentCleanup = null;
@@ -523,9 +527,27 @@ function shell(contentNode) {
           shellActions(),
         ]),
       ]),
-      el("main.content", { id: "main" }, [contentNode]),
+      el("main.content", { id: "main" }, [contentNode, siteFooter()]),
       tabBar(),
     ]),
+  ]);
+}
+
+/** Sits at the bottom of every page's content, inside .content so it shares
+ *  its max-width and mobile tab-bar clearance — the one place About/Terms/
+ *  Privacy are reachable from, deliberately not the main nav. */
+function siteFooter() {
+  return el("footer.sitefooter", {}, [
+    el("span.sitefooter__brand", {}, [
+      el("img", { src: "assets/favicon.svg", alt: "" }), "StudyBuddy",
+    ]),
+    el("nav.sitefooter__links", { "aria-label": t("footer.nav") }, [
+      el("a", { href: "#/about" }, t("footer.about")),
+      el("a", { href: "#/terms" }, t("footer.terms")),
+      el("a", { href: "#/privacy" }, t("footer.privacy")),
+      el("a", { href: "mailto:liamohrn0911@gmail.com" }, t("footer.contact")),
+    ]),
+    el("span.sitefooter__copy", {}, t("footer.copy")),
   ]);
 }
 
