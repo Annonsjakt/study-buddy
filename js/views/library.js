@@ -29,13 +29,10 @@ function subjectIcon(name) {
   return ICONS.book;
 }
 
-/** One icon per grade level, in the same spirit as subjectIcon() — a rough
- *  "further along" progression rather than anything precise. Unknown level
- *  ids (a future addition to the index) fall back to the graduation cap
- *  every level used before this. */
+/** Grundskolan (åk7–9) shares one book icon; gymnasiet gets its own
+ *  graduation cap. Unknown level ids fall back to the cap too. */
 function levelIcon(id) {
-  return ({ ak7: ICONS.book, ak8: ICONS.compass, ak9: ICONS.flag, gymnasiet: ICONS.graduation })[id]
-    || ICONS.graduation;
+  return id === "gymnasiet" ? ICONS.graduation : ICONS.book;
 }
 
 export async function renderLibrary() {
