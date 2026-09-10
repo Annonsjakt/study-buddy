@@ -173,11 +173,14 @@ a.streakbadge:hover {
 @media (min-width: 900px) {
   .sidebar {
     display: flex; flex-direction: column; flex: none;
-    width: 236px; position: sticky; top: 0; align-self: flex-start;
-    height: 100vh; overflow-y: auto;
+    width: 236px; position: sticky; top: var(--s-4); align-self: flex-start;
+    height: calc(100vh - var(--s-4) * 2); overflow-y: auto;
     scrollbar-width: none;       /* Firefox */
     padding: var(--s-5) var(--s-3);
-    background: var(--surface); border-right: 1px solid var(--line);
+    margin: var(--s-4) 0 var(--s-4) var(--s-4);
+    border-radius: var(--r-lg);
+    background: var(--surface); border: 1px solid var(--line);
+    box-shadow: var(--shadow-1);
   }
   /* Still scrolls (wheel/trackpad/keyboard) if the nav ever outgrows the
      viewport — just without a visible track/thumb cluttering the rail. */
