@@ -296,25 +296,6 @@ function themePicker() {
   return wrap;
 }
 
-/** Two-flag segmented switcher for the sidebar footer — direct-select
- *  (each flag its own button) rather than the single cycling button used
- *  in the topbar (langButton(), left unchanged — no room here for both
- *  flags at that size). No self-sync listener needed: setLang() already
- *  dispatches "sb:langchange", which main.js's top-level listener answers
- *  with a full render() — that rebuilds this picker fresh with the new
- *  current language already reflected, unlike the theme picker which
- *  deliberately avoids a full render to skip the loading-state flash. */
-function sidebarLangPicker() {
-  const current = getLang();
-  return el("div.sidebar__lang", { role: "group", "aria-label": t("common.language") },
-    LANGS.map(([code, label, flagSvg]) => el("button.sidebar__lang-btn", {
-      type: "button",
-      "aria-pressed": String(code === current),
-      "aria-label": label, title: label,
-      onclick: () => setLang(code),
-    }, [el("span", { "aria-hidden": "true", html: flagSvg })])));
-}
-
 const DAY_MS = 86400000;
 
 /** The two live notification types, each with a stable id and a "signature"
@@ -501,7 +482,7 @@ function shell(contentNode) {
   const { displayStreak: streak, atRisk } = store.streakInfo;
 
   // Desktop: a left sidebar carries the whole nav; the topbar stays but
-  // collapses (via CSS) to just the bell + account pair on the right.
+  // collapses (via CSS) to just language + bell + account on the right.
   // Mobile: a fixed bottom tab bar carries it instead (see tabBar()).
   const sidebar = el("nav.sidebar", { "aria-label": t("common.menu") }, [
     el("a.sidebar__brand", { href: "#/" }, [
@@ -520,7 +501,6 @@ function shell(contentNode) {
       el("div.sidebar__foot", {}, [
         sidebarStreak(streak, atRisk),
         themePicker(),
-        sidebarLangPicker(),
       ].filter(Boolean)),
     ]),
   ]);

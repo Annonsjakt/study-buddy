@@ -158,18 +158,6 @@ a.streakbadge:hover {
 .sidebar__theme-btn:hover { color: var(--ink); }
 .sidebar__theme-btn[aria-pressed="true"] { background: var(--surface); color: var(--brand-ink); box-shadow: var(--shadow-1); }
 
-/* Two-flag direct-select switcher, sidebar footer — same segmented-group
-   look as .sidebar__theme, sized for flags rather than icon glyphs. */
-.sidebar__lang { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-md); background: var(--surface-sunk); }
-.sidebar__lang-btn {
-  flex: 1; display: grid; place-items: center; padding: var(--s-2) 0;
-  border: none; border-radius: var(--r-sm); background: transparent;
-  cursor: pointer; transition: background var(--dur-fast), box-shadow var(--dur-fast);
-}
-.sidebar__lang-btn:hover { background: var(--line); }
-.sidebar__lang-btn[aria-pressed="true"] { background: var(--surface); box-shadow: var(--shadow-1); }
-.sidebar__lang-btn svg { width: 28px; height: auto; display: block; border-radius: 3px; }
-
 @media (min-width: 900px) {
   .sidebar {
     display: flex; flex-direction: column; flex: none;
@@ -191,14 +179,14 @@ a.streakbadge:hover {
     display: flex; flex-direction: column;
   }
   .sidebar__scroll::-webkit-scrollbar { display: none; }
-  /* Topbar stays on desktop but collapses to just the bell + account pair,
+  /* Topbar stays on desktop but collapses to just language + bell + account,
      floating top-right over the content — the sidebar carries brand/nav/
-     streak/language, so everything else in the topbar is hidden here. */
+     streak, so brand and streak are hidden here; language lives only here
+     now, not duplicated in the sidebar footer. */
   .topbar { background: transparent; backdrop-filter: none; border-bottom: none; }
   .topbar__inner { justify-content: flex-end; padding-top: var(--s-4); padding-right: var(--s-6); }
   .topbar .brand,
-  .topbar .streakbadge,
-  .topbar .langbtn { display: none; }
+  .topbar .streakbadge { display: none; }
 }
 
 .topbar {
