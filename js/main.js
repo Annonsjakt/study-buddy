@@ -105,11 +105,11 @@ function navGroups() {
     { href: "#/progress", match: "/progress",  icon: ICONS.chart,     label: t("common.progress") },
     { href: "#/achievements", match: "/achievements", icon: ICONS.award, label: t("nav.achievements") },
   ];
-  // The leaderboard needs an account + the backend — only surface it once
-  // you're signed in, same as the parent view.
-  if (store.authed) {
-    track.push({ href: "#/leaderboard", match: "/leaderboard", icon: ICONS.podium, label: t("nav.leaderboard") });
-  }
+  // The leaderboard needs an account + the backend, but stays in the nav
+  // either way — renderLeaderboard() already explains what's missing and
+  // how to fix it (sign in, or "no server" if there isn't one to sign into)
+  // rather than the feature just being invisible until it works.
+  track.push({ href: "#/leaderboard", match: "/leaderboard", icon: ICONS.podium, label: t("nav.leaderboard") });
   const tools = [
     { href: "#/reference",  match: "/reference",  icon: ICONS.sigma,      label: t("nav.formulas") },
     { href: "#/calculator", match: "/calculator", icon: ICONS.calculator, label: t("nav.calculator") },
