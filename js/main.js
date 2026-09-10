@@ -506,20 +506,22 @@ function shell(contentNode) {
     el("a.sidebar__brand", { href: "#/" }, [
       el("img", { src: "assets/favicon.svg", alt: "" }), "StudyBuddy",
     ]),
-    el("div.sidebar__nav", {}, navGroups().flatMap((g, gi) => [
-      g.label
-        ? el("p.sidebar__group", {}, g.label)
-        : gi > 0 ? el("div.sidebar__div") : null,
-      ...g.items.map((it) =>
-        el("a.sidebar__link" + (navActive(it.match) ? ".is-active" : ""), {
-          href: it.href, "aria-current": navActive(it.match) ? "page" : null,
-        }, [icon(it.icon, 18), it.label])),
-    ].filter(Boolean))),
-    el("div.sidebar__foot", {}, [
-      sidebarStreak(streak, atRisk),
-      themePicker(),
-      sidebarLangPicker(),
-    ].filter(Boolean)),
+    el("div.sidebar__scroll", {}, [
+      el("div.sidebar__nav", {}, navGroups().flatMap((g, gi) => [
+        g.label
+          ? el("p.sidebar__group", {}, g.label)
+          : gi > 0 ? el("div.sidebar__div") : null,
+        ...g.items.map((it) =>
+          el("a.sidebar__link" + (navActive(it.match) ? ".is-active" : ""), {
+            href: it.href, "aria-current": navActive(it.match) ? "page" : null,
+          }, [icon(it.icon, 18), it.label])),
+      ].filter(Boolean))),
+      el("div.sidebar__foot", {}, [
+        sidebarStreak(streak, atRisk),
+        themePicker(),
+        sidebarLangPicker(),
+      ].filter(Boolean)),
+    ]),
   ]);
 
   return el("div.shell", {}, [
