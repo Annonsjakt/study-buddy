@@ -1172,6 +1172,8 @@ button.cal__cell:hover:not(:disabled) { background: var(--surface-sunk); }
 .sitechat__form { display: flex; gap: var(--s-2); padding: var(--s-3); border-top: 1px solid var(--line); }
 .sitechat__input { flex: 1; font: inherit; padding: var(--s-2) var(--s-3); border-radius: var(--r-full); border: 1px solid var(--line-strong); background: var(--surface); }
 .sitechat__input:focus-visible { border-color: var(--brand); box-shadow: none; }
+.sitechat__input:disabled { opacity: .6; }
+.sitechat__form .iconbtn:disabled { opacity: .4; cursor: not-allowed; }
 .sitechat__dormant { padding: var(--s-4); text-align: center; color: var(--ink-soft); }
 .sitechat__dormant p:first-child { font-family: var(--font-display); font-weight: 600; margin-bottom: var(--s-2); color: var(--ink); }
 /* Clear of the fixed bottom tab bar on mobile. */

@@ -11,7 +11,7 @@ import { showAchievementUnlocks } from "./lib/achievement-toast.js";
 import { renderMenu } from "./views/menu.js";
 import { renderCreate } from "./views/create.js";
 import { renderEdit } from "./views/edit.js";
-import { renderSession, renderReview, renderPractice, renderWeakPractice, renderNationalMix, renderHpMock, isSessionActive } from "./views/session.js";
+import { renderSession, renderReview, renderPractice, renderWeakPractice, renderNationalMix, renderHpMock, isSessionActive, resetSessionActive } from "./views/session.js";
 import { renderResults } from "./views/results.js";
 import { renderProgress } from "./views/progress.js";
 import { renderSettings } from "./views/settings.js";
@@ -606,6 +606,11 @@ async function render({ chromeOnly = false } = {}) {
       el("p", {}, String(e?.message || e)),
       el("a.btn.btn--ghost", { href: "#/", style: { marginTop: "16px" } }, t("common.backToMenu")),
     ])));
+    // currentCleanup is still null here (the view never got far enough to
+    // return one) — if it threw after flagging itself active, nothing else
+    // would ever clear that flag. This error screen is definitely not a
+    // running session, so say so explicitly rather than trust the flag.
+    resetSessionActive();
     syncSessionClass();
     announce(t("common.somethingWrongShort"));
   }

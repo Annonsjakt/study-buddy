@@ -28,6 +28,12 @@ const TIP_SEEN_KEY = "studybuddy.shortcutTipSeen";
 let sessionActive = false;
 export function isSessionActive() { return sessionActive; }
 
+// Safety net for main.js's catch path: if a session view throws while
+// initializing (after it's already flagged itself active, before it returns
+// its own cleanup to reset the flag), nothing else ever clears this — the
+// flag, and anything driven by it, would otherwise stay stuck forever.
+export function resetSessionActive() { sessionActive = false; }
+
 export async function renderSession(assignmentId, qs) {
   const assignment = store.getAssignment(assignmentId);
   if (!assignment) return notFound(t("session.goneSet"));

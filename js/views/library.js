@@ -29,10 +29,11 @@ function subjectIcon(name) {
   return ICONS.book;
 }
 
-/** Grundskolan (åk7–9) shares one book icon; gymnasiet gets its own
- *  graduation cap. Unknown level ids fall back to the cap too. */
+/** Grundskolan (åk7–9) shares one book icon; gymnasiet — and anything
+ *  else, including a future/unrecognized level id — gets the graduation cap. */
+const GRUNDSKOLA_IDS = ["ak7", "ak8", "ak9"];
 function levelIcon(id) {
-  return id === "gymnasiet" ? ICONS.graduation : ICONS.book;
+  return GRUNDSKOLA_IDS.includes(id) ? ICONS.book : ICONS.graduation;
 }
 
 export async function renderLibrary() {

@@ -110,6 +110,9 @@ export function mountSiteChat() {
     panel.hidden = true;
     fab.setAttribute("aria-expanded", "false");
     clear(fab); fab.appendChild(icon(ICONS.message, 24));
+    // A reply still streaming when the panel closes would otherwise keep
+    // running unseen — cancel it, same as tutor-chat.js does on destroy().
+    abort?.abort();
   }
 
   async function submit() {
@@ -119,6 +122,8 @@ export function mountSiteChat() {
     append("me", text);
     messages.push({ role: "user", content: text });
     busy = true;
+    inputEl.disabled = true;
+    sendBtn.disabled = true;
     setMood(mascotEl, "thinking");
     const bubble = append("ai", "");
     bubble.innerHTML = `<span class="typing"><span></span><span></span><span></span></span>`;
@@ -135,12 +140,25 @@ export function mountSiteChat() {
       setMood(mascotEl, "idle");
       announce(t("sitechat.prefix", { text: acc }));
     } catch (e) {
-      const msg = e instanceof ClaudeError ? e.message : t("sitechat.snag");
-      bubble.innerHTML = markdown(`_${msg}_`);
+      // The student closing the panel mid-reply aborts this on purpose (see
+      // close()) — that's not a failure worth a "couldn't get an answer"
+      // bubble left showing a permanently-stuck typing indicator, so drop
+      // the empty reply instead of painting an error into it.
+      if (e?.name === "AbortError") {
+        bubble.remove();
+      } else {
+        const msg = e instanceof ClaudeError ? e.message : t("sitechat.snag");
+        bubble.innerHTML = markdown(`_${msg}_`);
+      }
+      // Either way the assistant never actually replied — drop the dangling
+      // user turn so a later question doesn't send two user messages in a
+      // row with nothing in between.
       messages.pop();
       setMood(mascotEl, "idle");
     }
     busy = false;
+    inputEl.disabled = false;
+    sendBtn.disabled = false;
   }
 }
 
