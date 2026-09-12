@@ -19,15 +19,19 @@ function enter(hash) {
   store.markOnboarded();
 }
 
+/** Shows the language you're *in*, like the app's own topbar button does — a
+ *  flag-and-code badge reads as current state, not as a destination. Clicking
+ *  switches to the other one; the label spells that out. */
 function langSwitch() {
   const current = getLang();
   const next = LANGS.find(([c]) => c !== current);
   if (!next) return null;
-  const [code, label, flagSvg] = next;
+  const flag = LANGS.find(([c]) => c === current)?.[2] || "";
+  const hint = `${t("common.language")} → ${next[1]}`;
   return el("button.lp-lang", {
-    type: "button", "aria-label": `${t("common.language")} → ${label}`, title: label,
-    onclick: () => setLang(code),
-  }, [el("span.lp-lang__flag", { "aria-hidden": "true", html: flagSvg }), el("span", {}, code.toUpperCase())]);
+    type: "button", "aria-label": hint, title: hint,
+    onclick: () => setLang(next[0]),
+  }, [el("span.lp-lang__flag", { "aria-hidden": "true", html: flag }), el("span", {}, current.toUpperCase())]);
 }
 
 function header() {
