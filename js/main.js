@@ -29,14 +29,34 @@ import { renderCalculator } from "./views/calculator.js";
 import { renderAchievements } from "./views/achievements.js";
 import { renderLeaderboard } from "./views/leaderboard.js";
 import { renderAbout, renderTerms, renderPrivacy } from "./views/legal.js";
+import { renderLanding } from "./views/landing.js";
 import { mountCommandPalette } from "./components/command-palette.js";
 import { mountSiteChat } from "./components/site-chat.js";
 import { maybeShowOnboarding } from "./components/onboarding.js";
 
 const app = document.getElementById("app");
 
+/**
+ * The front page is for genuinely new visitors only: nothing of their own
+ * yet, intro not seen, and not an installed-PWA launch (an app someone
+ * added to their home screen should open the app, not a pitch for it).
+ * Deep links are honoured elsewhere — this only ever governs the root route.
+ */
+function shouldShowLanding() {
+  if (store.state.onboarded) return false;
+  if (store.assignments.length) return false;
+  try {
+    if (window.matchMedia("(display-mode: standalone)").matches) return false;
+    if (window.navigator.standalone) return false;   // iOS home-screen launch
+  } catch { /* matchMedia unavailable — fall through and show it */ }
+  return true;
+}
+
 const routes = [
-  { rx: /^\/?$/, view: () => renderMenu() },
+  // Root is the front page for a first-time visitor and the app for everyone
+  // else, decided at render time rather than by redirecting — no flash, and
+  // the URL a newcomer was given stays the URL they're looking at.
+  { rx: /^\/?$/, view: () => (shouldShowLanding() ? renderLanding() : renderMenu()) },
   { rx: /^\/study$/, view: () => renderMenu("study") },
   { rx: /^\/calendar$/, view: () => renderMenu("calendar") },
   { rx: /^\/create$/, view: (m, qs) => renderCreate(qs) },
@@ -64,6 +84,7 @@ const routes = [
   { rx: /^\/parent$/, view: () => renderParentHub() },
   { rx: /^\/parent\/(.+)$/, view: (m) => renderParentStudent(m[1]) },
   { rx: /^\/national\/mix\/(.+)$/, view: (m, qs) => renderNationalMix(m[1], qs) },
+  { rx: /^\/welcome$/, view: () => renderLanding() },
   { rx: /^\/about$/, view: () => renderAbout() },
   { rx: /^\/terms$/, view: () => renderTerms() },
   { rx: /^\/privacy$/, view: () => renderPrivacy() },
@@ -585,7 +606,12 @@ async function render({ chromeOnly = false } = {}) {
     const node = result?.node || result;
     currentCleanup = result?.cleanup || null;
     currentViewNode = node;
-    mount(app, shell(node));
+    // `chrome: false` mounts a view on its own — no sidebar, topbar or tab
+    // bar around it. Only the landing page uses it: it brings its own header
+    // and footer, and app furniture would undercut the point of a front page.
+    const bare = result?.chrome === false;
+    document.body.classList.toggle("no-chrome", bare);
+    mount(app, bare ? node : shell(node));
     syncSessionClass();
 
     const title = result?.title || "StudyBuddy";
@@ -595,12 +621,16 @@ async function render({ chromeOnly = false } = {}) {
     // Deliberate focus + a single short announcement, rather than a live
     // region that re-reads the entire page on every navigation.
     if (firstPaintDone) {
-      focusHeading(app.querySelector(".content"));
+      // A bare (chrome-less) view has no .content wrapper — fall back to the
+      // mount root so its own <h1> still takes focus on navigation.
+      focusHeading(app.querySelector(".content") || app);
       announce(title);
     }
     firstPaintDone = true;
   } catch (e) {
     console.error(e);
+    // The error screen is a normal app screen, so the chrome comes back.
+    document.body.classList.remove("no-chrome");
     mount(app, shell(el("div.empty", {}, [
       el("h2", {}, t("common.somethingWrong")),
       el("p", {}, String(e?.message || e)),
@@ -654,7 +684,9 @@ mountSiteChat();
 store.init().then(() => {
   applyLang();
   render();
-  maybeShowOnboarding();
+  // The front page covers the same ground as the first-run modal (better),
+  // so only one of the two ever greets a new visitor.
+  if (!shouldShowLanding()) maybeShowOnboarding();
   // Bring any demo or library sets loaded in a different language up to date —
   // then refresh whatever's on screen so a deep-linked session or the home
   // grid shows the corrected wording.
